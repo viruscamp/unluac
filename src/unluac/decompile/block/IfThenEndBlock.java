@@ -119,7 +119,7 @@ public class IfThenEndBlock extends Block {
       if(test >= 0) {
         if(r.getUpdated(test, branch.end - 1) >= branch.begin) {
           Expression right = r.getValue(test, branch.end);
-          final Branch setb = d.popSetCondition(stack, stack.peek().end);
+          final Branch setb = d.popSetCondition(stack, stack.peek().end, test);
           setb.useExpression(right);
           final int testreg = test;
           return new Operation(end - 1) {
