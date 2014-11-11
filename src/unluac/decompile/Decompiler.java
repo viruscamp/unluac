@@ -816,7 +816,7 @@ public class Decompiler {
             int begin = stack.peek().begin;
             assignEnd = begin + 2;
             int target = code.A(begin);
-            conditions.push(popCompareSetCondition(stack, assignEnd));
+            conditions.push(popCompareSetCondition(stack, assignEnd, target));
             conditions.peek().setTarget = target;
             conditions.peek().end = assignEnd;
             conditions.peek().begin = begin;
@@ -824,7 +824,7 @@ public class Decompiler {
             backup = null;
             int target = stack.peek().setTarget;
             int begin = stack.peek().begin;
-            conditions.push(popSetCondition(stack, assignEnd));
+            conditions.push(popSetCondition(stack, assignEnd, target));
             conditions.peek().setTarget = target;
             conditions.peek().end = assignEnd;
             conditions.peek().begin = begin;
@@ -1054,15 +1054,15 @@ public class Decompiler {
     return branch;
   }
   
-  public Branch popSetCondition(Stack<Branch> stack, int assignEnd) {
+  public Branch popSetCondition(Stack<Branch> stack, int assignEnd, int target) {
     //System.err.println("assign end " + assignEnd);
     stack.push(new AssignNode(assignEnd - 1, assignEnd, assignEnd));
     //Invert argument doesn't matter because begin == end
-    Branch rtn = _helper_popSetCondition(stack, false, assignEnd);
+    Branch rtn = _helper_popSetCondition(stack, false, assignEnd, target);
     return rtn;
   }
   
-  public Branch popCompareSetCondition(Stack<Branch> stack, int assignEnd) {
+  public Branch popCompareSetCondition(Stack<Branch> stack, int assignEnd, int target) {
     Branch top = stack.pop();
     boolean invert = false;
     if(code.B(top.begin) == 0) invert = true;//top = top.invert();
@@ -1072,11 +1072,27 @@ public class Decompiler {
     //stack.pop();
     //stack.push(new AssignNode(assignEnd - 1, assignEnd, assignEnd));
     //Invert argument doesn't matter because begin == end
-    Branch rtn = _helper_popSetCondition(stack, invert, assignEnd);
+    Branch rtn = _helper_popSetCondition(stack, invert, assignEnd, target);
     return rtn;
   }
   
-  private Branch _helper_popSetCondition(Stack<Branch> stack, boolean invert, int assignEnd) {
+  private int _adjustLine(int line, int target) {
+    int testline = line;
+    while(testline >= 1 && code.op(testline) == Op.LOADBOOL && (target == -1 || code.A(testline) == target)) {
+      testline--;
+    }
+    if(testline == line) {
+      return testline;
+    }
+    testline++;
+    if(code.C(testline) != 0) {
+      return testline + 2;
+    } else {
+      return testline + 1;
+    }
+  }
+  
+  private Branch _helper_popSetCondition(Stack<Branch> stack, boolean invert, int assignEnd, int target) {
     Branch branch = stack.pop();
     int begin = branch.begin;
     int end = branch.end;
@@ -1087,37 +1103,21 @@ public class Decompiler {
     if(invert) {
       branch = branch.invert();
     }
-    if(code.op(begin) == Op.LOADBOOL) {
-      if(code.C(begin) != 0) {
-        begin += 2;
-      } else {
-        begin += 1;
-      }
-    }
-    if(code.op(end) == Op.LOADBOOL) {
-      if(code.C(end) != 0) {
-        end += 2;
-      } else {
-        end += 1;
-      }
-    }
+    begin = _adjustLine(begin, target);
+    end = _adjustLine(end, target);
     //System.err.println("_helper_popSetCondition; begin_adj: " + begin);
     //System.err.println("_helper_popSetCondition; end_adj:   " + end);
     //if(count >= 2) System.exit(1);
-    int target = branch.setTarget;
+    int btarget = branch.setTarget;
     while(!stack.isEmpty()) {
       Branch next = stack.peek();
       //System.err.println("_helper_popSetCondition; next begin: " + next.begin);
       //System.err.println("_helper_popSetCondition; next end:   " + next.end);
       boolean ninvert;
       int nend = next.end;
-      if(code.op(next.end) == Op.LOADBOOL) {
-        ninvert = code.B(next.end) != 0;
-        if(code.C(next.end) != 0) {
-          nend += 2;
-        } else {
-          nend += 1;
-        }
+      if(code.op(nend) == Op.LOADBOOL && (target == -1 || code.A(nend) == target)) {
+        ninvert = code.B(nend) != 0;
+        nend = _adjustLine(nend, target);
       } else if(next instanceof TestSetNode) {
         TestSetNode node = (TestSetNode) next;
         ninvert = node.invert;
@@ -1147,9 +1147,9 @@ public class Decompiler {
       if(addr == nend) {
         if(addr != nend) ninvert = !ninvert;
         if(ninvert) {
-          branch = new OrBranch(_helper_popSetCondition(stack, ninvert, assignEnd), branch);
+          branch = new OrBranch(_helper_popSetCondition(stack, ninvert, assignEnd, target), branch);
         } else {
-          branch = new AndBranch(_helper_popSetCondition(stack, ninvert, assignEnd), branch);
+          branch = new AndBranch(_helper_popSetCondition(stack, ninvert, assignEnd, target), branch);
         }
         branch.end = nend;
       } else {
@@ -1162,7 +1162,7 @@ public class Decompiler {
       }
     }
     branch.isSet = true;
-    branch.setTarget = target;
+    branch.setTarget = btarget;
     return branch;
   }
   
