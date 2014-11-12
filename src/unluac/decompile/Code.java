@@ -4,35 +4,55 @@ import unluac.parse.LFunction;
 
 public class Code {
   
+  /**
+   * Returns the A field of the given codepoint.
+   */
   public static int extract_A(int codepoint) {
     return (codepoint >> 6) & 0x0000000FF;
   }
   
+  /**
+   * Returns the C field of the given codepoint.
+   */
   public static int extract_C(int codepoint) {
     return (codepoint >> 14) & 0x000001FF;
   }
   
+  /**
+   * Returns the B field of the given codepoint.
+   */
   public static int extract_B(int codepoint) {
     return codepoint >>> 23;
   }
   
+  /**
+   * Returns the Bx (B extended) field of the given codepoint.
+   */
   public static int extract_Bx(int codepoint) {
     return codepoint >>> 14;
   }
   
+  /**
+   * Returns the sBx (signed B extended) field of the given codepoint.
+   */
   public static int extract_sBx(int codepoint) {
     return (codepoint >>> 14) - 131071;
   }
   private final OpcodeMap map;
   private final int[] code;
+  public final int length;
   
   public Code(LFunction function) {
     this.code = function.code;
+    this.length = code.length;
     map = function.header.version.getOpcodeMap();
   }
   
   //public boolean reentered = false;
   
+  /**
+   * Returns the operation indicated by the instruction at the given line.
+   */
   public Op op(int line) {
     /*if(!reentered) {
       reentered = true;
@@ -42,26 +62,51 @@ public class Code {
     return map.get(code[line - 1] & 0x0000003F);
   }
   
+  /**
+   * Returns the A field of the instruction at the given line.
+   */
   public int A(int line) {
     return extract_A(code[line - 1]);
   }
   
+  /**
+   * Returns the C field of the instruction at the given line.
+   */
   public int C(int line) {
     return extract_C(code[line - 1]);
   }
   
+  /**
+   * Returns the B field of the instruction at the given line.
+   */
   public int B(int line) {
     return extract_B(code[line - 1]);
   }
   
+  /**
+   * Returns the Bx field (B extended) of the instruction at the given line.
+   */
   public int Bx(int line) {
     return extract_Bx(code[line - 1]);
   }
   
+  /**
+   * Returns the sBx field (signed B extended) of the instruction at the given line.
+   */
   public int sBx(int line) {
     return extract_sBx(code[line - 1]);
   }
-
+  
+  /**
+   * Returns the absolute target address of a jump instruction (using sBx) and the given line.
+   */
+  public int target(int line) {
+    return line + 1 + extract_sBx(code[line - 1]);
+  }
+  
+  /**
+   * Returns the full instruction codepoint at the given line.
+   */
   public int codepoint(int line) {
     return code[line - 1];
   }

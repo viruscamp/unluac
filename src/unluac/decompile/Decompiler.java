@@ -103,10 +103,15 @@ public class Decompiler {
   
   public void decompile() {
     r = new Registers(registers, length, declList, f);
-    findReverseTargets();
-    handleBranches(true);
-    outer = handleBranches(false);
+    //findReverseTargets();
+    //handleBranches(true);
+    //outer = handleBranches(false);
+    blocks = new ArrayList<Block>();
+    List<Block> myblocks = ControlFlowHandler.process(this, r);
+    blocks.addAll(myblocks);
+    outer = myblocks.get(0);
     processSequence(1, length);
+    //ControlFlowHandler.process(this, r);
   }
   
   public void print() {
