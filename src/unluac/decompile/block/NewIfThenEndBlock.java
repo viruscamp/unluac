@@ -3,6 +3,7 @@ package unluac.decompile.block;
 import java.util.ArrayList;
 import java.util.List;
 
+import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
 import unluac.decompile.condition.Condition;
@@ -48,13 +49,13 @@ public class NewIfThenEndBlock extends Block {
   }
   
   @Override
-  public void print(Output out) {
+  public void print(Decompiler d, Output out) {
     out.print("if ");
-    cond.asExpression(r).print(out);
+    cond.asExpression(r).print(d, out);
     out.print(" then");
     out.println();
     out.indent();
-    Statement.printSequence(out, statements);
+    Statement.printSequence(d, out, statements);
     out.dedent();
     out.print("end");
   }

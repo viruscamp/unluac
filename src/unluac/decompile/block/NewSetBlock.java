@@ -55,10 +55,10 @@ public class NewSetBlock extends Block {
   }
   
   @Override
-  public void print(Output out) {
+  public void print(Decompiler d, Output out) {
     if(assign != null && assign.getFirstTarget() != null) {
       Assignment assignOut = new Assignment(assign.getFirstTarget(), getValue());
-      assignOut.print(out);
+      assignOut.print(d, out);
     } else {
       out.print("-- unhandled set block");
       out.println();
@@ -88,7 +88,7 @@ public class NewSetBlock extends Block {
   public Operation process(final Decompiler d) {
     if(ControlFlowHandler.verbose) {
       System.out.print("set expression: ");
-      cond.asExpression(r).print(new Output());
+      cond.asExpression(r).print(d, new Output());
       System.out.println();
     }
     if(assign != null) {
