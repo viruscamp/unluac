@@ -1,5 +1,6 @@
 package unluac.decompile.block;
 
+import unluac.decompile.ControlFlowHandler;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Op;
 import unluac.decompile.Output;
@@ -85,9 +86,11 @@ public class NewSetBlock extends Block {
   
   @Override
   public Operation process(final Decompiler d) {
-    System.out.print("set expression: ");
-    cond.asExpression(r).print(new Output());
-    System.out.println();
+    if(ControlFlowHandler.verbose) {
+      System.out.print("set expression: ");
+      cond.asExpression(r).print(new Output());
+      System.out.println();
+    }
     if(assign != null) {
       // branch.useExpression(assign.getFirstValue());
       final Target target = assign.getFirstTarget();

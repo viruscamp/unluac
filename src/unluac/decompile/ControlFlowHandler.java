@@ -23,6 +23,8 @@ import unluac.parse.LFunction;
 
 public class ControlFlowHandler {
   
+  public static boolean verbose = false;
+  
   private static class Branch implements Comparable<Branch> {
     
     private static enum Type {
@@ -345,7 +347,7 @@ public class ControlFlowHandler {
       if(adjacent) {
         for(int line = branch0.targetFirst; line < branch1.line; line++) {
           if(is_statement(state, line)) {
-            System.out.println("Found statement at " + line + " between " + branch0.line + " and " + branch1.line);
+            if(verbose) System.out.println("Found statement at " + line + " between " + branch0.line + " and " + branch1.line);
             adjacent = false;
             break;
           }
@@ -372,7 +374,7 @@ public class ControlFlowHandler {
         Condition c = new OrCondition(branch0.cond.inverse(), branch1.cond);
         Branch branchn = new Branch(branch0.line, Branch.Type.comparison, c, branch1.targetFirst, branch1.targetSecond);
         branchn.inverseValue = branch1.inverseValue;
-        System.err.println("conditional or " + branchn.line);
+        if(verbose) System.err.println("conditional or " + branchn.line);
         replace_branch(state, branch0, branch1, branchn);
         return combine_conditional(state, branchn);
       } else if(branch0.targetSecond == branch1.targetSecond) {
@@ -381,7 +383,7 @@ public class ControlFlowHandler {
         Condition c = new AndCondition(branch0.cond, branch1.cond);
         Branch branchn = new Branch(branch0.line, Branch.Type.comparison, c, branch1.targetFirst, branch1.targetSecond);
         branchn.inverseValue = branch1.inverseValue;
-        System.err.println("conditional and " + branchn.line);
+        if(verbose) System.err.println("conditional and " + branchn.line);
         replace_branch(state, branch0, branch1, branchn);
         return combine_conditional(state, branchn);
       }
@@ -393,14 +395,11 @@ public class ControlFlowHandler {
     Branch branch0 = branch1.previous;
     if(adjacent(state, branch0, branch1)) {
       //System.err.println("blah " + branch1.line + " " + branch0.line);
-      if(branch1.line == 32 && branch0.line == 29) {
-        System.err.println("yes");
-      }
       if(is_conditional(branch0) && is_assignment(branch1)) {
         //System.err.println("bridge cand " + branch1.line + " " + branch0.line);
         if(branch0.targetSecond == branch1.targetFirst) {
           boolean inverse = branch0.inverseValue;
-          System.err.println("bridge " + (inverse ? "or" : "and") + " " + branch1.line + " " + branch0.line);
+          if(verbose) System.err.println("bridge " + (inverse ? "or" : "and") + " " + branch1.line + " " + branch0.line);
           branch0 = combine_conditional(state, branch0);
           if(inverse != branch0.inverseValue) throw new IllegalStateException();
           Condition c;
@@ -430,7 +429,7 @@ public class ControlFlowHandler {
           Condition c;
           //System.err.println("preassign " + branch1.line + " " + branch0.line + " " + branch0.targetSecond);
           boolean inverse = branch0.inverseValue;
-          System.err.println("assign " + (inverse ? "or" : "and") + " " + branch1.line + " " + branch0.line);
+          if(verbose) System.err.println("assign " + (inverse ? "or" : "and") + " " + branch1.line + " " + branch0.line);
           branch0 = combine_assignment(state, branch0);
           if(inverse != branch0.inverseValue) throw new IllegalStateException();
           if(branch0.inverseValue) {
@@ -451,7 +450,7 @@ public class ControlFlowHandler {
           Condition c;
           //System.err.println("final preassign " + branch1.line + " " + branch0.line);
           boolean inverse = branch0.inverseValue;
-          System.err.println("final assign " + (inverse ? "or" : "and") + " " + branch1.line + " " + branch0.line);
+          if(verbose) System.err.println("final assign " + (inverse ? "or" : "and") + " " + branch1.line + " " + branch0.line);
           branch0 = combine_assignment(state, branch0);
           if(inverse != branch0.inverseValue) throw new IllegalStateException();
           if(branch0.inverseValue) {
