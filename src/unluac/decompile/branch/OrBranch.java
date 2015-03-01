@@ -10,7 +10,7 @@ public class OrBranch extends Branch {
   private final Branch right;
   
   public OrBranch(Branch left, Branch right) {
-    super(right.line, right.begin, right.end);
+    super(left.line, right.begin, right.end);
     this.left = left;
     this.right = right;
   }
