@@ -54,7 +54,7 @@ public class Main {
     while(len > 0) len -= in.read(buffer);
     buffer.rewind();
     BHeader header = new BHeader(buffer);
-    return header.function.parse(buffer, header);
+    return header.main;
   }
   
   public static void decompile(String in, String out) throws IOException {

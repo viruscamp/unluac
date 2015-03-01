@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
+import unluac.Version;
 import unluac.decompile.block.AlwaysLoop;
 import unluac.decompile.block.Block;
 import unluac.decompile.block.BooleanIndicator;
@@ -72,6 +73,7 @@ public class Decompiler {
   private final int vararg;
   
   private final Op tforTarget;
+  private final Op forTarget;
   
   public Decompiler(LFunction function) {
     this.f = new Function(function);
@@ -86,16 +88,25 @@ public class Decompiler {
       }
     } else {
       //TODO: debug info missing;
+      /*
       declList = new Declaration[function.numParams];
       for(int i = 0; i < declList.length; i++) {
         declList[i] = new Declaration("_ARG_" + i + "_", 0, length - 1);
       }
+      */
+      declList = VariableFinder.process(this, function.numParams, function.maximumStackSize);
+      
     }
     upvalues = new Upvalues(function.upvalues);
     functions = function.functions;
     params = function.numParams;
     vararg = function.vararg;
     tforTarget = function.header.version.getTForTarget();
+    forTarget = function.header.version.getForTarget();
+  }
+  
+  public Version getVersion() {
+    return function.header.version;
   }
   
   private Registers r;
@@ -124,7 +135,7 @@ public class Decompiler {
   
   public void print(Output out) {
     handleInitialDeclares(out);
-    outer.print(out);
+    outer.print(this, out);
   }
   
   private void handleInitialDeclares(Output out) {
@@ -142,6 +153,19 @@ public class Decompiler {
         out.print(initdecls.get(i).name);
       }
       out.println();
+    }
+  }
+  
+  private int fb2int50(int fb) {
+    return (fb & 7) << (fb >> 3);
+  }
+  
+  private int fb2int(int fb) {
+    int exponent = (fb >> 3) & 0x1f;
+    if(exponent == 0) {
+      return fb;
+    } else {
+      return ((fb & 7) + 8) << (exponent - 1);
     }
   }
   
@@ -178,11 +202,7 @@ public class Decompiler {
         operations.add(new RegisterSet(line, A, upvalues.getExpression(B)));
         break;
       case GETTABUP:
-        if(B == 0 && (C & 0x100) != 0) {
-          operations.add(new RegisterSet(line, A, f.getGlobalExpression(C & 0xFF))); //TODO: check
-        } else {
-          operations.add(new RegisterSet(line, A, new TableReference(upvalues.getExpression(B), r.getKExpression(C, line))));
-        }
+        operations.add(new RegisterSet(line, A, new TableReference(upvalues.getExpression(B), r.getKExpression(C, line))));
         break;
       case GETGLOBAL:
         operations.add(new RegisterSet(line, A, f.getGlobalExpression(Bx)));
@@ -194,11 +214,7 @@ public class Decompiler {
         operations.add(new UpvalueSet(line, upvalues.getName(B), r.getExpression(A, line)));
         break;
       case SETTABUP:
-        if(A == 0 && (B & 0x100) != 0) {
-          operations.add(new GlobalSet(line, f.getGlobalName(B & 0xFF), r.getKExpression(C, line))); //TODO: check
-        } else {
-          operations.add(new TableSet(line, upvalues.getExpression(A), r.getKExpression(B, line), r.getKExpression(C, line), true, line));
-        }
+        operations.add(new TableSet(line, upvalues.getExpression(A), r.getKExpression(B, line), r.getKExpression(C, line), true, line));
         break;
       case SETGLOBAL:
         operations.add(new GlobalSet(line, f.getGlobalName(Bx), r.getExpression(A, line)));
@@ -207,7 +223,10 @@ public class Decompiler {
         operations.add(new TableSet(line, r.getExpression(A, line), r.getKExpression(B, line), r.getKExpression(C, line), true, line));
         break;
       case NEWTABLE:
-        operations.add(new RegisterSet(line, A, new TableLiteral(B, C)));
+        operations.add(new RegisterSet(line, A, new TableLiteral(fb2int(B), fb2int(C))));
+        break;
+      case NEWTABLE50:
+        operations.add(new RegisterSet(line, A, new TableLiteral(fb2int50(B), 1 << C)));
         break;
       case SELF: {
         // We can later determine is : syntax was used by comparing subexpressions with ==
@@ -234,6 +253,24 @@ public class Decompiler {
       case POW:
         operations.add(new RegisterSet(line, A, Expression.makePOW(r.getKExpression(B, line), r.getKExpression(C, line))));
         break;
+      case IDIV:
+        operations.add(new RegisterSet(line, A, Expression.makeIDIV(r.getKExpression(B, line), r.getKExpression(C, line))));
+        break;
+      case BAND:
+        operations.add(new RegisterSet(line, A, Expression.makeBAND(r.getKExpression(B, line), r.getKExpression(C, line))));
+        break;
+      case BOR:
+        operations.add(new RegisterSet(line, A, Expression.makeBOR(r.getKExpression(B, line), r.getKExpression(C, line))));
+        break;
+      case BXOR:
+        operations.add(new RegisterSet(line, A, Expression.makeBXOR(r.getKExpression(B, line), r.getKExpression(C, line))));
+        break;
+      case SHL:
+        operations.add(new RegisterSet(line, A, Expression.makeSHL(r.getKExpression(B, line), r.getKExpression(C, line))));
+        break;
+      case SHR:
+        operations.add(new RegisterSet(line, A, Expression.makeSHR(r.getKExpression(B, line), r.getKExpression(C, line))));
+        break;
       case UNM:
         operations.add(new RegisterSet(line, A, Expression.makeUNM(r.getExpression(B, line))));
         break;
@@ -242,6 +279,9 @@ public class Decompiler {
         break;
       case LEN:
         operations.add(new RegisterSet(line, A, Expression.makeLEN(r.getExpression(B, line))));
+        break;
+      case BNOT:
+        operations.add(new RegisterSet(line, A, Expression.makeBNOT(r.getExpression(B, line))));
         break;
       case CONCAT: {
         Expression value = r.getExpression(C, line);
@@ -258,6 +298,7 @@ public class Decompiler {
       case LE:
       case TEST:
       case TESTSET:
+      case TEST50:
         /* Do nothing ... handled with branches */
         break;
       case CALL: {
@@ -306,10 +347,20 @@ public class Decompiler {
       }
       case FORLOOP:
       case FORPREP:
+      case TFORPREP:
       case TFORCALL:
       case TFORLOOP:
         /* Do nothing ... handled with branches */
         break;
+      case SETLIST50:
+      case SETLISTO: {
+        Expression table = r.getValue(A, line);
+        int n = Bx % 32;
+        for(int i = 1; i <= n + 1; i++) {
+          operations.add(new TableSet(line, table, new ConstantExpression(new Constant(Bx - n + i), -1), r.getExpression(A + i, line), false, r.getUpdated(A + i, line)));
+        }
+        break;
+      }
       case SETLIST: {
         if(C == 0) {
           C = code.codepoint(line + 1);
@@ -474,6 +525,9 @@ public class Decompiler {
           if(count > 0) {
             block.addStatement(assign);
           }
+        } else if(code.op(line) == Op.TFORPREP) {
+          // Lua5.0 FORPREP - no assignments
+          newLocals.clear();
         } else {
           //System.out.println("-- Process iterating ... ");
           for(Operation operation : operations) {
@@ -530,9 +584,10 @@ public class Decompiler {
       case SETUPVAL:
       case SETGLOBAL:
         return !r.isLocal(code.A(line), line);
-      case SETTABLE: {
+      case SETTABLE:
+      case SETTABUP: {
         int C = code.C(line);
-        if((C & 0x100) != 0) {
+        if(f.isConstant(C)) {
           return false;
         } else {
           return !r.isLocal(C, line);
@@ -553,6 +608,11 @@ public class Decompiler {
         return new GlobalTarget(f.getGlobalName(code.Bx(line)));
       case SETTABLE:
         return new TableTarget(r.getExpression(code.A(line), previous), r.getKExpression(code.B(line), previous));
+      case SETTABUP: {
+        int A = code.A(line);
+        int B = code.B(line);
+        return new TableTarget(upvalues.getExpression(A), r.getKExpression(B, line));
+      }
       default:
         throw new IllegalStateException();
     }
@@ -569,7 +629,8 @@ public class Decompiler {
       case SETGLOBAL:
         return r.getExpression(A, previous);
       case SETTABLE:
-        if((C & 0x100) != 0) {
+      case SETTABUP:
+        if(f.isConstant(C)) {
           throw new IllegalStateException();
         } else {
           return r.getExpression(C, previous);
@@ -636,7 +697,7 @@ public class Decompiler {
               if(code.C(node.end) != 0) {
                 node.isCompareSet = true;
                 node.setTarget = code.A(node.end);
-              } else if(code.op(node.end - 1) == Op.LOADBOOL) {
+              } else if(node.end - 1 >= 1 && code.op(node.end - 1) == Op.LOADBOOL) {
                 if(code.C(node.end - 1) != 0) {
                   node.isCompareSet = true;
                   node.setTarget = code.A(node.end);
@@ -653,7 +714,7 @@ public class Decompiler {
               if(code.C(node.end) != 0) {
                 node.isCompareSet = true;
                 node.setTarget = code.A(node.end);
-              } else if(code.op(node.end - 1) == Op.LOADBOOL) {
+              } else if(node.end - 1 >= 1 && code.op(node.end - 1) == Op.LOADBOOL) {
                 if(code.C(node.end - 1) != 0) {
                   node.isCompareSet = true;
                   node.setTarget = code.A(node.end);
@@ -670,7 +731,7 @@ public class Decompiler {
               if(code.C(node.end) != 0) {
                 node.isCompareSet = true;
                 node.setTarget = code.A(node.end);
-              } else if(code.op(node.end - 1) == Op.LOADBOOL) {
+              } else if(node.end - 1 >= 1 && code.op(node.end - 1) == Op.LOADBOOL) {
                 if(code.C(node.end - 1) != 0) {
                   node.isCompareSet = true;
                   node.setTarget = code.A(node.end);
@@ -688,6 +749,16 @@ public class Decompiler {
             testsetend = line + 2 + code.sBx(line + 1);
             stack.push(new TestSetNode(code.A(line), code.B(line), code.C(line) != 0, line, line + 2, line + 2 + code.sBx(line + 1)));
             skip[line + 1] = true;            
+            continue;
+          case TEST50:
+            if(code.A(line) == code.B(line)) {
+              stack.push(new TestNode(code.A(line), code.C(line) != 0, line, line + 2, line + 2 + code.sBx(line + 1)));
+            } else {
+              testset = true;
+              testsetend = line + 2 + code.sBx(line + 1);
+              stack.push(new TestSetNode( code.A(line), code.B(line), code.C(line) != 0, line, line + 2, line + 2 + code.sBx(line + 1)));
+            }
+            skip[line + 1] = true;
             continue;
           case JMP: {
             reduce = true;
@@ -708,9 +779,20 @@ public class Decompiler {
               skip[tline] = true;
               skip[tline + 1] = true;
               blocks.add(new TForBlock(function, line + 1, tline + 2, A, C, r));
+            } else if(code.op(tline) == forTarget && !skip[tline]) {
+              int A = code.A(tline);
+              r.setInternalLoopVariable(A, tline, line + 1); //TODO: end?
+              r.setInternalLoopVariable(A + 1, tline, line + 1);
+              r.setInternalLoopVariable(A + 2, tline, line + 1);
+              skip[tline] = true;
+              blocks.add(new ForBlock(function, line + 1, tline + 1, A, r));
             } else if(code.sBx(line) == 2 && code.op(line + 1) == Op.LOADBOOL && code.C(line + 1) != 0) {
               /* This is the tail of a boolean set with a compare node and assign node */
               blocks.add(new BooleanIndicator(function, line));
+            } else if(code.op(tline) == Op.JMP && code.sBx(tline) + tline == line) {
+              if(first)
+                blocks.add(new AlwaysLoop(function, line, tline+1));
+              skip[tline] = true;
             } else {
               /*
               for(Block block : blocks) {
@@ -719,7 +801,7 @@ public class Decompiler {
                 }
               }
               */
-              if(first || loopRemoved[line]) {
+              if(first || loopRemoved[line] || reverseTarget[line+1]) {
                 if(tline > line) {
                   isBreak[line] = true;
                   blocks.add(new Break(function, line, tline));
@@ -749,6 +831,22 @@ public class Decompiler {
           case FORLOOP:
             /* Should be skipped by preceding FORPREP */
             throw new IllegalStateException();
+          case TFORPREP: {
+            reduce = true;
+            int tline = line + 1 + code.sBx(line);
+            int A = code.A(tline);
+            int C = code.C(tline);
+            r.setInternalLoopVariable(A, tline, line + 1); // TODO: end?
+            r.setInternalLoopVariable(A + 1, tline, line + 1);
+            r.setInternalLoopVariable(A + 2, tline, line + 1);
+            for(int index = 1; index <= C; index++) {
+              r.setExplicitLoopVariable(A + 2 + index, line, tline + 2); // TODO: end?
+            }
+            skip[tline] = true;
+            skip[tline + 1] = true;
+            blocks.add(new TForBlock(function, line + 1, tline + 2, A, C, r));
+            break;
+          }
           default:
             reduce = isStatement(line);
             break;
@@ -821,7 +919,7 @@ public class Decompiler {
             int begin = stack.peek().begin;
             assignEnd = begin + 2;
             int target = code.A(begin);
-            conditions.push(popCompareSetCondition(stack, assignEnd));
+            conditions.push(popCompareSetCondition(stack, assignEnd, target));
             conditions.peek().setTarget = target;
             conditions.peek().end = assignEnd;
             conditions.peek().begin = begin;
@@ -829,7 +927,7 @@ public class Decompiler {
             backup = null;
             int target = stack.peek().setTarget;
             int begin = stack.peek().begin;
-            conditions.push(popSetCondition(stack, assignEnd));
+            conditions.push(popSetCondition(stack, assignEnd, target));
             conditions.peek().setTarget = target;
             conditions.peek().end = assignEnd;
             conditions.peek().begin = begin;
@@ -845,12 +943,15 @@ public class Decompiler {
           Stack<Branch> backup = backups.pop();
           int breakTarget = breakTarget(cond.begin);
           boolean breakable = (breakTarget >= 1);
-          if(breakable && code.op(breakTarget) == Op.JMP) {
+          if(breakable && code.op(breakTarget) == Op.JMP && breakTarget != cond.end) {
             breakTarget += 1 + code.sBx(breakTarget);
           }
           if(breakable && breakTarget == cond.end) {
             Block immediateEnclosing = enclosingBlock(cond.begin);
-            for(int iline = Math.max(cond.end, immediateEnclosing.end - 1); iline >= Math.max(cond.begin, immediateEnclosing.begin); iline--) {
+            Block breakableEnclosing = enclosingBreakableBlock(cond.begin);
+            int loopstart = immediateEnclosing.end;
+            if(immediateEnclosing == breakableEnclosing) loopstart--;
+            for(int iline = loopstart; iline >= Math.max(cond.begin, immediateEnclosing.begin); iline--) {
               if(code.op(iline) == Op.JMP && iline + 1 + code.sBx(iline) == breakTarget) {
                 cond.end = iline;
                 break;
@@ -891,10 +992,15 @@ public class Decompiler {
             }
             blocks.add(new CompareBlock(function, begin, begin + 2, target, cond));
           } else if(cond.end < cond.begin) {
-            blocks.add(new RepeatBlock(function, cond, r));
+            if(isBreak[cond.end - 1]) {
+              skip[cond.end - 1] = true;
+              blocks.add(new WhileBlock(function, cond.invert(), originalTail, r));
+            } else {
+              blocks.add(new RepeatBlock(function, cond, r));
+            }
           } else if(hasTail) {
             Op endOp = code.op(cond.end - 2);
-            boolean isEndCondJump = endOp == Op.EQ || endOp == Op.LE || endOp == Op.LT || endOp == Op.TEST || endOp == Op.TESTSET;
+            boolean isEndCondJump = endOp == Op.EQ || endOp == Op.LE || endOp == Op.LT || endOp == Op.TEST || endOp == Op.TESTSET || endOp == Op.TEST50;
             if(tail > cond.end || (tail == cond.end && !isEndCondJump)) {
               Op op = code.op(tail - 1);
               int sbx = code.sBx(tail - 1);
@@ -1059,15 +1165,15 @@ public class Decompiler {
     return branch;
   }
   
-  public Branch popSetCondition(Stack<Branch> stack, int assignEnd) {
+  public Branch popSetCondition(Stack<Branch> stack, int assignEnd, int target) {
     //System.err.println("assign end " + assignEnd);
     stack.push(new AssignNode(assignEnd - 1, assignEnd, assignEnd));
     //Invert argument doesn't matter because begin == end
-    Branch rtn = _helper_popSetCondition(stack, false, assignEnd);
+    Branch rtn = _helper_popSetCondition(stack, false, assignEnd, target);
     return rtn;
   }
   
-  public Branch popCompareSetCondition(Stack<Branch> stack, int assignEnd) {
+  public Branch popCompareSetCondition(Stack<Branch> stack, int assignEnd, int target) {
     Branch top = stack.pop();
     boolean invert = false;
     if(code.B(top.begin) == 0) invert = true;//top = top.invert();
@@ -1077,11 +1183,27 @@ public class Decompiler {
     //stack.pop();
     //stack.push(new AssignNode(assignEnd - 1, assignEnd, assignEnd));
     //Invert argument doesn't matter because begin == end
-    Branch rtn = _helper_popSetCondition(stack, invert, assignEnd);
+    Branch rtn = _helper_popSetCondition(stack, invert, assignEnd, target);
     return rtn;
   }
   
-  private Branch _helper_popSetCondition(Stack<Branch> stack, boolean invert, int assignEnd) {
+  private int _adjustLine(int line, int target) {
+    int testline = line;
+    while(testline >= 1 && code.op(testline) == Op.LOADBOOL && (target == -1 || code.A(testline) == target)) {
+      testline--;
+    }
+    if(testline == line) {
+      return testline;
+    }
+    testline++;
+    if(code.C(testline) != 0) {
+      return testline + 2;
+    } else {
+      return testline + 1;
+    }
+  }
+  
+  private Branch _helper_popSetCondition(Stack<Branch> stack, boolean invert, int assignEnd, int target) {
     Branch branch = stack.pop();
     int begin = branch.begin;
     int end = branch.end;
@@ -1092,37 +1214,21 @@ public class Decompiler {
     if(invert) {
       branch = branch.invert();
     }
-    if(code.op(begin) == Op.LOADBOOL) {
-      if(code.C(begin) != 0) {
-        begin += 2;
-      } else {
-        begin += 1;
-      }
-    }
-    if(code.op(end) == Op.LOADBOOL) {
-      if(code.C(end) != 0) {
-        end += 2;
-      } else {
-        end += 1;
-      }
-    }
+    begin = _adjustLine(begin, target);
+    end = _adjustLine(end, target);
     //System.err.println("_helper_popSetCondition; begin_adj: " + begin);
     //System.err.println("_helper_popSetCondition; end_adj:   " + end);
     //if(count >= 2) System.exit(1);
-    int target = branch.setTarget;
+    int btarget = branch.setTarget;
     while(!stack.isEmpty()) {
       Branch next = stack.peek();
       //System.err.println("_helper_popSetCondition; next begin: " + next.begin);
       //System.err.println("_helper_popSetCondition; next end:   " + next.end);
       boolean ninvert;
       int nend = next.end;
-      if(code.op(next.end) == Op.LOADBOOL) {
-        ninvert = code.B(next.end) != 0;
-        if(code.C(next.end) != 0) {
-          nend += 2;
-        } else {
-          nend += 1;
-        }
+      if(code.op(nend) == Op.LOADBOOL && (target == -1 || code.A(nend) == target)) {
+        ninvert = code.B(nend) != 0;
+        nend = _adjustLine(nend, target);
       } else if(next instanceof TestSetNode) {
         TestSetNode node = (TestSetNode) next;
         ninvert = node.invert;
@@ -1152,9 +1258,9 @@ public class Decompiler {
       if(addr == nend) {
         if(addr != nend) ninvert = !ninvert;
         if(ninvert) {
-          branch = new OrBranch(_helper_popSetCondition(stack, ninvert, assignEnd), branch);
+          branch = new OrBranch(_helper_popSetCondition(stack, ninvert, assignEnd, target), branch);
         } else {
-          branch = new AndBranch(_helper_popSetCondition(stack, ninvert, assignEnd), branch);
+          branch = new AndBranch(_helper_popSetCondition(stack, ninvert, assignEnd, target), branch);
         }
         branch.end = nend;
       } else {
@@ -1167,7 +1273,7 @@ public class Decompiler {
       }
     }
     branch.isSet = true;
-    branch.setTarget = target;
+    branch.setTarget = btarget;
     return branch;
   }
   
@@ -1185,6 +1291,7 @@ public class Decompiler {
       case GETGLOBAL:
       case GETTABLE:
       case NEWTABLE:
+      case NEWTABLE50:
       case ADD:
       case SUB:
       case MUL:
@@ -1194,6 +1301,13 @@ public class Decompiler {
       case UNM:
       case NOT:
       case LEN:
+      case IDIV:
+      case BAND:
+      case BOR:
+      case BXOR:
+      case SHL:
+      case SHR:
+      case BNOT:
       case CONCAT:
       case CLOSURE:
         return r.isLocal(code.A(line), line) || code.A(line) == testRegister;
@@ -1213,6 +1327,7 @@ public class Decompiler {
       case RETURN:
       case FORLOOP:
       case FORPREP:
+      case TFORPREP:
       case TFORCALL:
       case TFORLOOP:
       case CLOSE:
@@ -1224,7 +1339,10 @@ public class Decompiler {
       case LE:
       case TEST:
       case TESTSET:
+      case TEST50:
       case SETLIST:
+      case SETLISTO:
+      case SETLIST50:
         return false;
       case CALL: {
         int a = code.A(line);
@@ -1270,6 +1388,7 @@ public class Decompiler {
       case GETGLOBAL:
       case GETTABLE:
       case NEWTABLE:
+      case NEWTABLE50:
       case ADD:
       case SUB:
       case MUL:
@@ -1279,6 +1398,13 @@ public class Decompiler {
       case UNM:
       case NOT:
       case LEN:
+      case IDIV:
+      case BAND:
+      case BOR:
+      case BXOR:
+      case SHL:
+      case SHR:
+      case BNOT:
       case CONCAT:
       case CLOSURE:
         return code.A(line);
@@ -1309,6 +1435,8 @@ public class Decompiler {
       case TEST:
       case TESTSET:
       case SETLIST:
+      case SETLIST50:
+      case SETLISTO:
         return -1;
       case CALL: {
         if(code.C(line) == 2) {
