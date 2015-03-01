@@ -53,6 +53,7 @@ public class ControlFlowHandler {
       this.targetFirst = targetFirst;
       this.targetSecond = targetSecond;
       this.inverseValue = false;
+      this.target = -1;
     }
 
     @Override
@@ -137,6 +138,7 @@ public class ControlFlowHandler {
             Condition c = new TestCondition(line, code.A(line));
             if(code.C(line) != 0) c = c.inverse();
             Branch b = new Branch(line, Branch.Type.test, c, line + 2, code.target(line + 1));
+            b.target = code.A(line);
             if(code.C(line) != 0) b.inverseValue = true;
             skip[line + 1] = true;
             insert_branch(state, b);
@@ -154,6 +156,7 @@ public class ControlFlowHandler {
             if(state.branches[final_line] == null) {
               c = new SetCondition(final_line, get_target(state, final_line));
               b = new Branch(final_line, Branch.Type.finalset, c, target, target);
+              b.target = code.A(line);
               insert_branch(state, b);
             }
             break;
@@ -335,8 +338,16 @@ public class ControlFlowHandler {
     return b.type == Branch.Type.comparison || b.type == Branch.Type.test;
   }
   
+  private static boolean is_conditional(Branch b, int r) {
+    return b.type == Branch.Type.comparison || b.type == Branch.Type.test && b.target != r;
+  }
+  
   private static boolean is_assignment(Branch b) {
     return b.type == Branch.Type.testset;
+  }
+  
+  private static boolean is_assignment(Branch b, int r) {
+    return b.type == Branch.Type.testset || b.type == Branch.Type.test && b.target == r;
   }
   
   private static boolean adjacent(State state, Branch branch0, Branch branch1) {
@@ -394,8 +405,10 @@ public class ControlFlowHandler {
   private static Branch combine_assignment(State state, Branch branch1) {
     Branch branch0 = branch1.previous;
     if(adjacent(state, branch0, branch1)) {
+      int register = branch1.target;
+      if(register < 0) throw new IllegalStateException();
       //System.err.println("blah " + branch1.line + " " + branch0.line);
-      if(is_conditional(branch0) && is_assignment(branch1)) {
+      if(is_conditional(branch0, register) && is_assignment(branch1)) {
         //System.err.println("bridge cand " + branch1.line + " " + branch0.line);
         if(branch0.targetSecond == branch1.targetFirst) {
           boolean inverse = branch0.inverseValue;
@@ -412,6 +425,7 @@ public class ControlFlowHandler {
           }
           Branch branchn = new Branch(branch0.line, branch1.type, c, branch1.targetFirst, branch1.targetSecond);
           branchn.inverseValue = branch1.inverseValue;
+          branchn.target = register;
           replace_branch(state, branch0, branch1, branchn);
           return combine_assignment(state, branchn);
         } else if(branch0.targetSecond == branch1.targetSecond) {
@@ -424,7 +438,10 @@ public class ControlFlowHandler {
         }
       }
       
-      if(is_assignment(branch0) && is_assignment(branch1) && branch0.inverseValue == branch1.inverseValue) {
+      if(is_assignment(branch0, register) && is_assignment(branch1) && branch0.inverseValue == branch1.inverseValue) {
+        if(branch0.type == Branch.Type.test && branch0.inverseValue) {
+          branch0.cond = branch0.cond.inverse(); // inverse has been double handles; undo it
+        }
         if(branch0.targetSecond == branch1.targetSecond) {
           Condition c;
           //System.err.println("preassign " + branch1.line + " " + branch0.line + " " + branch0.targetSecond);
@@ -441,11 +458,12 @@ public class ControlFlowHandler {
           }
           Branch branchn = new Branch(branch0.line, branch1.type, c, branch1.targetFirst, branch1.targetSecond);
           branchn.inverseValue = branch1.inverseValue;
+          branchn.target = register;
           replace_branch(state, branch0, branch1, branchn);
           return combine_assignment(state, branchn);
         }
       }
-      if(is_assignment(branch0) && branch1.type == Branch.Type.finalset) {
+      if(is_assignment(branch0, register) && branch1.type == Branch.Type.finalset) {
         if(branch0.targetSecond == branch1.targetFirst) {
           Condition c;
           //System.err.println("final preassign " + branch1.line + " " + branch0.line);
@@ -461,6 +479,7 @@ public class ControlFlowHandler {
             c = new AndCondition(branch0.cond, branch1.cond);
           }
           Branch branchn = new Branch(branch0.line, Branch.Type.finalset, c, branch1.targetFirst, branch1.targetFirst);
+          branchn.target = register;
           replace_branch(state, branch0, branch1, branchn);
           return combine_assignment(state, branchn);
         }
