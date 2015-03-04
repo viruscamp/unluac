@@ -3,6 +3,8 @@ package unluac.decompile;
 import java.util.ArrayList;
 import java.util.List;
 
+import unluac.decompile.expression.Expression;
+import unluac.decompile.operation.RegisterSet;
 import unluac.parse.LFunction;
 import unluac.parse.LUpvalue;
 
@@ -82,11 +84,20 @@ public class VariableFinder {
         case NEWTABLE50:
           states.get(code.A(line), line).written = true;
           break;
-        case LOADNIL:
-          for(int register = code.A(line); register <= code.B(line); register++) {
+        case LOADNIL: {
+          int maximum;
+          if(d.getVersion().usesOldLoadNilEncoding()) {
+            maximum = code.B(line);
+          } else {
+            maximum = code.A(line) + code.B(line);
+          }
+          int register = code.A(line); 
+          while(register <= maximum) {
             states.get(register, line).written = true;
+            register++;
           }
           break;
+        }
         case GETTABLE:
           states.get(code.A(line), line).written = true;
           if(!isConstantReference(code.B(line))) states.get(code.B(line), line).read = true;
