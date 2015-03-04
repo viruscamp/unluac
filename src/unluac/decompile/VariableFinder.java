@@ -244,15 +244,56 @@ public class VariableFinder {
         }
       }
     }
+    for(int register = 0; register < registers; register++) {
+      states.setWritten(register, 1);
+    }
     for(int line = 1; line <= code.length(); line++) {
       for(int register = 0; register < registers; register++) {
-        if(line == 1) {
-          states.setWritten(register, line);
-        }
         RegisterState s = states.get(register, line);
         if(s.written) {
           if(s.read_count >= 2 || (line >= 2 && s.read_count == 0)) {
             states.setLocalWrite(register, register, line);
+          }
+        }
+      }
+    }
+    for(int line = 1; line <= code.length(); line++) {
+      for(int register = 0; register < registers; register++) {
+        if(line == 10 && register == 4) {
+          System.out.println("here");
+        }
+        RegisterState s = states.get(register, line);
+        if(s.written && s.temporary) {
+          List<Integer> ancestors = new ArrayList<Integer>();
+          for(int read = 0; read < registers; read++) {
+            RegisterState r = states.get(read, line);
+            if(r.read && !r.local) {
+              ancestors.add(read);
+            }
+          }
+          int pline;
+          for(pline = line - 1; pline >= 1; pline--) {
+            boolean any_written = false;
+            for(int pregister = 0; pregister < registers; pregister++) {
+              if(states.get(pregister, pline).written && ancestors.contains(pregister)) {
+                any_written = true;
+                ancestors.remove((Object)pregister);
+              }
+            }
+            if(!any_written) {
+              break;
+            }
+            for(int pregister = 0; pregister < registers; pregister++) {
+              RegisterState a = states.get(pregister, pline); 
+              if(a.read && !a.local) {
+                ancestors.add(pregister);
+              }
+            }
+          }
+          for(int ancestor : ancestors) {
+            if(pline >= 1) {
+              states.setLocalRead(ancestor, pline);
+            }
           }
         }
       }
