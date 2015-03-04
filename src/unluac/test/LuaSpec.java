@@ -13,20 +13,34 @@ public class LuaSpec {
     this.isDefault = true;
     this.version = 0;
     this.numberFormat = NumberFormat.DEFAULT;
+    this.strip = false;
   }
   
   public LuaSpec(int version) {
     this.isDefault = false;
     this.version = version;
     this.numberFormat = NumberFormat.DEFAULT;
+    this.strip = false;
   }
   
   public void setNumberFormat(NumberFormat format) {
     this.numberFormat = format;
   }
   
+  public void setStrip(boolean strip) {
+    this.strip = strip;
+  }
+  
   public String getLuaCName() {
     return "luac" + getVersionString() + getNumberFormatString();
+  }
+  
+  public String[] getArgs() {
+    if(strip) {
+      return new String[] {"-s"};
+    } else {
+      return new String[] {};
+    }
   }
   
   private String getVersionString() {
@@ -55,5 +69,5 @@ public class LuaSpec {
   private boolean isDefault;
   private int version;
   private NumberFormat numberFormat;
-  
+  private boolean strip;
 }
