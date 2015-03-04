@@ -1,7 +1,5 @@
 package unluac.parse;
 
-import unluac.parse.LNumberType.NumberMode;
-
 public abstract class LNumber extends LObject {
 
   public static LNumber makeInteger(int number) {
