@@ -12,6 +12,7 @@ public class VariableFinder {
     
     public RegisterState() {
       last_written = 1;
+      last_read = -1;
       read_count = 0;
       temporary = false;
       local = false;
@@ -20,6 +21,7 @@ public class VariableFinder {
     }
     
     int last_written;
+    int last_read;
     int read_count;
     boolean temporary;
     boolean local;
@@ -52,6 +54,7 @@ public class VariableFinder {
     public void setRead(int register, int line) {
       get(register, line).read = true;
       get(register, get(register, line).last_written).read_count++;
+      get(register, get(register, line).last_written).last_read = line;
     }
     
     public void setLocalRead(int register, int line) {
@@ -302,7 +305,7 @@ public class VariableFinder {
       for(int line = 1; line <= code.length(); line++) {
         RegisterState s = states.get(register, line);
         if(s.written || line == 1) {
-          System.out.println("WRITE r:" + register + " l:" + line);
+          System.out.println("WRITE r:" + register + " l:" + line + " .. " + s.last_read);
           if(s.local) System.out.println("  LOCAL");
           if(s.temporary) System.out.println("  TEMPORARY");
           System.out.println("  READ_COUNT " + s.read_count);
