@@ -12,7 +12,17 @@ public class LuaC {
     if(System.getProperty("os.name").contains("Windows")) {
       luac = luac + ".exe";
     }
-    ProcessBuilder pb = new ProcessBuilder(luac, "-o", out, in);
+    String[] args = spec.getArgs();
+    String[] full = new String[4 + args.length];
+    int i = 0;
+    full[i++] = luac;
+    for(String arg : args) {
+      full[i++] = arg;
+    }
+    full[i++] = "-o";
+    full[i++] = out;
+    full[i++] = in;
+    ProcessBuilder pb = new ProcessBuilder(full);
     pb.directory(null);
     Process p = pb.start();
     while(true) {
