@@ -23,6 +23,11 @@ public class NotCondition implements Condition {
   }
   
   @Override
+  public int register() {
+    return cond.register();
+  }
+  
+  @Override
   public Expression asExpression(Registers r) {
     return new UnaryExpression("not ", cond.asExpression(r), Expression.PRECEDENCE_UNARY);
   }

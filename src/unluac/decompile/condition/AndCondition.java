@@ -29,6 +29,17 @@ public class AndCondition implements Condition {
   }
   
   @Override
+  public int register() {
+    int leftr = left.register();
+    int rightr = right.register();
+    if(leftr == rightr) {
+      return leftr;
+    } else {
+      return -1;
+    }
+  }
+  
+  @Override
   public Expression asExpression(Registers r) {
     return new BinaryExpression("and", left.asExpression(r), right.asExpression(r), Expression.PRECEDENCE_AND, Expression.ASSOCIATIVITY_NONE);
   }

@@ -24,6 +24,11 @@ public class TestCondition implements Condition {
   }
   
   @Override
+  public int register() {
+    return register;
+  }
+  
+  @Override
   public Expression asExpression(Registers r) {
     return r.getExpression(register, line);
   }

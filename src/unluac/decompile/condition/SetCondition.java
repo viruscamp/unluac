@@ -22,6 +22,11 @@ public class SetCondition implements Condition {
   public boolean invertible() {
     return false;
   }
+  
+  @Override
+  public int register() {
+    return register;
+  }
 
   @Override
   public Expression asExpression(Registers r) {

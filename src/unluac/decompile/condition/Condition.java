@@ -9,6 +9,8 @@ public interface Condition {
   
   public boolean invertible();
   
+  public int register();
+  
   public Expression asExpression(Registers r);
   
   @Override
