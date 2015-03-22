@@ -115,7 +115,7 @@ public class ControlFlowHandler {
     if(state.code.op(target) == Op.LOADBOOL) {
       if(state.code.C(target) != 0) {
         loadboolblock = target; 
-      } else if(target - 1 >= 1 && state.code.op(target - 1) == Op.LOADBOOL) {
+      } else if(target - 1 >= 1 && state.code.op(target - 1) == Op.LOADBOOL && state.code.C(target - 1) != 0) {
         loadboolblock = target - 1;
       }
     }
@@ -138,7 +138,7 @@ public class ControlFlowHandler {
     b.target = state.code.A(loadboolblock);
     b.inverseValue = inverse;
     insert_branch(state, b);
-    if(final_line >= 1 && state.branches[final_line] == null) {
+    if(final_line >= line + 2 && state.branches[final_line] == null) {
       c = new SetCondition(final_line, get_target(state, final_line));
       b = new Branch(final_line, Branch.Type.finalset, c, loadboolblock + 2, loadboolblock + 2);
       b.target = state.code.A(line);
