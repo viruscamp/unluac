@@ -110,6 +110,39 @@ public class ControlFlowHandler {
     }
   }
   
+  private static int find_loadboolblock(State state, int target) {
+    int loadboolblock = -1;
+    if(state.code.op(target) == Op.LOADBOOL) {
+      if(state.code.C(target) != 0) {
+        loadboolblock = target; 
+      } else if(target - 1 >= 1 && state.code.op(target - 1) == Op.LOADBOOL) {
+        loadboolblock = target - 1;
+      }
+    }
+    return loadboolblock;
+  }
+  
+  private static void handle_loadboolblock(State state, boolean[] skip, int loadboolblock, Condition c, int line, int target) {
+    int loadboolvalue = state.code.B(target);
+    int final_line = -1;
+    if(loadboolblock - 1 >= 1 && state.code.op(loadboolblock - 1) == Op.JMP && state.code.target(loadboolblock - 1) == loadboolblock + 2) {
+      skip[loadboolblock - 1] = true;
+      final_line = loadboolblock - 2;
+    }
+    if(loadboolvalue == 1) {
+      c = c.inverse();
+    }
+    Branch b = new Branch(line, Branch.Type.testset, c, line + 2, loadboolblock + 2);
+    b.target = state.code.A(loadboolblock);
+    insert_branch(state, b);
+    if(final_line >= 1 && state.branches[final_line] == null) {
+      c = new SetCondition(final_line, get_target(state, final_line));
+      b = new Branch(final_line, Branch.Type.finalset, c, loadboolblock + 2, loadboolblock + 2);
+      b.target = state.code.A(line);
+      insert_branch(state, b);
+    }
+  }
+  
   private static void find_branches(State state) {
     Code code = state.code;
     state.branches = new Branch[state.code.length + 1];
@@ -130,40 +163,14 @@ public class ControlFlowHandler {
             if(code.A(line) == 1) {
               c = c.inverse();
             }
-            int loadboolblock = -1;
-            int loadboolvalue = 0;
-            if(code.op(target) == Op.LOADBOOL) {
-              if(code.C(target) != 0) {
-                loadboolblock = target;
-                loadboolvalue = code.B(target); 
-              } else if(target - 1 >= 1 && code.op(target - 1) == Op.LOADBOOL) {
-                loadboolblock = target - 1;
-                loadboolvalue = code.B(target - 1);
-              }
-            }
-            Branch b;
+            int loadboolblock = find_loadboolblock(state, target);
             if(loadboolblock >= 1) {
-              int final_line = -1;
-              if(loadboolblock - 1 >= 1 && code.op(loadboolblock - 1) == Op.JMP && code.target(loadboolblock - 1) == loadboolblock + 2) {
-                skip[loadboolblock - 1] = true;
-                final_line = loadboolblock - 2;
-              }
-              if(loadboolvalue == 1) {
-                c = c.inverse();
-              }
-              b = new Branch(line, Branch.Type.testset, c, line + 2, loadboolblock + 2);
-              b.target = code.A(loadboolblock);
-              if(final_line >= 1 && state.branches[final_line] == null) {
-                c = new SetCondition(final_line, get_target(state, final_line));
-                Branch fb = new Branch(final_line, Branch.Type.finalset, c, loadboolblock + 2, loadboolblock + 2);
-                fb.target = code.A(line);
-                insert_branch(state, fb);
-              }
+              handle_loadboolblock(state, skip, loadboolblock, c, line, target);
             } else {
-              b = new Branch(line, Branch.Type.comparison, c, line + 2, target);
+              Branch b = new Branch(line, Branch.Type.comparison, c, line + 2, target);
+              insert_branch(state, b);
             }
             skip[line + 1] = true;
-            insert_branch(state, b);
             break;
           }
           case TEST: {
