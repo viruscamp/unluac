@@ -143,7 +143,7 @@ public class ControlFlowHandler {
             }
             Branch b;
             if(loadboolblock >= 1) {
-              int final_line = loadboolblock - 1;
+              int final_line = -1;
               if(loadboolblock - 1 >= 1 && code.op(loadboolblock - 1) == Op.JMP && code.target(loadboolblock - 1) == loadboolblock + 2) {
                 skip[loadboolblock - 1] = true;
                 final_line = loadboolblock - 2;
@@ -153,7 +153,7 @@ public class ControlFlowHandler {
               }
               b = new Branch(line, Branch.Type.testset, c, line + 2, loadboolblock + 2);
               b.target = code.A(loadboolblock);
-              if(state.branches[final_line] == null) {
+              if(final_line >= 1 && state.branches[final_line] == null) {
                 c = new SetCondition(final_line, get_target(state, final_line));
                 Branch fb = new Branch(final_line, Branch.Type.finalset, c, loadboolblock + 2, loadboolblock + 2);
                 fb.target = code.A(line);
