@@ -129,11 +129,14 @@ public class ControlFlowHandler {
       skip[loadboolblock - 1] = true;
       final_line = loadboolblock - 2;
     }
+    boolean inverse = false;
     if(loadboolvalue == 1) {
+      inverse = true;
       c = c.inverse();
     }
     Branch b = new Branch(line, Branch.Type.testset, c, line + 2, loadboolblock + 2);
     b.target = state.code.A(loadboolblock);
+    b.inverseValue = inverse;
     insert_branch(state, b);
     if(final_line >= 1 && state.branches[final_line] == null) {
       c = new SetCondition(final_line, get_target(state, final_line));
@@ -176,11 +179,17 @@ public class ControlFlowHandler {
           case TEST: {
             Condition c = new TestCondition(line, code.A(line));
             if(code.C(line) != 0) c = c.inverse();
-            Branch b = new Branch(line, Branch.Type.test, c, line + 2, code.target(line + 1));
-            b.target = code.A(line);
-            if(code.C(line) != 0) b.inverseValue = true;
+            int target = code.target(line + 1);
+            int loadboolblock = find_loadboolblock(state, target);
+            if(loadboolblock >= 1) {
+              handle_loadboolblock(state, skip, loadboolblock, c, line, target);
+            } else {
+              Branch b = new Branch(line, Branch.Type.test, c, line + 2, target);
+              b.target = code.A(line);
+              if(code.C(line) != 0) b.inverseValue = true;
+              insert_branch(state, b);
+            }
             skip[line + 1] = true;
-            insert_branch(state, b);
             break;
           }
           case TESTSET: {
