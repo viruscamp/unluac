@@ -125,11 +125,43 @@ public class ControlFlowHandler {
             if(code.op(line) == Op.LE) op = BinaryCondition.Operator.LE;
             int left = code.B(line);
             int right = code.C(line);
+            int target = code.target(line + 1);
             Condition c = new BinaryCondition(op, line, left, right);
             if(code.A(line) == 1) {
               c = c.inverse();
             }
-            Branch b = new Branch(line, Branch.Type.comparison, c, line + 2, code.target(line + 1));
+            int loadboolblock = -1;
+            int loadboolvalue = 0;
+            if(code.op(target) == Op.LOADBOOL) {
+              if(code.C(target) != 0) {
+                loadboolblock = target;
+                loadboolvalue = code.B(target); 
+              } else if(target - 1 >= 1 && code.op(target - 1) == Op.LOADBOOL) {
+                loadboolblock = target - 1;
+                loadboolvalue = code.B(target - 1);
+              }
+            }
+            Branch b;
+            if(loadboolblock >= 1) {
+              int final_line = loadboolblock - 1;
+              if(loadboolblock - 1 >= 1 && code.op(loadboolblock - 1) == Op.JMP && code.target(loadboolblock - 1) == loadboolblock + 2) {
+                skip[loadboolblock - 1] = true;
+                final_line = loadboolblock - 2;
+              }
+              if(loadboolvalue == 1) {
+                c = c.inverse();
+              }
+              b = new Branch(line, Branch.Type.testset, c, line + 2, loadboolblock + 2);
+              b.target = code.A(loadboolblock);
+              if(state.branches[final_line] == null) {
+                c = new SetCondition(final_line, get_target(state, final_line));
+                Branch fb = new Branch(final_line, Branch.Type.finalset, c, loadboolblock + 2, loadboolblock + 2);
+                fb.target = code.A(line);
+                insert_branch(state, fb);
+              }
+            } else {
+              b = new Branch(line, Branch.Type.comparison, c, line + 2, target);
+            }
             skip[line + 1] = true;
             insert_branch(state, b);
             break;
