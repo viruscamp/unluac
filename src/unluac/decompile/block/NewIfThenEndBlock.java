@@ -13,6 +13,7 @@ import unluac.decompile.condition.OrCondition;
 import unluac.decompile.condition.SetCondition;
 import unluac.decompile.expression.Expression;
 import unluac.decompile.operation.Operation;
+import unluac.decompile.statement.Assignment;
 import unluac.decompile.statement.Statement;
 import unluac.parse.LFunction;
 
@@ -57,25 +58,46 @@ public class NewIfThenEndBlock extends Block {
   @Override
   public Operation process(Decompiler d) {
     final int test = cond.register();
-    if(statements.isEmpty() && test >= 0 && r.getUpdated(test, end - 1) >= begin) {
-      Condition assign = new SetCondition(end - 1, test);
-      Condition combined;
-      
-      if(cond.invertible()) {
-        combined = new OrCondition(cond.inverse(), assign);
-      } else {
-        combined = new AndCondition(cond, assign);
-      }
-      final Condition fcombined = combined;
-      return new Operation(end - 1) {
-        
-        @Override
-        public Statement process(Registers r, Block block) {
-          r.setValue(test, end - 1, fcombined.asExpression(r));
-          return null;
+    if(test >= 0 && r.getUpdated(test, end - 1) >= begin) {
+      // Check for a single assignment
+      Assignment assign = null;
+      if(statements.size() == 1) {
+        Statement stmt = statements.get(0);
+        if(stmt instanceof Assignment) {
+          assign = (Assignment)stmt;
+          if(assign.getArity() != 1) {
+            assign = null;
+          }
         }
+      }
+      if(assign != null && assign.getFirstTarget().getIndex() == test || statements.isEmpty()) {
+        Condition finalset = new SetCondition(end - 1, test);
+        Condition combined;
         
-      };
+        if(cond.invertible()) {
+          combined = new OrCondition(cond.inverse(), finalset);
+        } else {
+          combined = new AndCondition(cond, finalset);
+        }
+        final Assignment fassign;
+        if(assign != null) {
+          fassign = new Assignment(assign.getFirstTarget(), combined.asExpression(r));
+        } else {
+          fassign = null;
+        }
+        final Condition fcombined = combined;
+        return new Operation(end - 1) {
+          
+          @Override
+          public Statement process(Registers r, Block block) {
+            if(fassign == null) {
+              r.setValue(test, end - 1, fcombined.asExpression(r));
+            }
+            return fassign;
+          }
+          
+        };
+      }
     }
     return super.process(d);
   }
