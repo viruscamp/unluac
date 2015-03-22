@@ -114,7 +114,7 @@ public class ControlFlowHandler {
     int loadboolblock = -1;
     if(state.code.op(target) == Op.LOADBOOL) {
       if(state.code.C(target) != 0) {
-        loadboolblock = target; 
+        loadboolblock = target;
       } else if(target - 1 >= 1 && state.code.op(target - 1) == Op.LOADBOOL && state.code.C(target - 1) != 0) {
         loadboolblock = target - 1;
       }
@@ -202,10 +202,13 @@ public class ControlFlowHandler {
             insert_branch(state, b);
             int final_line = target - 1;
             if(state.branches[final_line] == null) {
-              c = new SetCondition(final_line, get_target(state, final_line));
-              b = new Branch(final_line, Branch.Type.finalset, c, target, target);
-              b.target = code.A(line);
-              insert_branch(state, b);
+              int loadboolblock = find_loadboolblock(state, target - 2);
+              if(loadboolblock == -1) {
+                c = new SetCondition(final_line, get_target(state, final_line));
+                b = new Branch(final_line, Branch.Type.finalset, c, target, target);
+                b.target = code.A(line);
+                insert_branch(state, b);
+              }
             }
             break;
           }
