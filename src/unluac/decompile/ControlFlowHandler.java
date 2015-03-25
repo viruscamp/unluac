@@ -474,7 +474,7 @@ public class ControlFlowHandler {
       int register = branch1.target;
       if(register < 0) throw new IllegalStateException();
       //System.err.println("blah " + branch1.line + " " + branch0.line);
-      if(is_conditional(branch0, register) && is_assignment(branch1)) {
+      if(is_conditional(branch0) && is_assignment(branch1)) {
         //System.err.println("bridge cand " + branch1.line + " " + branch0.line);
         if(branch0.targetSecond == branch1.targetFirst) {
           boolean inverse = branch0.inverseValue;
