@@ -34,8 +34,12 @@ public class AndCondition implements Condition {
     int rightr = right.register();
     if(leftr == rightr) {
       return leftr;
+    } else if(leftr == -1) {
+      return rightr;
+    } else if(rightr == -1) {
+      return leftr;
     } else {
-      return -1;
+      return -2;
     }
   }
   
