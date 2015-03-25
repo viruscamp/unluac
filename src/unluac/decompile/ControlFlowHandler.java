@@ -146,7 +146,7 @@ public class ControlFlowHandler {
     insert_branch(state, b);
     if(final_line >= line + 2 && state.branches[final_line] == null) {
       c = new SetCondition(final_line, get_target(state, final_line));
-      b = new Branch(final_line, Branch.Type.finalset, c, loadboolblock + 2, loadboolblock + 2);
+      b = new Branch(final_line, Branch.Type.finalset, c, final_line, loadboolblock + 2);
       b.target = state.code.A(line);
       insert_branch(state, b);
     }
