@@ -176,6 +176,9 @@ public class ControlFlowHandler {
               handle_loadboolblock(state, skip, loadboolblock, c, line, target);
             } else {
               Branch b = new Branch(line, Branch.Type.comparison, c, line + 2, target);
+              if(code.A(line) == 1) {
+                b.inverseValue = true;
+              }
               insert_branch(state, b);
             }
             skip[line + 1] = true;
