@@ -134,7 +134,12 @@ public class ControlFlowHandler {
       inverse = true;
       c = c.inverse();
     }
-    Branch b = new Branch(line, Branch.Type.testset, c, line + 2, loadboolblock + 2);
+    Branch b;
+    if(line + 2 == loadboolblock) {
+      b = new Branch(line, Branch.Type.finalset, c, line + 2, loadboolblock + 2);
+    } else {
+      b = new Branch(line, Branch.Type.testset, c, line + 2, loadboolblock + 2);
+    }
     b.target = state.code.A(loadboolblock);
     b.inverseValue = inverse;
     insert_branch(state, b);
@@ -491,7 +496,7 @@ public class ControlFlowHandler {
       
       if(is_assignment(branch0, register) && is_assignment(branch1) && branch0.inverseValue == branch1.inverseValue) {
         if(branch0.type == Branch.Type.test && branch0.inverseValue) {
-          branch0.cond = branch0.cond.inverse(); // inverse has been double handles; undo it
+          branch0.cond = branch0.cond.inverse(); // inverse has been double handled; undo it
         }
         if(branch0.targetSecond == branch1.targetSecond) {
           Condition c;
@@ -515,7 +520,10 @@ public class ControlFlowHandler {
         }
       }
       if(is_assignment(branch0, register) && branch1.type == Branch.Type.finalset) {
-        if(branch0.targetSecond == branch1.targetFirst) {
+        if(branch0.targetSecond == branch1.targetSecond) {
+          if(branch0.type == Branch.Type.test && branch0.inverseValue) {
+            branch0.cond = branch0.cond.inverse(); // inverse has been double handled; undo it
+          }
           Condition c;
           //System.err.println("final preassign " + branch1.line + " " + branch0.line);
           boolean inverse = branch0.inverseValue;
@@ -529,7 +537,7 @@ public class ControlFlowHandler {
             //System.err.println("final assign and " + branch1.line + " " + branch0.line);
             c = new AndCondition(branch0.cond, branch1.cond);
           }
-          Branch branchn = new Branch(branch0.line, Branch.Type.finalset, c, branch1.targetFirst, branch1.targetFirst);
+          Branch branchn = new Branch(branch0.line, Branch.Type.finalset, c, branch1.targetFirst, branch1.targetSecond);
           branchn.target = register;
           replace_branch(state, branch0, branch1, branchn);
           return combine_assignment(state, branchn);
