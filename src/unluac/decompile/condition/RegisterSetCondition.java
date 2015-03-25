@@ -3,12 +3,12 @@ package unluac.decompile.condition;
 import unluac.decompile.Registers;
 import unluac.decompile.expression.Expression;
 
-public class SetCondition implements Condition {
+public class RegisterSetCondition implements Condition {
 
   private int line;
   private int register;
   
-  public SetCondition(int line, int register) {
+  public RegisterSetCondition(int line, int register) {
     this.line = line;
     this.register = register;
     if(register < 0) {
@@ -33,7 +33,7 @@ public class SetCondition implements Condition {
 
   @Override
   public Expression asExpression(Registers r) {
-    return r.getValue(register, line + 1);
+    return r.getExpression(register, line + 1);
   }
   
   @Override

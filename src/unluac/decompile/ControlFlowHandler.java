@@ -17,6 +17,7 @@ import unluac.decompile.condition.AndCondition;
 import unluac.decompile.condition.BinaryCondition;
 import unluac.decompile.condition.Condition;
 import unluac.decompile.condition.OrCondition;
+import unluac.decompile.condition.RegisterSetCondition;
 import unluac.decompile.condition.SetCondition;
 import unluac.decompile.condition.TestCondition;
 import unluac.parse.LFunction;
@@ -212,7 +213,13 @@ public class ControlFlowHandler {
             if(state.branches[final_line] == null) {
               int loadboolblock = find_loadboolblock(state, target - 2);
               if(loadboolblock == -1) {
-                c = new SetCondition(final_line, get_target(state, final_line));
+                if(line + 2 == target) {
+                  c = new RegisterSetCondition(line, get_target(state, line));
+                  //c = new SetCondition(line - 1, get_target(state, line));
+                  final_line = final_line + 1;
+                } else {
+                  c = new SetCondition(final_line, get_target(state, final_line));
+                }
                 b = new Branch(final_line, Branch.Type.finalset, c, target, target);
                 b.target = code.A(line);
                 insert_branch(state, b);
@@ -617,6 +624,7 @@ public class ControlFlowHandler {
       case LEN:
       case CONCAT:
       case CLOSURE:
+      case TESTSET:
         return code.A(line);
       case LOADNIL:
         if(code.A(line) == code.B(line)) {
@@ -643,7 +651,6 @@ public class ControlFlowHandler {
       case LT:
       case LE:
       case TEST:
-      case TESTSET:
       case SETLIST:
         return -1;
       case CALL: {
