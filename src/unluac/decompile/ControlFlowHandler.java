@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import unluac.decompile.block.Block;
+import unluac.decompile.block.ForBlock;
 import unluac.decompile.block.NewElseEndBlock;
 import unluac.decompile.block.NewIfThenElseBlock;
 import unluac.decompile.block.NewIfThenEndBlock;
@@ -309,7 +310,7 @@ public class ControlFlowHandler {
     blocks.add(new OuterBlock(state.function, state.code.length));
     for(int line = 1; line <= code.length; line++) {
       switch(code.op(line)) {
-        case JMP:
+        case JMP: {
           int target = code.target(line); 
           if(code.op(target) == tforTarget) {
             int A = code.A(target);
@@ -324,8 +325,16 @@ public class ControlFlowHandler {
             blocks.add(new TForBlock(state.function, line + 1, target + 2, A, C, r));
           }
           break;
-        case FORPREP:
+        }
+        case FORPREP: {
+          int target = code.target(line);
+          blocks.add(new ForBlock(state.function, line + 1, target + 1, code.A(line), r));
+          r.setInternalLoopVariable(code.A(line), line, target + 1);
+          r.setInternalLoopVariable(code.A(line) + 1, line, target + 1);
+          r.setInternalLoopVariable(code.A(line) + 2, line, target + 1);
+          r.setExplicitLoopVariable(code.A(line) + 3, line, target + 1);
           break;
+        }
       }
     }
   }
