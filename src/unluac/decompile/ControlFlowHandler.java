@@ -498,6 +498,7 @@ public class ControlFlowHandler {
             break;
           }
         }
+        adjacent = adjacent && !state.reverse_targets[branch1.line];
       }
       return adjacent;
     }
