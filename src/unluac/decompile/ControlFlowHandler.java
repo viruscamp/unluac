@@ -375,7 +375,7 @@ public class ControlFlowHandler {
         int end = j.line + 1;
         b = state.begin_branch;
         while(b != null) {
-          if(is_conditional(b) && b.targetSecond == end) {
+          if(is_conditional(b) && b.line >= loopback && b.line < j.line && b.targetSecond == end) {
             break;
           }
           b = b.next;
