@@ -412,6 +412,16 @@ public class ControlFlowHandler {
     }
   }
   
+  private static void unredirect_break(State state, int line, Block enclosing) {
+    Branch b = state.begin_branch;
+    while(b != null) {
+      if(is_conditional(b) && enclosing.contains(b.line) && b.targetFirst <= line && b.targetSecond == enclosing.end) {
+        b.targetSecond = line;
+      }
+      b = b.next;
+    }
+  }
+  
   private static void find_break_statements(State state) {
     List<Block> blocks = state.blocks;
     Branch b = state.begin_branch;
@@ -429,11 +439,13 @@ public class ControlFlowHandler {
         if(enclosing != null && b.targetFirst == enclosing.end) {
           Block block = new Break(state.function, b.line, b.targetFirst);
           remove_branch(state, b);
+          unredirect_break(state, line, enclosing);
           blocks.add(block);
         }
       }
       b = b.next;
     }
+    //TODO: conditional breaks (Lua 5.2) [conflicts with unredirection]
   }
   
   private static void find_blocks(State state) {
