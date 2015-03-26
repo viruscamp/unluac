@@ -4,7 +4,9 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import unluac.decompile.block.AlwaysLoop;
 import unluac.decompile.block.Block;
+import unluac.decompile.block.Break;
 import unluac.decompile.block.ForBlock;
 import unluac.decompile.block.NewElseEndBlock;
 import unluac.decompile.block.NewIfThenElseBlock;
@@ -83,9 +85,10 @@ public class ControlFlowHandler {
     find_reverse_targets(state);
     find_branches(state);
     combine_branches(state);
-    unredirect_branches(state);
     initialize_blocks(state);
     find_fixed_blocks(state);
+    find_loops(state);
+    unredirect_branches(state);
     find_blocks(state);
     // DEBUG: print branches stuff
     /*
@@ -322,6 +325,8 @@ public class ControlFlowHandler {
             for(int index = 1; index <= C; index++) {
               r.setExplicitLoopVariable(A + 2 + index, line, target + 2); //TODO: end?
             }
+            remove_branch(state, state.branches[line]);
+            remove_branch(state, state.branches[target + 1]);
             blocks.add(new TForBlock(state.function, line + 1, target + 2, A, C, r));
           }
           break;
@@ -335,6 +340,57 @@ public class ControlFlowHandler {
           r.setExplicitLoopVariable(code.A(line) + 3, line, target + 1);
           break;
         }
+      }
+    }
+  }
+  
+  private static void unredirect(State state, int begin, int end, int line, int target) {
+    Branch b = state.begin_branch;
+    while(b != null) {
+      if(b.line >= begin && b.line < end && b.targetSecond == target) {
+        b.targetSecond = line;
+      }
+      b = b.next;
+    }
+  }
+  
+  private static void find_loops(State state) {
+    List<Block> blocks = state.blocks;
+    Registers r = state.r;
+    Code code = state.code;
+    Branch[] whileEnds = new Branch[code.length + 1];
+    Branch b = state.begin_branch;
+    while(b != null) {
+      if(b.type == Branch.Type.jump) {
+        if(b.targetFirst < b.line) {
+          whileEnds[b.targetFirst] = b;
+        }
+      }
+      b = b.next;
+    }
+    for(int line = 1; line <= code.length; line++) {
+      Branch j = whileEnds[line];
+      if(j != null) {
+        int loopback = line;
+        int end = j.line + 1;
+        b = state.begin_branch;
+        while(b != null) {
+          if(is_conditional(b) && b.targetSecond == end) {
+            break;
+          }
+          b = b.next;
+        }
+        Block loop;
+        if(b != null) {
+          remove_branch(state, b);
+          loop = new NewWhileBlock(state.function, r, b.cond, b.targetFirst, b.targetSecond);
+          unredirect(state, loopback, end, j.line, loopback);
+        } else {
+          loop = new AlwaysLoop(state.function, loopback, end);
+          unredirect(state, loopback, end, j.line, loopback);
+        }
+        remove_branch(state, j);
+        blocks.add(loop);
       }
     }
   }
@@ -368,6 +424,7 @@ public class ControlFlowHandler {
               block.partner = block2;
               block2.partner = block;
               //System.out.println("else -- end " + block2.begin + " " + block2.end);
+              remove_branch(state, state.branches[tail_line]);
               blocks.add(block);
               blocks.add(block2);
             } else {
@@ -403,6 +460,9 @@ public class ControlFlowHandler {
         Block block = new NewSetBlock(state.function, b.cond, b.target, b.line, b.targetFirst, b.targetSecond, false, state.r);
         blocks.add(block);
         //System.out.println("Assign block " + b.line);
+      } else if(b.type == Branch.Type.jump) {
+        Block block = new Break(state.function, b.line, b.targetFirst);
+        blocks.add(block);
       }
       b = b.next;
     }
@@ -481,7 +541,6 @@ public class ControlFlowHandler {
     Branch branch0 = branch1.previous;
     if(adjacent(state, branch0, branch1)) {
       int register = branch1.target;
-      if(register < 0) throw new IllegalStateException();
       //System.err.println("blah " + branch1.line + " " + branch0.line);
       if(is_conditional(branch0) && is_assignment(branch1)) {
         //System.err.println("bridge cand " + branch1.line + " " + branch0.line);
@@ -582,6 +641,22 @@ public class ControlFlowHandler {
       branchn.next.previous = branchn;
     }
     state.branches[branchn.line] = branchn;
+  }
+  
+  private static void remove_branch(State state, Branch b) {
+    state.branches[b.line] = null;
+    Branch prev = b.previous;
+    Branch next = b.next;
+    if(prev != null) {
+      prev.next = next;
+    } else {
+      state.begin_branch = next;
+    }
+    if(next != null) {
+      next.previous = prev;
+    } else {
+      state.end_branch = next;
+    }
   }
   
   private static void insert_branch(State state, Branch b) {
