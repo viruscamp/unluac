@@ -89,6 +89,7 @@ public class ControlFlowHandler {
     find_fixed_blocks(state);
     find_while_loops(state);
     find_repeat_loops(state);
+    find_break_statements(state);
     unredirect_branches(state);
     find_blocks(state);
     // DEBUG: print branches stuff
@@ -398,13 +399,35 @@ public class ControlFlowHandler {
   
   private static void find_repeat_loops(State state) {
     List<Block> blocks = state.blocks;
-    Registers r = state.r;
-    Code code = state.code;
     Branch b = state.begin_branch;
     while(b != null) {
       if(is_conditional(b)) {
         if(b.targetSecond < b.targetFirst) {
           Block block = new NewRepeatBlock(state.function, state.r, b.cond, b.targetSecond, b.targetFirst);
+          remove_branch(state, b);
+          blocks.add(block);
+        }
+      }
+      b = b.next;
+    }
+  }
+  
+  private static void find_break_statements(State state) {
+    List<Block> blocks = state.blocks;
+    Branch b = state.begin_branch;
+    while(b != null) {
+      if(b.type == Branch.Type.jump) {
+        int line = b.line;
+        Block enclosing = null;
+        for(Block block : blocks) {
+          if(block.contains(line) && block.breakable()) {
+            if(enclosing == null || enclosing.contains(block)) {
+              enclosing = block;
+            }
+          }
+        }
+        if(enclosing != null && b.targetFirst == enclosing.end) {
+          Block block = new Break(state.function, b.line, b.targetFirst);
           remove_branch(state, b);
           blocks.add(block);
         }
