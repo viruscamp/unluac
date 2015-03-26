@@ -313,26 +313,33 @@ public class ControlFlowHandler {
     Code code = state.code;
     Op tforTarget = state.function.header.version.getTForTarget();
     blocks.add(new OuterBlock(state.function, state.code.length));
+    
+    Branch b = state.begin_branch;
+    while(b != null) {
+      if(b.type == Branch.Type.jump) {
+        int line = b.line;
+        int target = b.targetFirst;
+        if(code.op(target) == tforTarget) {
+          int A = code.A(target);
+          int C = code.C(target);
+          if(C == 0) throw new IllegalStateException();
+          r.setInternalLoopVariable(A, target, line + 1); //TODO: end?
+          r.setInternalLoopVariable(A + 1, target, line + 1);
+          r.setInternalLoopVariable(A + 2, target, line + 1);
+          for(int index = 1; index <= C; index++) {
+            r.setExplicitLoopVariable(A + 2 + index, line, target + 2); //TODO: end?
+          }
+          remove_branch(state, state.branches[line]);
+          remove_branch(state, state.branches[target + 1]);
+          blocks.add(new TForBlock(state.function, line + 1, target + 2, A, C, r));
+        }
+        break;
+      }
+      b = b.next;
+    }
+    
     for(int line = 1; line <= code.length; line++) {
       switch(code.op(line)) {
-        case JMP: {
-          int target = code.target(line); 
-          if(code.op(target) == tforTarget) {
-            int A = code.A(target);
-            int C = code.C(target);
-            if(C == 0) throw new IllegalStateException();
-            r.setInternalLoopVariable(A, target, line + 1); //TODO: end?
-            r.setInternalLoopVariable(A + 1, target, line + 1);
-            r.setInternalLoopVariable(A + 2, target, line + 1);
-            for(int index = 1; index <= C; index++) {
-              r.setExplicitLoopVariable(A + 2 + index, line, target + 2); //TODO: end?
-            }
-            remove_branch(state, state.branches[line]);
-            remove_branch(state, state.branches[target + 1]);
-            blocks.add(new TForBlock(state.function, line + 1, target + 2, A, C, r));
-          }
-          break;
-        }
         case FORPREP: {
           int target = code.target(line);
           blocks.add(new ForBlock(state.function, line + 1, target + 1, code.A(line), r));
