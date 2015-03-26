@@ -87,7 +87,8 @@ public class ControlFlowHandler {
     combine_branches(state);
     initialize_blocks(state);
     find_fixed_blocks(state);
-    find_loops(state);
+    find_while_loops(state);
+    find_repeat_loops(state);
     unredirect_branches(state);
     find_blocks(state);
     // DEBUG: print branches stuff
@@ -354,7 +355,7 @@ public class ControlFlowHandler {
     }
   }
   
-  private static void find_loops(State state) {
+  private static void find_while_loops(State state) {
     List<Block> blocks = state.blocks;
     Registers r = state.r;
     Code code = state.code;
@@ -392,6 +393,23 @@ public class ControlFlowHandler {
         remove_branch(state, j);
         blocks.add(loop);
       }
+    }
+  }
+  
+  private static void find_repeat_loops(State state) {
+    List<Block> blocks = state.blocks;
+    Registers r = state.r;
+    Code code = state.code;
+    Branch b = state.begin_branch;
+    while(b != null) {
+      if(is_conditional(b)) {
+        if(b.targetSecond < b.targetFirst) {
+          Block block = new NewRepeatBlock(state.function, state.r, b.cond, b.targetSecond, b.targetFirst);
+          remove_branch(state, b);
+          blocks.add(block);
+        }
+      }
+      b = b.next;
     }
   }
   
