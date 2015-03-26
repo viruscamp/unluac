@@ -358,6 +358,9 @@ public class ControlFlowHandler {
     while(b != null) {
       if(b.line >= begin && b.line < end && b.targetSecond == target) {
         b.targetSecond = line;
+        if(b.targetFirst == target) {
+          b.targetFirst = line;
+        }
       }
       b = b.next;
     }
@@ -415,6 +418,9 @@ public class ControlFlowHandler {
     while(b != null) {
       if(is_conditional(b) && enclosing.contains(b.line) && b.targetFirst <= line && b.targetSecond == enclosing.end) {
         b.targetSecond = line;
+        if(b.targetFirst == enclosing.end) {
+          b.targetFirst = line;
+        }
       }
       b = b.next;
     }
