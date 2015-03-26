@@ -366,23 +366,13 @@ public class ControlFlowHandler {
   private static void find_while_loops(State state) {
     List<Block> blocks = state.blocks;
     Registers r = state.r;
-    Code code = state.code;
-    Branch[] whileEnds = new Branch[code.length + 1];
-    Branch b = state.begin_branch;
-    while(b != null) {
-      if(b.type == Branch.Type.jump) {
-        if(b.targetFirst < b.line) {
-          whileEnds[b.targetFirst] = b;
-        }
-      }
-      b = b.next;
-    }
-    for(int line = 1; line <= code.length; line++) {
-      Branch j = whileEnds[line];
-      if(j != null) {
+    Branch j = state.end_branch;
+    while(j != null) {
+      if(j.type == Branch.Type.jump && j.targetFirst < j.line) {
+        int line = j.targetFirst;
         int loopback = line;
         int end = j.line + 1;
-        b = state.begin_branch;
+        Branch b = state.begin_branch;
         while(b != null) {
           if(is_conditional(b) && b.line >= loopback && b.line < j.line && b.targetSecond == end) {
             break;
@@ -401,6 +391,7 @@ public class ControlFlowHandler {
         remove_branch(state, j);
         blocks.add(loop);
       }
+      j = j.previous;
     }
   }
   
