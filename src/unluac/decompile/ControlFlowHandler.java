@@ -413,14 +413,44 @@ public class ControlFlowHandler {
     }
   }
   
+  private static Block enclosing_block(State state, int line) {
+    Block enclosing = null;
+    for(Block block : state.blocks) {
+      if(block.contains(line) && block.breakable()) {
+        if(enclosing == null || enclosing.contains(block)) {
+          enclosing = block;
+        }
+      }
+    }
+    return enclosing;
+  }
+  
+  private static Block enclosing_block(State state, Block inner) {
+    Block enclosing = null;
+    for(Block block : state.blocks) {
+      if(block != inner && block.contains(inner) && block.breakable()) {
+        if(enclosing == null || enclosing.contains(block)) {
+          enclosing = block;
+        }
+      }
+    }
+    return enclosing;
+  }
+  
   private static void unredirect_break(State state, int line, Block enclosing) {
     Branch b = state.begin_branch;
     while(b != null) {
-      if(is_conditional(b) && enclosing.contains(b.line) && b.targetFirst <= line && b.targetSecond == enclosing.end) {
+      /* ???
+      if(is_conditional(b) && enclosing_block(state, b.line) == enclosing && b.targetFirst <= line && b.targetSecond == enclosing.end) {
         b.targetSecond = line;
         if(b.targetFirst == enclosing.end) {
           b.targetFirst = line;
         }
+      }
+      */
+      if(b.type == Branch.Type.jump && enclosing_block(state, enclosing_block(state, b.line)) == enclosing && b.targetFirst == enclosing.end) {
+        b.targetFirst = line;
+        b.targetSecond = line;
       }
       b = b.next;
     }
@@ -428,28 +458,51 @@ public class ControlFlowHandler {
   
   private static void find_break_statements(State state) {
     List<Block> blocks = state.blocks;
-    Branch b = state.begin_branch;
+    Branch b = state.end_branch;
+    LinkedList<Branch> breaks = new LinkedList<Branch>();
     while(b != null) {
       if(b.type == Branch.Type.jump) {
         int line = b.line;
-        Block enclosing = null;
-        for(Block block : blocks) {
-          if(block.contains(line) && block.breakable()) {
-            if(enclosing == null || enclosing.contains(block)) {
-              enclosing = block;
-            }
-          }
-        }
+        Block enclosing = enclosing_block(state, line);
         if(enclosing != null && b.targetFirst == enclosing.end) {
-          Block block = new Break(state.function, b.line, b.targetFirst);
-          remove_branch(state, b);
+          Break block = new Break(state.function, b.line, b.targetFirst);
           unredirect_break(state, line, enclosing);
           blocks.add(block);
+          //breaks.add(b);
+          breaks.addFirst(b);
+        }
+      }
+      b = b.previous;
+    }
+    //TODO: conditional breaks (Lua 5.2) [conflicts with unredirection]
+    b = state.begin_branch;
+    while(b != null) {
+      if(is_conditional(b)) {
+        Block enclosing = enclosing_block(state, b.line);
+        if(enclosing != null && b.targetSecond >= enclosing.end) {
+          for(Branch br : breaks) {
+            if(br.line >= b.targetFirst && br.line < b.targetSecond && br.line < enclosing.end) {
+              Branch tbr = br;
+              while(b.targetSecond != tbr.targetSecond) {
+                Branch next = state.branches[tbr.targetSecond];
+                if(next != null && next.type == Branch.Type.jump) {
+                  tbr = next; // TODO: guard against infinite loop
+                } else {
+                  break;
+                }
+              }
+              if(b.targetSecond == tbr.targetSecond) {
+                b.targetSecond = br.line;
+              }
+            }
+          }
         }
       }
       b = b.next;
     }
-    //TODO: conditional breaks (Lua 5.2) [conflicts with unredirection]
+    for(Branch br : breaks) {
+      remove_branch(state, br);
+    }
   }
   
   private static void find_blocks(State state) {
