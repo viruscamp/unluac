@@ -771,7 +771,7 @@ public class ControlFlowHandler {
     if(next != null) {
       next.previous = prev;
     } else {
-      state.end_branch = next;
+      state.end_branch = prev;
     }
   }
   
