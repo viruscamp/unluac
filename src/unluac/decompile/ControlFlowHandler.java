@@ -523,7 +523,7 @@ public class ControlFlowHandler {
           }
         }
         
-        if(b.targetSecond > b.targetFirst) {
+        if(b.targetSecond >= b.targetFirst) {
           if(has_tail) {
             if(tail_target > tail_line) {
               // If -- then -- else
@@ -556,7 +556,12 @@ public class ControlFlowHandler {
             // If -- then
             //System.out.println("If -- then");
             //System.out.println("\t" + b.line + "\t" + b.cond.toString() + "\t" + b.targetFirst + "\t" + b.targetSecond);
-            Block block = new NewIfThenEndBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond);
+            int begin = b.targetFirst;
+            int end = b.targetSecond;
+            if(begin == end) {
+              begin = end - 1;
+            }
+            Block block = new NewIfThenEndBlock(state.function, state.r, b.cond, begin, end);
             blocks.add(block);
           }
         } else {
