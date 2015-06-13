@@ -612,7 +612,7 @@ public class Decompiler {
       case SETTABUP: {
         int A = code.A(line);
         int B = code.B(line);
-        return new TableTarget(upvalues.getExpression(A), r.getKExpression(B, line));
+        return new TableTarget(upvalues.getExpression(A), r.getKExpression(B, previous));
       }
       default:
         throw new IllegalStateException();
