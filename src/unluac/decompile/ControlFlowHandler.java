@@ -33,7 +33,6 @@ public class ControlFlowHandler {
     
     private static enum Type {
       comparison,
-      //comparisonset,
       test,
       testset,
       finalset,
@@ -92,11 +91,8 @@ public class ControlFlowHandler {
     find_while_loops(state);
     find_repeat_loops(state);
     find_break_statements(state);
-    //unredirect_branches(state);
-    //find_blocks(state);
     find_if_blocks(state);
     find_set_blocks(state);
-    find_jump_blocks(state);
     Collections.sort(state.blocks);
     // DEBUG: print branches stuff
     /*
@@ -272,55 +268,6 @@ public class ControlFlowHandler {
     while(b != null) {
       b = combine_left(state, b).previous;
     }
-    /*
-    b = state.end_branch;
-    while(b != null) {
-      Branch result = combine_right(state, b);
-      if(result != null) {
-        b = result;
-        if(b.next != null) {
-          b = b.next;
-        }
-      } else {
-        b = b.previous;
-      }
-    }
-    */
-  }
-  
-  private static void unredirect_branches(State state) {
-    // There is more complication here
-    int[] redirect = new int[state.code.length + 1];
-    
-    Branch b = state.end_branch;
-    while(b != null) {
-      if(b.type == Branch.Type.jump) {
-        if(redirect[b.targetFirst] == 0) {
-          redirect[b.targetFirst] = b.line;
-        } else {
-          int temp = b.targetFirst;
-          b.targetFirst = b.targetSecond = redirect[temp];
-          redirect[temp] = b.line;
-        }
-      }
-      b = b.previous;
-    }
-    b = state.begin_branch;
-    while(b != null) {
-      if(b.type != Branch.Type.jump) {
-        if(redirect[b.targetSecond] != 0) {
-          // Hack-ish -- redirect can't extend the scope
-          boolean skip = false;
-          if(b.targetSecond > b.line & redirect[b.targetSecond] > b.targetSecond) skip = true;
-          if(!skip) {
-            //System.out.println("Redirected to " + redirct[b.targetSecond] + " from " + b.targetSecond);
-            //if(redirect[b.targetSecond] < b.targetSecond)
-            b.targetSecond = redirect[b.targetSecond];
-          }
-        }
-      }
-      b = b.next;
-    }
   }
   
   private static void initialize_blocks(State state) {
@@ -452,9 +399,7 @@ public class ControlFlowHandler {
     Branch b = state.begin_branch;
     while(b != null) {
       if(is_conditional(b)) {
-        // else?
         Block enclosing;
-        
         enclosing = enclosing_unprotected_block(state, b.line);
         if(enclosing != null && !enclosing.contains(b.targetSecond)) {
           if(b.targetSecond == enclosing.getUnprotectedTarget()) {
@@ -493,19 +438,6 @@ public class ControlFlowHandler {
     while(b != null) {
       if(is_assignment(b) || b.type == Branch.Type.finalset) {
         Block block = new NewSetBlock(state.function, b.cond, b.target, b.line, b.targetFirst, b.targetSecond, false, state.r);
-        blocks.add(block);
-        remove_branch(state, b);
-      }
-      b = b.next;
-    }
-  }
-  
-  private static void find_jump_blocks(State state) {
-    List<Block> blocks = state.blocks;
-    Branch b = state.begin_branch;
-    while(b != null) {
-      if(b.type == Branch.Type.jump) {
-        Block block = new Break(state.function, b.line, b.targetFirst);
         blocks.add(block);
         remove_branch(state, b);
       }
@@ -552,14 +484,6 @@ public class ControlFlowHandler {
   private static void unredirect_break(State state, int line, Block enclosing) {
     Branch b = state.begin_branch;
     while(b != null) {
-      /* ???
-      if(is_conditional(b) && enclosing_block(state, b.line) == enclosing && b.targetFirst <= line && b.targetSecond == enclosing.end) {
-        b.targetSecond = line;
-        if(b.targetFirst == enclosing.end) {
-          b.targetFirst = line;
-        }
-      }
-      */
       Block breakable = enclosing_breakable_block(state, b.line);
       if(breakable != null && b.type == Branch.Type.jump && enclosing_block(state, breakable) == enclosing && b.targetFirst == enclosing.end) {
         b.targetFirst = line;
@@ -581,7 +505,6 @@ public class ControlFlowHandler {
           Break block = new Break(state.function, b.line, b.targetFirst);
           unredirect_break(state, line, enclosing);
           blocks.add(block);
-          //breaks.add(b);
           breaks.addFirst(b);
         }
       }
@@ -616,85 +539,6 @@ public class ControlFlowHandler {
     for(Branch br : breaks) {
       remove_branch(state, br);
     }
-  }
-  
-  private static void find_blocks(State state) {
-    List<Block> blocks = state.blocks;
-    Code code = state.code;
-    Branch b = state.begin_branch;
-    while(b != null) {
-      if(is_conditional(b)) {
-        // Conditional branches decompile to if, while, or repeat
-        boolean has_tail = false;
-        int tail_line = b.targetSecond - 1;
-        int tail_target = 0;
-        if(tail_line >= 1 && code.op(tail_line) == Op.JMP) {
-          Branch tail_branch = state.branches[tail_line];
-          if(tail_branch != null && tail_branch.type == Branch.Type.jump) {
-            has_tail = true;
-            tail_target = tail_branch.targetFirst;
-          }
-        }
-        
-        if(b.targetSecond >= b.targetFirst) {
-          if(has_tail) {
-            if(tail_target > tail_line) {
-              // If -- then -- else
-              //System.out.println("If -- then -- else");
-              //System.out.println("\t" + b.line + "\t" + b.cond.toString());
-              NewIfThenElseBlock block = new NewIfThenElseBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond, tail_target);
-              NewElseEndBlock block2 = new NewElseEndBlock(state.function, b.targetSecond, tail_target);
-              block.partner = block2;
-              block2.partner = block;
-              //System.out.println("else -- end " + block2.begin + " " + block2.end);
-              remove_branch(state, state.branches[tail_line]);
-              blocks.add(block);
-              blocks.add(block2);
-            } else {
-              if(tail_target <= b.line) {
-                // While
-                //System.out.println("While");
-                //System.out.println("\t" + b.line + "\t" + b.cond.toString());
-                Block block = new NewWhileBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond);
-                blocks.add(block);
-              } else {
-                // If -- then (tail is from an inner loop)
-                //System.out.println("If -- then");
-                //System.out.println("\t" + b.line + "\t" + b.cond.toString());
-                Block block = new NewIfThenEndBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond);
-                blocks.add(block);
-              }
-            }
-          } else {
-            // If -- then
-            //System.out.println("If -- then");
-            //System.out.println("\t" + b.line + "\t" + b.cond.toString() + "\t" + b.targetFirst + "\t" + b.targetSecond);
-            int begin = b.targetFirst;
-            int end = b.targetSecond;
-            if(begin == end) {
-              begin = end - 1;
-            }
-            Block block = new NewIfThenEndBlock(state.function, state.r, b.cond, begin, end);
-            blocks.add(block);
-          }
-        } else {
-          // Repeat
-          //System.out.println("Repeat " + b.targetSecond + " .. " + b.targetFirst);
-          //System.out.println("\t" + b.line + "\t" + b.cond.toString());
-          Block block = new NewRepeatBlock(state.function, state.r, b.cond, b.targetSecond, b.targetFirst);
-          blocks.add(block);
-        }
-      } else if(is_assignment(b) || b.type == Branch.Type.finalset) {
-        Block block = new NewSetBlock(state.function, b.cond, b.target, b.line, b.targetFirst, b.targetSecond, false, state.r);
-        blocks.add(block);
-        //System.out.println("Assign block " + b.line);
-      } else if(b.type == Branch.Type.jump) {
-        Block block = new Break(state.function, b.line, b.targetFirst);
-        blocks.add(block);
-      }
-      b = b.next;
-    }
-    Collections.sort(blocks);
   }
   
   private static boolean is_conditional(Branch b) {
