@@ -402,9 +402,23 @@ public class ControlFlowHandler {
           }
           b = b.next;
         }
+        if(b != null) {
+          boolean reverse = state.reverse_targets[loopback];
+          state.reverse_targets[loopback] = false;
+          for(int l = loopback; l < b.line; l++) {
+            
+            if(is_statement(state, l)) {
+              //System.err.println("not while " + l);
+              b = null;
+              break;
+            }
+          }
+          state.reverse_targets[loopback] = reverse;
+        }
         Block loop;
         if(b != null) {
           remove_branch(state, b);
+          //System.err.println("while " + b.targetFirst + " " + b.targetSecond);
           loop = new NewWhileBlock(state.function, r, b.cond, b.targetFirst, b.targetSecond);
           unredirect(state, loopback, end, j.line, loopback);
         } else {
