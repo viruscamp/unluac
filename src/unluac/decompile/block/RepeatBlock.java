@@ -10,13 +10,13 @@ import unluac.decompile.condition.Condition;
 import unluac.decompile.statement.Statement;
 import unluac.parse.LFunction;
 
-public class NewRepeatBlock extends Block {
+public class RepeatBlock extends Block {
 
   private final Registers r;
   private final Condition cond;
   private final List<Statement> statements;
   
-  public NewRepeatBlock(LFunction function, Registers r, Condition cond, int begin, int end) {
+  public RepeatBlock(LFunction function, Registers r, Condition cond, int begin, int end) {
     super(function, begin, end);
     this.r = r;
     this.cond = cond;

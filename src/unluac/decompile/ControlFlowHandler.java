@@ -9,12 +9,12 @@ import unluac.decompile.block.Block;
 import unluac.decompile.block.Break;
 import unluac.decompile.block.DoEndBlock;
 import unluac.decompile.block.ForBlock;
-import unluac.decompile.block.NewElseEndBlock;
-import unluac.decompile.block.NewIfThenElseBlock;
-import unluac.decompile.block.NewIfThenEndBlock;
-import unluac.decompile.block.NewRepeatBlock;
-import unluac.decompile.block.NewSetBlock;
-import unluac.decompile.block.NewWhileBlock;
+import unluac.decompile.block.ElseEndBlock;
+import unluac.decompile.block.IfThenElseBlock;
+import unluac.decompile.block.IfThenEndBlock;
+import unluac.decompile.block.RepeatBlock;
+import unluac.decompile.block.SetBlock;
+import unluac.decompile.block.WhileBlock;
 import unluac.decompile.block.OuterBlock;
 import unluac.decompile.block.TForBlock;
 import unluac.decompile.condition.AndCondition;
@@ -368,7 +368,7 @@ public class ControlFlowHandler {
         if(b != null) {
           remove_branch(state, b);
           //System.err.println("while " + b.targetFirst + " " + b.targetSecond);
-          loop = new NewWhileBlock(state.function, r, b.cond, b.targetFirst, b.targetSecond);
+          loop = new WhileBlock(state.function, r, b.cond, b.targetFirst, b.targetSecond);
           unredirect(state, loopback, end, j.line, loopback);
         } else {
           loop = new AlwaysLoop(state.function, loopback, end);
@@ -387,7 +387,7 @@ public class ControlFlowHandler {
     while(b != null) {
       if(is_conditional(b)) {
         if(b.targetSecond < b.targetFirst) {
-          Block block = new NewRepeatBlock(state.function, state.r, b.cond, b.targetSecond, b.targetFirst);
+          Block block = new RepeatBlock(state.function, state.r, b.cond, b.targetSecond, b.targetFirst);
           remove_branch(state, b);
           blocks.add(block);
         }
@@ -417,15 +417,15 @@ public class ControlFlowHandler {
             }             
           }
           //System.err.println("else end " + b.targetFirst + " " + b.targetSecond + " " + tail.targetSecond + " enclosing " + (enclosing != null ? enclosing.begin : -1) + " " + + (enclosing != null ? enclosing.end : -1));
-          state.blocks.add(new NewIfThenElseBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond, tail.targetSecond));
+          state.blocks.add(new IfThenElseBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond, tail.targetSecond));
           if(b.targetSecond != tail.targetSecond) {
-            state.blocks.add(new NewElseEndBlock(state.function, b.targetSecond, tail.targetSecond));
+            state.blocks.add(new ElseEndBlock(state.function, b.targetSecond, tail.targetSecond));
           } // else "empty else" case
           remove_branch(state, tail);
         } else {
           //System.err.println("if end " + b.targetFirst + " " + b.targetSecond);
           
-          state.blocks.add(new NewIfThenEndBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond));
+          state.blocks.add(new IfThenEndBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond));
         }
         
         remove_branch(state, b);
@@ -439,7 +439,7 @@ public class ControlFlowHandler {
     Branch b = state.begin_branch;
     while(b != null) {
       if(is_assignment(b) || b.type == Branch.Type.finalset) {
-        Block block = new NewSetBlock(state.function, b.cond, b.target, b.line, b.targetFirst, b.targetSecond, false, state.r);
+        Block block = new SetBlock(state.function, b.cond, b.target, b.line, b.targetFirst, b.targetSecond, false, state.r);
         blocks.add(block);
         remove_branch(state, b);
       }

@@ -14,7 +14,7 @@ import unluac.decompile.statement.Statement;
 import unluac.decompile.target.Target;
 import unluac.parse.LFunction;
 
-public class NewSetBlock extends Block {
+public class SetBlock extends Block {
   
   public final int target;
   private Assignment assign;
@@ -23,7 +23,7 @@ public class NewSetBlock extends Block {
   private boolean empty;
   private boolean finalize = false;
   
-  public NewSetBlock(LFunction function, Condition cond, int target, int line,
+  public SetBlock(LFunction function, Condition cond, int target, int line,
       int begin, int end, boolean empty, Registers r) {
     super(function, begin, end);
     this.empty = empty;

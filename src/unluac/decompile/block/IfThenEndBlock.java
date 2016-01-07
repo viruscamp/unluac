@@ -17,13 +17,13 @@ import unluac.decompile.statement.Assignment;
 import unluac.decompile.statement.Statement;
 import unluac.parse.LFunction;
 
-public class NewIfThenEndBlock extends Block {
+public class IfThenEndBlock extends Block {
 
   private final Condition cond;
   private final Registers r;
   private final List<Statement> statements;
   
-  public NewIfThenEndBlock(LFunction function, Registers r, Condition cond, int begin, int end) {
+  public IfThenEndBlock(LFunction function, Registers r, Condition cond, int begin, int end) {
     super(function, begin, end);
     this.r = r;
     this.cond = cond;

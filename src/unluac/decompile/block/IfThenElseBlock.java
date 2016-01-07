@@ -11,15 +11,15 @@ import unluac.decompile.condition.Condition;
 import unluac.decompile.statement.Statement;
 import unluac.parse.LFunction;
 
-public class NewIfThenElseBlock extends Block {
+public class IfThenElseBlock extends Block {
 
   private final Condition cond;
   private final Registers r;
   private final List<Statement> statements;
   private final int elseTarget;
-  public NewElseEndBlock partner;
+  public ElseEndBlock partner;
   
-  public NewIfThenElseBlock(LFunction function, Registers r, Condition cond, int begin, int end, int elseTarget) {
+  public IfThenElseBlock(LFunction function, Registers r, Condition cond, int begin, int end, int elseTarget) {
     super(function, begin, end);
     this.r = r;
     this.cond = cond;

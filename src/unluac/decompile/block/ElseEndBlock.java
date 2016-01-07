@@ -8,12 +8,12 @@ import unluac.decompile.Output;
 import unluac.decompile.statement.Statement;
 import unluac.parse.LFunction;
 
-public class NewElseEndBlock extends Block {
+public class ElseEndBlock extends Block {
 
   private final List<Statement> statements;
-  public NewIfThenElseBlock partner;
+  public IfThenElseBlock partner;
   
-  public NewElseEndBlock(LFunction function, int begin, int end) {
+  public ElseEndBlock(LFunction function, int begin, int end) {
     super(function, begin, end);
     statements = new ArrayList<Statement>(end - begin + 1);
   }
@@ -55,10 +55,10 @@ public class NewElseEndBlock extends Block {
   
   @Override
   public void print(Decompiler d, Output out) {    
-    if(statements.size() == 1 && statements.get(0) instanceof NewIfThenEndBlock) {
+    if(statements.size() == 1 && statements.get(0) instanceof IfThenEndBlock) {
       out.print("else");
       statements.get(0).print(d, out);
-    } else if(statements.size() == 2 && statements.get(0) instanceof NewIfThenElseBlock && statements.get(1) instanceof NewElseEndBlock) {
+    } else if(statements.size() == 2 && statements.get(0) instanceof IfThenElseBlock && statements.get(1) instanceof ElseEndBlock) {
       out.print("else");
       statements.get(0).print(d, out);
       statements.get(1).print(d, out);
