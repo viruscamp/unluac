@@ -72,7 +72,7 @@ public class NewSetBlock extends Block {
   
   @Override
   public boolean isContainer() {
-    return false;
+    return true;
   }
   
   public void useAssignment(Assignment assign) {

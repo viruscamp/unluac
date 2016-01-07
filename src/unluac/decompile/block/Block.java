@@ -38,11 +38,19 @@ abstract public class Block extends Statement implements Comparable<Block> {
    * If this is the case, any inner statement that tries to jump
    * to the end of this block will be redirected.
    * 
-   * (One of the lua compiler's few optimizations is that is changes
+   * (One of the Lua compiler's few optimizations is that is changes
    * any JMP that targets another JMP to the ultimate target. This
    * is what I call redirection.)
    */
   abstract public boolean isUnprotected();
+  
+  public int getUnprotectedTarget() {
+    throw new IllegalStateException();
+  }
+  
+  public int getUnprotectedLine() {
+    throw new IllegalStateException();
+  }
   
   abstract public int getLoopback();
   

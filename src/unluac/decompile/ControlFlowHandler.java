@@ -74,6 +74,7 @@ public class ControlFlowHandler {
     public Branch end_branch;
     public Branch[] branches;
     public boolean[] reverse_targets;
+    public int[] resolved;
     public List<Block> blocks;
   }
   
@@ -85,13 +86,18 @@ public class ControlFlowHandler {
     find_reverse_targets(state);
     find_branches(state);
     combine_branches(state);
+    resolve_lines(state);
     initialize_blocks(state);
     find_fixed_blocks(state);
     find_while_loops(state);
     find_repeat_loops(state);
     find_break_statements(state);
-    unredirect_branches(state);
-    find_blocks(state);
+    //unredirect_branches(state);
+    //find_blocks(state);
+    find_if_blocks(state);
+    find_set_blocks(state);
+    find_jump_blocks(state);
+    Collections.sort(state.blocks);
     // DEBUG: print branches stuff
     /*
     Branch b = state.begin_branch;
@@ -106,7 +112,7 @@ public class ControlFlowHandler {
   
   private static void find_reverse_targets(State state) {
     Code code = state.code;
-    boolean[] reverse_targets = state.reverse_targets = new boolean[state.code.length];
+    boolean[] reverse_targets = state.reverse_targets = new boolean[state.code.length + 1];
     for(int line = 1; line <= code.length; line++) {
       if(code.op(line) == Op.JMP) {
         int target = code.target(line);
@@ -115,6 +121,20 @@ public class ControlFlowHandler {
         }
       }
     }
+  }
+  
+  private static void resolve_lines(State state) {
+    int[] resolved = new int[state.code.length + 1];
+    for(int line = 1; line <= state.code.length; line++) {
+      int r = line;
+      Branch b = state.branches[line];
+      while(b != null && b.type == Branch.Type.jump) {
+        r = b.targetSecond;
+        b = state.branches[r];
+      }
+      resolved[line] = r;
+    }
+    state.resolved = resolved;
   }
   
   private static int find_loadboolblock(State state, int target) {
@@ -413,10 +433,88 @@ public class ControlFlowHandler {
     }
   }
   
-  private static Block enclosing_block(State state, int line) {
+  private static void find_if_blocks(State state) {
+    List<Block> blocks = state.blocks;
+    Branch b = state.begin_branch;
+    while(b != null) {
+      if(is_conditional(b)) {
+        // else?
+        Block enclosing;
+        
+        enclosing = enclosing_unprotected_block(state, b.line);
+        if(enclosing != null && !enclosing.contains(b.targetSecond)) {
+          if(b.targetSecond == enclosing.getUnprotectedTarget()) {
+            b.targetSecond = enclosing.getUnprotectedLine();
+          }
+        }
+        Branch tail = b.targetSecond >= 1 ? state.branches[b.targetSecond - 1] : null;
+        if(tail != null && !is_conditional(tail)) {
+          enclosing = enclosing_unprotected_block(state, tail.line);
+          if(enclosing != null && !enclosing.contains(tail.targetSecond)) {
+            if(tail.targetSecond == state.resolved[enclosing.getUnprotectedTarget()]) {
+              tail.targetSecond = enclosing.getUnprotectedLine();
+            }             
+          }
+          //System.err.println("else end " + b.targetFirst + " " + b.targetSecond + " " + tail.targetSecond + " enclosing " + (enclosing != null ? enclosing.begin : -1) + " " + + (enclosing != null ? enclosing.end : -1));
+          state.blocks.add(new NewIfThenElseBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond, tail.targetSecond));
+          if(b.targetSecond != tail.targetSecond) {
+            state.blocks.add(new NewElseEndBlock(state.function, b.targetSecond, tail.targetSecond));
+          } // else "empty else" case
+          remove_branch(state, tail);
+        } else {
+          //System.err.println("if end " + b.targetFirst + " " + b.targetSecond);
+          
+          state.blocks.add(new NewIfThenEndBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond));
+        }
+        
+        remove_branch(state, b);
+      }
+      b = b.next;
+    }
+  }
+ 
+  private static void find_set_blocks(State state) {
+    List<Block> blocks = state.blocks;
+    Branch b = state.begin_branch;
+    while(b != null) {
+      if(is_assignment(b) || b.type == Branch.Type.finalset) {
+        Block block = new NewSetBlock(state.function, b.cond, b.target, b.line, b.targetFirst, b.targetSecond, false, state.r);
+        blocks.add(block);
+        remove_branch(state, b);
+      }
+      b = b.next;
+    }
+  }
+  
+  private static void find_jump_blocks(State state) {
+    List<Block> blocks = state.blocks;
+    Branch b = state.begin_branch;
+    while(b != null) {
+      if(b.type == Branch.Type.jump) {
+        Block block = new Break(state.function, b.line, b.targetFirst);
+        blocks.add(block);
+        remove_branch(state, b);
+      }
+      b = b.next;
+    }
+  }
+  
+  private static Block enclosing_breakable_block(State state, int line) {
     Block enclosing = null;
     for(Block block : state.blocks) {
       if(block.contains(line) && block.breakable()) {
+        if(enclosing == null || enclosing.contains(block)) {
+          enclosing = block;
+        }
+      }
+    }
+    return enclosing;
+  }
+  
+  private static Block enclosing_unprotected_block(State state, int line) {
+    Block enclosing = null;
+    for(Block block : state.blocks) {
+      if(block.contains(line) && block.isUnprotected()) {
         if(enclosing == null || enclosing.contains(block)) {
           enclosing = block;
         }
@@ -448,7 +546,8 @@ public class ControlFlowHandler {
         }
       }
       */
-      if(b.type == Branch.Type.jump && enclosing_block(state, enclosing_block(state, b.line)) == enclosing && b.targetFirst == enclosing.end) {
+      Block breakable = enclosing_breakable_block(state, b.line);
+      if(breakable != null && b.type == Branch.Type.jump && enclosing_block(state, breakable) == enclosing && b.targetFirst == enclosing.end) {
         b.targetFirst = line;
         b.targetSecond = line;
       }
@@ -463,7 +562,7 @@ public class ControlFlowHandler {
     while(b != null) {
       if(b.type == Branch.Type.jump) {
         int line = b.line;
-        Block enclosing = enclosing_block(state, line);
+        Block enclosing = enclosing_breakable_block(state, line);
         if(enclosing != null && b.targetFirst == enclosing.end) {
           Break block = new Break(state.function, b.line, b.targetFirst);
           unredirect_break(state, line, enclosing);
@@ -478,7 +577,7 @@ public class ControlFlowHandler {
     b = state.begin_branch;
     while(b != null) {
       if(is_conditional(b)) {
-        Block enclosing = enclosing_block(state, b.line);
+        Block enclosing = enclosing_breakable_block(state, b.line);
         if(enclosing != null && b.targetSecond >= enclosing.end) {
           for(Branch br : breaks) {
             if(br.line >= b.targetFirst && br.line < b.targetSecond && br.line < enclosing.end) {
@@ -529,7 +628,7 @@ public class ControlFlowHandler {
               // If -- then -- else
               //System.out.println("If -- then -- else");
               //System.out.println("\t" + b.line + "\t" + b.cond.toString());
-              NewIfThenElseBlock block = new NewIfThenElseBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond);
+              NewIfThenElseBlock block = new NewIfThenElseBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond, tail_target);
               NewElseEndBlock block2 = new NewElseEndBlock(state.function, b.targetSecond, tail_target);
               block.partner = block2;
               block2.partner = block;

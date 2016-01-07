@@ -494,6 +494,15 @@ public class Decompiler {
         }
       }
       Block block = blockStack.peek();
+      ArrayList<Block> blockStatements = new ArrayList<Block>(); 
+      while(block != null && !block.isContainer()) {
+        blockStack.pop();
+        blockStatements.add(block);
+        block = blockStack.peek();
+      }
+      for(Block blockStatement : blockStatements) {
+        block.addStatement(blockStatement.process(this).process(r, block));
+      }
       r.startLine(line); //Must occur AFTER block.rewrite
       if(skip[line]) {
         List<Declaration> newLocals = r.getNewLocals(line);

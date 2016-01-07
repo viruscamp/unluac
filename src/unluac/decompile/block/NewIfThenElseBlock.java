@@ -16,12 +16,14 @@ public class NewIfThenElseBlock extends Block {
   private final Condition cond;
   private final Registers r;
   private final List<Statement> statements;
+  private final int elseTarget;
   public NewElseEndBlock partner;
   
-  public NewIfThenElseBlock(LFunction function, Registers r, Condition cond, int begin, int end) {
+  public NewIfThenElseBlock(LFunction function, Registers r, Condition cond, int begin, int end, int elseTarget) {
     super(function, begin, end);
     this.r = r;
     this.cond = cond;
+    this.elseTarget = elseTarget;
     statements = new ArrayList<Statement>(end - begin + 1);
   }
   
@@ -60,6 +62,16 @@ public class NewIfThenElseBlock extends Block {
   }
   
   @Override
+  public int getUnprotectedLine() {
+    return end - 1;
+  }
+  
+  @Override
+  public int getUnprotectedTarget() {
+    return elseTarget;
+  }
+  
+  @Override
   public int getLoopback() {
     throw new IllegalStateException();
   }
@@ -84,12 +96,13 @@ public class NewIfThenElseBlock extends Block {
     */
     Statement.printSequence(d, out, statements);
     out.dedent();
-    /*
-    if(emptyElse) {
+    
+    // Handle the "empty else" case
+    if(end == elseTarget) {
       out.println("else");
       out.println("end");
     }
-    */
+    
   }
   
 }

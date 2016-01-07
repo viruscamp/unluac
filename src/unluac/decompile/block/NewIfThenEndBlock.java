@@ -42,7 +42,7 @@ public class NewIfThenEndBlock extends Block {
   
   @Override
   public boolean isContainer() {
-    return true;
+    return begin != end;
   }
   
   @Override
