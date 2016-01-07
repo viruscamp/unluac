@@ -729,7 +729,12 @@ public class ControlFlowHandler {
   private static Branch combine_conditional(State state, Branch branch1) {
     Branch branch0 = branch1.previous;
     if(adjacent(state, branch0, branch1) && is_conditional(branch0) && is_conditional(branch1)) {
-      if(branch0.targetSecond == branch1.targetFirst) {
+      int branch0TargetSecond = branch0.targetSecond;
+      if(state.code.op(branch1.targetFirst) == Op.JMP && state.code.target(branch1.targetFirst) == branch0TargetSecond) {
+        // Handle redirected target
+        branch0TargetSecond = branch1.targetFirst;
+      }
+      if(branch0TargetSecond == branch1.targetFirst) {
         // Combination if not branch0 or branch1 then
         branch0 = combine_conditional(state, branch0);
         Condition c = new OrCondition(branch0.cond.inverse(), branch1.cond);
@@ -738,7 +743,7 @@ public class ControlFlowHandler {
         if(verbose) System.err.println("conditional or " + branchn.line);
         replace_branch(state, branch0, branch1, branchn);
         return combine_conditional(state, branchn);
-      } else if(branch0.targetSecond == branch1.targetSecond) {
+      } else if(branch0TargetSecond == branch1.targetSecond) {
         // Combination if branch0 and branch1 then
         branch0 = combine_conditional(state, branch0);
         Condition c = new AndCondition(branch0.cond, branch1.cond);
