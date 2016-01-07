@@ -7,6 +7,7 @@ import java.util.List;
 import unluac.decompile.block.AlwaysLoop;
 import unluac.decompile.block.Block;
 import unluac.decompile.block.Break;
+import unluac.decompile.block.DoEndBlock;
 import unluac.decompile.block.ForBlock;
 import unluac.decompile.block.NewElseEndBlock;
 import unluac.decompile.block.NewIfThenElseBlock;
@@ -93,6 +94,7 @@ public class ControlFlowHandler {
     find_break_statements(state);
     find_if_blocks(state);
     find_set_blocks(state);
+    find_do_blocks(state, d.declList);
     Collections.sort(state.blocks);
     // DEBUG: print branches stuff
     /*
@@ -538,6 +540,28 @@ public class ControlFlowHandler {
     }
     for(Branch br : breaks) {
       remove_branch(state, br);
+    }
+  }
+  
+  private static void find_do_blocks(State state, Declaration[] declList) {
+    for(Declaration decl : declList) {
+      if(!decl.forLoop && !decl.forLoopExplicit) {
+        boolean needsDoEnd = true;
+        for(Block block : state.blocks) {
+          if(block.contains(decl.begin)) {
+            if(block.scopeEnd() == decl.end) {
+              needsDoEnd = false;
+              break;
+            }
+          }
+        }
+        if(needsDoEnd) {
+          //Without accounting for the order of declarations, we might
+          //create another do..end block later that would eliminate the
+          //need for this one. But order of decls should fix this.
+          state.blocks.add(new DoEndBlock(state.function, decl.begin, decl.end + 1));
+        }
+      }
     }
   }
   
