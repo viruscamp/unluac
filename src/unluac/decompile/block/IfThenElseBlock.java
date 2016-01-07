@@ -6,7 +6,6 @@ import java.util.List;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
-import unluac.decompile.branch.Branch;
 import unluac.decompile.condition.Condition;
 import unluac.decompile.statement.Statement;
 import unluac.parse.LFunction;

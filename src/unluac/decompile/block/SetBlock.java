@@ -2,13 +2,11 @@ package unluac.decompile.block;
 
 import unluac.decompile.ControlFlowHandler;
 import unluac.decompile.Decompiler;
-import unluac.decompile.Op;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
 import unluac.decompile.condition.Condition;
 import unluac.decompile.expression.Expression;
 import unluac.decompile.operation.Operation;
-import unluac.decompile.operation.RegisterSet;
 import unluac.decompile.statement.Assignment;
 import unluac.decompile.statement.Statement;
 import unluac.decompile.target.Target;
