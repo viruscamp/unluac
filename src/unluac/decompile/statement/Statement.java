@@ -24,11 +24,9 @@ abstract public class Statement {
       } else {
         stmt.print(d, out);
       }
-      /* TODO
-      if(!(stmt instanceof IfThenElseBlock)) {
+      if(!stmt.suppressNewline()) {
         out.println();
-      }*/
-      out.println();
+      }
     }
   }
     
@@ -45,6 +43,10 @@ abstract public class Statement {
   }
   
   public boolean beginsWithParen() {
+    return false;
+  }
+  
+  public boolean suppressNewline() {
     return false;
   }
   

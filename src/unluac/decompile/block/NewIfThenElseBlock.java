@@ -28,6 +28,11 @@ public class NewIfThenElseBlock extends Block {
   }
   
   @Override
+  public boolean suppressNewline() {
+    return true;
+  }
+  
+  @Override
   public int compareTo(Block block) {
     if(block == partner) {
       return -1;
