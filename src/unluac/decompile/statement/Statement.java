@@ -4,7 +4,6 @@ import java.util.List;
 
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
-import unluac.decompile.block.IfThenElseBlock;
 
 abstract public class Statement {
 
@@ -25,9 +24,11 @@ abstract public class Statement {
       } else {
         stmt.print(d, out);
       }
+      /* TODO
       if(!(stmt instanceof IfThenElseBlock)) {
         out.println();
-      }
+      }*/
+      out.println();
     }
   }
     
