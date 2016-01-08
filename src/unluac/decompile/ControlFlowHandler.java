@@ -21,6 +21,7 @@ import unluac.decompile.block.TForBlock;
 import unluac.decompile.condition.AndCondition;
 import unluac.decompile.condition.BinaryCondition;
 import unluac.decompile.condition.Condition;
+import unluac.decompile.condition.ConstantCondition;
 import unluac.decompile.condition.OrCondition;
 import unluac.decompile.condition.RegisterSetCondition;
 import unluac.decompile.condition.SetCondition;
@@ -160,16 +161,26 @@ public class ControlFlowHandler {
       inverse = true;
       c = c.inverse();
     }
+    boolean constant = state.code.op(line) == Op.JMP;
     Branch b;
-    if(line + 2 == loadboolblock) {
-      b = new Branch(line, Branch.Type.finalset, c, line + 2, loadboolblock + 2);
+    int begin = line + 2;
+    if(constant) {
+      begin--;
+      b = new Branch(line, Branch.Type.testset, c, begin, loadboolblock + 2);
+    } else if(line + 2 == loadboolblock) {
+      b = new Branch(line, Branch.Type.finalset, c, begin, loadboolblock + 2);
     } else {
-      b = new Branch(line, Branch.Type.testset, c, line + 2, loadboolblock + 2);
+      b = new Branch(line, Branch.Type.testset, c, begin, loadboolblock + 2);
     }
     b.target = state.code.A(loadboolblock);
     b.inverseValue = inverse;
     insert_branch(state, b);
-    if(final_line >= line + 2 && state.branches[final_line] == null) {
+    if(constant && final_line < begin && state.branches[final_line + 1] == null) {
+      c = new TestCondition(final_line + 1, state.code.A(target));
+      b = new Branch(final_line + 1, Branch.Type.finalset, c, final_line, loadboolblock + 2);
+      insert_branch(state, b);
+    }
+    if(final_line >= begin && state.branches[final_line] == null) {
       c = new SetCondition(final_line, get_target(state, final_line));
       b = new Branch(final_line, Branch.Type.finalset, c, final_line, loadboolblock + 2);
       b.target = state.code.A(loadboolblock);
@@ -293,8 +304,13 @@ public class ControlFlowHandler {
           }
           case JMP: {
             int target = code.target(line);
-            Branch b = new Branch(line, Branch.Type.jump, null, target, target);
-            insert_branch(state, b);
+            int loadboolblock = find_loadboolblock(state, target);
+            if(loadboolblock >= 1) {
+              handle_loadboolblock(state, skip, loadboolblock, new ConstantCondition(-1, false), line, target);
+            } else {
+              Branch b = new Branch(line, Branch.Type.jump, null, target, target);
+              insert_branch(state, b);
+            }
             break;
           }
         }
