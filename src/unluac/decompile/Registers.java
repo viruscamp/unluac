@@ -83,6 +83,10 @@ public class Registers {
     }
   }
   
+  public boolean isKConstant(int register) {
+    return f.isConstant(register);
+  }
+  
   public Expression getExpression(int register, int line) {
     if(isLocal(register, line - 1)) {
       return new LocalVariable(getDeclaration(register, line - 1));

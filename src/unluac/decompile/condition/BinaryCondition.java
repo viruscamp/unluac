@@ -64,7 +64,7 @@ public class BinaryCondition implements Condition {
     Expression leftExpression = r.getKExpression(left, line);
     Expression rightExpression = r.getKExpression(right, line);
     if(op != Operator.EQ) {
-      if(((left | right) & 256) == 0) {
+      if(!r.isKConstant(left) && !r.isKConstant(right)) {
         transpose = r.getUpdated(left, line) > r.getUpdated(right, line);
       } else {
         transpose = rightExpression.getConstantIndex() < leftExpression.getConstantIndex();
