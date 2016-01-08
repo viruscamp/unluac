@@ -345,7 +345,7 @@ public class ControlFlowHandler {
       if(b.type == Branch.Type.jump) {
         int line = b.line;
         int target = b.targetFirst;
-        if(code.op(target) == tforTarget && state.function.header.version != Version.LUA50) {
+        if(code.op(target) == tforTarget && state.branches[target + 1] != null && state.function.header.version != Version.LUA50) {
           int A = code.A(target);
           int C = code.C(target);
           if(C == 0) throw new IllegalStateException();
