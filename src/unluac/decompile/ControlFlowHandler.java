@@ -875,6 +875,7 @@ public class ControlFlowHandler {
       case CONCAT:
       case CLOSURE:
       case TESTSET:
+      case TEST50:
         return code.A(line);
       case LOADNIL:
         if(code.A(line) == code.B(line)) {
@@ -979,6 +980,7 @@ public class ControlFlowHandler {
       case LE:
       case TEST:
       case TESTSET:
+      case TEST50:
       case SETLIST:
         return false;
       case CALL: {
