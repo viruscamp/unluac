@@ -350,7 +350,6 @@ public class ControlFlowHandler {
           blocks.add(new ForBlock(state.function, line + 1, target + 1, A, r));
           remove_branch(state, b);
         }
-        break;
       }
       b = b.next;
     }
