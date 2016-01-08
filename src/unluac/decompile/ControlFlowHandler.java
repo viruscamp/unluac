@@ -321,6 +321,7 @@ public class ControlFlowHandler {
     Registers r = state.r;
     Code code = state.code;
     Op tforTarget = state.function.header.version.getTForTarget();
+    Op forTarget = state.function.header.version.getForTarget();
     blocks.add(new OuterBlock(state.function, state.code.length));
     
     Branch b = state.begin_branch;
@@ -341,6 +342,13 @@ public class ControlFlowHandler {
           remove_branch(state, state.branches[line]);
           remove_branch(state, state.branches[target + 1]);
           blocks.add(new TForBlock(state.function, line + 1, target + 2, A, C, r));
+        } else if(code.op(target) == forTarget) {
+          int A = code.A(target);
+          r.setInternalLoopVariable(A, target, line + 1); //TODO: end?
+          r.setInternalLoopVariable(A + 1, target, line + 1);
+          r.setInternalLoopVariable(A + 2, target, line + 1);
+          blocks.add(new ForBlock(state.function, line + 1, target + 1, A, r));
+          remove_branch(state, b);
         }
         break;
       }
