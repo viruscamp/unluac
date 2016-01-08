@@ -214,11 +214,11 @@ public class ControlFlowHandler {
             Condition c = new TestCondition(line, code.B(line));
             int target = code.target(line + 1);
             if(code.A(line) == code.B(line)) {
+              if(code.C(line) != 0) c = c.inverse();
               int loadboolblock = find_loadboolblock(state, target);
               if(loadboolblock >= 1) {
                 handle_loadboolblock(state, skip, loadboolblock, c, line, target);
               } else {
-                if(code.C(line) != 0) c = c.inverse();
                 Branch b = new Branch(line, Branch.Type.test, c, line + 2, target);
                 b.target = code.A(line);
                 if(code.C(line) != 0) b.inverseValue = true;
