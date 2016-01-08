@@ -366,6 +366,20 @@ public class ControlFlowHandler {
           r.setExplicitLoopVariable(code.A(line) + 3, line, target + 1);
           break;
         }
+        case TFORPREP: {
+          int target = code.target(line);
+          int A = code.A(target);
+          int C = code.C(target);
+          r.setInternalLoopVariable(A, target, line + 1); // TODO: end?
+          r.setInternalLoopVariable(A + 1, target, line + 1);
+          r.setInternalLoopVariable(A + 2, target, line + 1);
+          for(int index = 1; index <= C; index++) {
+            r.setExplicitLoopVariable(A + 2 + index, line, target + 2); // TODO: end?
+          }
+          blocks.add(new TForBlock(state.function, line + 1, target + 2, A, C, r));
+          remove_branch(state, state.branches[target + 1]);
+          break;
+        }
       }
     }
   }
