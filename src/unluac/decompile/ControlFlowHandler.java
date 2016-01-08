@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import unluac.Version;
 import unluac.decompile.block.AlwaysLoop;
 import unluac.decompile.block.Block;
 import unluac.decompile.block.Break;
@@ -403,6 +404,9 @@ public class ControlFlowHandler {
           }
           state.reverse_targets[loopback] = reverse;
         }
+        if(state.function.header.version == Version.LUA50) {
+          b = null; // while loop aren't this style
+        }
         Block loop;
         if(b != null) {
           remove_branch(state, b);
@@ -426,7 +430,28 @@ public class ControlFlowHandler {
     while(b != null) {
       if(is_conditional(b)) {
         if(b.targetSecond < b.targetFirst) {
-          Block block = new RepeatBlock(state.function, state.r, b.cond, b.targetSecond, b.targetFirst);
+          Block block = null;
+          if(state.function.header.version == Version.LUA50) {
+            int head = b.targetSecond - 1;
+            if(head >= 1 && state.branches[head] != null && state.branches[head].type == Branch.Type.jump) {
+              Branch headb = state.branches[head];
+              if(headb.targetSecond <= b.line) {
+                for(int l = headb.targetSecond; l < b.line; l++) {
+                  if(is_statement(state, l)) {
+                    headb = null;
+                    break;
+                  }
+                }
+                if(headb != null) {
+                  block = new WhileBlock(state.function, state.r, b.cond.inverse(), head, b.targetFirst);
+                  remove_branch(state, headb);
+                }
+              }
+            }
+          }
+          if(block == null) {
+            block = new RepeatBlock(state.function, state.r, b.cond, b.targetSecond, b.targetFirst);
+          }
           remove_branch(state, b);
           blocks.add(block);
         }
