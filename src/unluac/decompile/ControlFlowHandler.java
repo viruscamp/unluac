@@ -209,6 +209,46 @@ public class ControlFlowHandler {
             skip[line + 1] = true;
             break;
           }
+          case TEST50: {
+            Condition c = new TestCondition(line, code.B(line));
+            int target = code.target(line + 1);
+            if(code.A(line) == code.B(line)) {
+              int loadboolblock = find_loadboolblock(state, target);
+              if(loadboolblock >= 1) {
+                handle_loadboolblock(state, skip, loadboolblock, c, line, target);
+              } else {
+                if(code.C(line) != 0) c = c.inverse();
+                Branch b = new Branch(line, Branch.Type.test, c, line + 2, target);
+                b.target = code.A(line);
+                if(code.C(line) != 0) b.inverseValue = true;
+                insert_branch(state, b);
+              }
+            } else {
+              Branch b = new Branch(line, Branch.Type.testset, c, line + 2, target);
+              b.target = code.A(line);
+              if(code.C(line) != 0) b.inverseValue = true;
+              skip[line + 1] = true;
+              insert_branch(state, b);
+              int final_line = target - 1;
+              if(state.branches[final_line] == null) {
+                int loadboolblock = find_loadboolblock(state, target - 2);
+                if(loadboolblock == -1) {
+                  if(line + 2 == target) {
+                    c = new RegisterSetCondition(line, get_target(state, line));
+                    final_line = final_line + 1;
+                  } else {
+                    c = new SetCondition(final_line, get_target(state, final_line));
+                  }
+                  b = new Branch(final_line, Branch.Type.finalset, c, target, target);
+                  b.target = code.A(line);
+                  insert_branch(state, b);
+                }
+              }
+              break;
+            }
+            skip[line + 1] = true;
+            break;
+          }
           case TEST: {
             Condition c = new TestCondition(line, code.A(line));
             if(code.C(line) != 0) c = c.inverse();
@@ -239,7 +279,6 @@ public class ControlFlowHandler {
               if(loadboolblock == -1) {
                 if(line + 2 == target) {
                   c = new RegisterSetCondition(line, get_target(state, line));
-                  //c = new SetCondition(line - 1, get_target(state, line));
                   final_line = final_line + 1;
                 } else {
                   c = new SetCondition(final_line, get_target(state, final_line));
