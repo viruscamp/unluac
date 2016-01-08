@@ -465,7 +465,7 @@ public class ControlFlowHandler {
                   }
                 }
                 if(headb != null) {
-                  block = new WhileBlock(state.function, state.r, b.cond.inverse(), head, b.targetFirst);
+                  block = new WhileBlock(state.function, state.r, b.cond.inverse(), head + 1, b.targetFirst);
                   remove_branch(state, headb);
                 }
               }
