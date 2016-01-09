@@ -1,6 +1,8 @@
 package unluac.decompile;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -402,105 +404,96 @@ public class Decompiler {
   }
   
   private void processSequence(int begin, int end) {
-    int blockIndex = 1;
-    Stack<Block> blockStack = new Stack<Block>();
-    blockStack.push(blocks.get(0));
-    skip = new boolean[end + 1];
-    for(int line = begin; line <= end; line++) {
-      /*
-      System.out.print("-- line " + line + "; R[0] = ");
-      r.getValue(0, line).print(new Output());
-      System.out.println();
-      System.out.print("-- line " + line + "; R[1] = ");
-      r.getValue(1, line).print(new Output());
-      System.out.println();
-      System.out.print("-- line " + line + "; R[2] = ");
-      r.getValue(2, line).print(new Output());
-      System.out.println();
-      */
-      Operation blockHandler = null;
-      while(blockStack.peek().end <= line) {
-        Block block = blockStack.pop();
-        blockHandler = block.process(this);
-        if(blockHandler != null) {
-          break;
-        }
-      }
-      if(blockHandler == null) {
-        while(blockIndex < blocks.size() && blocks.get(blockIndex).begin <= line) {
-          blockStack.push(blocks.get(blockIndex++));
-        }
-      }
-      Block block = blockStack.peek();
-      ArrayList<Block> blockStatements = new ArrayList<Block>(); 
-      while(block != null && !block.isContainer()) {
-        blockStack.pop();
-        blockStatements.add(block);
-        block = blockStack.peek();
-      }
-      for(Block blockStatement : blockStatements) {
-        block.addStatement(blockStatement.process(this).process(r, block));
-      }
-      r.startLine(line); //Must occur AFTER block.rewrite
-      if(skip[line]) {
-        List<Declaration> newLocals = r.getNewLocals(line);
-        if(!newLocals.isEmpty()) {
-          Assignment assign = new Assignment();
-          assign.declare(newLocals.get(0).begin);
-          for(Declaration decl : newLocals) {
-            assign.addLast(new VariableTarget(decl), r.getValue(decl.register, line));
-          }
-          blockStack.peek().addStatement(assign);
-        }
-        continue;
-      }
-      List<Operation> operations = processLine(line);
-      List<Declaration> newLocals = r.getNewLocals(blockHandler == null ? line : line - 1);
-      //List<Declaration> newLocals = r.getNewLocals(line);
-      Assignment assign = null;
-      if(blockHandler == null) {
-        //System.out.println("-- Process iterating ... ");
-        for(Operation operation : operations) {
-          //System.out.println("-- iter");
-          Assignment temp = processOperation(operation, line, line + 1, block);
-          if(temp != null) {
-            assign = temp;
-            //System.out.print("-- top assign -> "); temp.getFirstTarget().print(new Output()); System.out.println();
-          }
-        }
+    int blockContainerIndex = 0;
+    int blockStatementIndex = 0;
+    List<Block> blockContainers = new ArrayList<Block>(blocks.size());
+    List<Block> blockStatements = new ArrayList<Block>(blocks.size());
+    for(Block block : blocks) {
+      if(block.isContainer()) {
+        blockContainers.add(block);
       } else {
-        assign = processOperation(blockHandler, line, line, block);
+        blockStatements.add(block);
       }
-      if(assign != null) {
-        if(!newLocals.isEmpty()) {
-          assign.declare(newLocals.get(0).begin);
-          for(Declaration decl : newLocals) {
-            //System.out.println("-- adding decl @" + line);
-            assign.addLast(new VariableTarget(decl), r.getValue(decl.register, line + 1));
-          }
-          //blockStack.peek().addStatement(assign);
+    }
+    Stack<Block> blockStack = new Stack<Block>();
+    blockStack.push(blockContainers.get(blockContainerIndex++));
+    
+    skip = new boolean[end + 1];
+    int line = begin;
+    while(line <= end) {
+      int nextline = line;
+      List<Operation> operations = null;
+      List<Declaration> prevLocals = null;
+      List<Declaration> newLocals = null;
+      
+      // Handle container blocks
+      if(blockStack.peek().end <= line) {
+        Block endingBlock = blockStack.pop();
+        Operation operation = endingBlock.process(this);
+        if(operation == null) throw new IllegalStateException();
+        operations = Arrays.asList(operation);
+        prevLocals = r.getNewLocals(line - 1);
+      } else {
+        while(blockContainerIndex < blockContainers.size() && blockContainers.get(blockContainerIndex).begin <= line) {
+          blockStack.push(blockContainers.get(blockContainerIndex++));
         }
       }
-      if(blockHandler == null) {
-        if(assign != null) {
-          
-        } else if(!newLocals.isEmpty()) {
-          if(code.op(line) != Op.JMP || code.op(line + 1 + code.sBx(line)) != tforTarget) {
-            assign = new Assignment();
-            assign.declare(newLocals.get(0).begin);
-            for(Declaration decl : newLocals) {
-              assign.addLast(new VariableTarget(decl), r.getValue(decl.register, line));
-            }
-            blockStack.peek().addStatement(assign);
+      
+      Block block = blockStack.peek();
+      
+      r.startLine(line);
+      
+      // Handle other sources of operations (after pushing any new container block)
+      if(operations == null) {
+        if(blockStatementIndex < blockStatements.size() && blockStatements.get(blockStatementIndex).begin <= line) {
+          Block blockStatement = blockStatements.get(blockStatementIndex++);
+          Operation operation = blockStatement.process(this);
+          operations = Arrays.asList(operation);
+        } else if(blockStack.peek().end <= line) {
+          // If the newly pushed block has already ended, allow processing other blocks, but not lines
+          operations = Collections.emptyList();
+        } else {
+          // After all blocks are handled for a line, we will reach here
+          nextline = line + 1;
+          if(!skip[line]) {
+            operations = processLine(line);
+          } else {
+            operations = Collections.emptyList();
           }
+          newLocals = r.getNewLocals(line);
         }
       }
-      if(blockHandler != null) {
-        //System.out.println("-- repeat @" + line);
-        line--;
-        continue;
+      
+      // Need to capture the assignment (if any) to attach local variable declarations
+      Assignment assignment = null;
+      
+      for(Operation operation : operations) {
+        Assignment operationAssignment = processOperation(operation, line, nextline, block);
+        if(operationAssignment != null) {
+          assignment = operationAssignment;
+        }
       }
-    }    
+      
+      // Some declarations may be swallowed by assignment blocks.
+      // These are restored via prevLocals
+      List<Declaration> locals = newLocals;
+      if(assignment != null && prevLocals != null) {
+        locals = prevLocals;
+      }
+      if(locals != null && !locals.isEmpty()) {
+        if(assignment == null) {
+          // Create a new Assignment to hold the declarations
+          assignment = new Assignment();
+          block.addStatement(assignment);
+        }
+        assignment.declare(locals.get(0).begin);
+        for(Declaration decl : locals) {
+          assignment.addLast(new VariableTarget(decl), r.getValue(decl.register, line + 1));
+        }
+      }
+      
+      line = nextline;
+    }
   }
   
   private boolean isMoveIntoTarget(int line) {

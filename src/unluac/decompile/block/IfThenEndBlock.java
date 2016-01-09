@@ -40,7 +40,7 @@ public class IfThenEndBlock extends Block {
   
   @Override
   public boolean isContainer() {
-    return begin != end;
+    return true;
   }
   
   @Override
