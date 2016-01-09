@@ -516,7 +516,7 @@ public class Decompiler {
       if(blockHandler == null) {
         if(assign != null) {
           
-        } else if(!newLocals.isEmpty() && code.op(line) != Op.FORPREP) {
+        } else if(!newLocals.isEmpty()) {
           if(code.op(line) != Op.JMP || code.op(line + 1 + code.sBx(line)) != tforTarget) {
             assign = new Assignment();
             assign.declare(newLocals.get(0).begin);
