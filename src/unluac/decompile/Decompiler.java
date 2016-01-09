@@ -16,6 +16,7 @@ import unluac.decompile.expression.Vararg;
 import unluac.decompile.operation.CallOperation;
 import unluac.decompile.operation.GlobalSet;
 import unluac.decompile.operation.LoadNil;
+import unluac.decompile.operation.MultipleRegisterSet;
 import unluac.decompile.operation.Operation;
 import unluac.decompile.operation.RegisterSet;
 import unluac.decompile.operation.ReturnOperation;
@@ -197,7 +198,7 @@ public class Decompiler {
         operations.add(new RegisterSet(line, A, new TableLiteral(fb2int50(B), 1 << C)));
         break;
       case SELF: {
-        // We can later determine is : syntax was used by comparing subexpressions with ==
+        // We can later determine if : syntax was used by comparing subexpressions with ==
         Expression common = r.getExpression(B, line);
         operations.add(new RegisterSet(line, A + 1, common));
         operations.add(new RegisterSet(line, A, new TableReference(common, r.getKExpression(C, line))));
@@ -285,9 +286,7 @@ public class Decompiler {
           if(C == 2 && !multiple) {
             operations.add(new RegisterSet(line, A, value));
           } else {
-            for(int register = A; register <= A + C - 2; register++) {
-              operations.add(new RegisterSet(line, register, value));
-            }
+            operations.add(new MultipleRegisterSet(line, A, A + C - 2, value));
           }
         }
         break;
@@ -361,9 +360,7 @@ public class Decompiler {
         if(B == 1) throw new IllegalStateException();
         if(B == 0) B = registers - A + 1;
         Expression value = new Vararg(B - 1, multiple);
-        for(int register = A; register <= A + B - 2; register++) {
-          operations.add(new RegisterSet(line, register, value));
-        }
+        operations.add(new MultipleRegisterSet(line, A, A + B - 2, value));
         break;
       }
       default:
@@ -380,18 +377,10 @@ public class Decompiler {
 
   private Assignment processOperation(Operation operation, int line, int nextLine, Block block) {
     Assignment assign = null;
-    boolean wasMultiple = false;
     Statement stmt = operation.process(r, block);
     if(stmt != null) {
       if(stmt instanceof Assignment) {
         assign = (Assignment) stmt;
-        if(!assign.getFirstValue().isMultiple()) {
-          block.addStatement(stmt);
-        } else {
-          wasMultiple = true;
-        }
-      } else {
-        block.addStatement(stmt);
       }
       //System.out.println("-- added statemtent @" + line);
       if(assign != null) {
@@ -404,10 +393,10 @@ public class Decompiler {
           skip[nextLine] = true;
           nextLine++;
         }
-        if(wasMultiple && !assign.getFirstValue().isMultiple()) {
-          block.addStatement(stmt);
-        }
       }
+      
+      block.addStatement(stmt);
+      
     }
     return assign;
   }
@@ -478,9 +467,6 @@ public class Decompiler {
             assign = temp;
             //System.out.print("-- top assign -> "); temp.getFirstTarget().print(new Output()); System.out.println();
           }
-        }
-        if(assign != null && assign.getFirstValue().isMultiple()) {
-          block.addStatement(assign);
         }
       } else {
         assign = processOperation(blockHandler, line, line, block);
