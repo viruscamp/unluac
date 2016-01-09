@@ -486,9 +486,6 @@ public class Decompiler {
           if(count > 0) {
             block.addStatement(assign);
           }
-        } else if(code.op(line) == Op.TFORPREP) {
-          // Lua5.0 FORPREP - no assignments
-          newLocals.clear();
         } else {
           //System.out.println("-- Process iterating ... ");
           for(Operation operation : operations) {
