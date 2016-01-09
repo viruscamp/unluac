@@ -43,6 +43,18 @@ public class LuaSpec {
     }
   }
   
+  public boolean compatible(String filename) {
+    int version = 0;
+    int underscore = filename.indexOf('_');
+    if(underscore != -1) {
+      String prefix = filename.substring(0, underscore);
+      try {
+        version = Integer.parseInt(prefix, 16);
+      } catch(NumberFormatException e) {}
+    }
+    return version == 0 || this.version >= version;
+  }
+  
   private String getVersionString() {
     if(isDefault) {
       return "";

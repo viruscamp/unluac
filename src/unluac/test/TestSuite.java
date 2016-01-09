@@ -48,24 +48,26 @@ public class TestSuite {
       working.mkdir();
     }
     for(String name : files) {
-      switch (test(spec, path + name + ext)) {
-        case OK:
-          System.out.println("Passed: " + name);
-          passed++;
-          break;
-        case SKIPPED:
-          System.out.println("Skipped: " + name);
-          skipped++;
-          break;
-        default:
-          System.out.println("Failed: " + name);
-          failed++;
+      if(spec.compatible(name)) {
+        switch (test(spec, path + name + ext)) {
+          case OK:
+            System.out.print(".");
+            passed++;
+            break;
+          case SKIPPED:
+            System.out.println("\nSkipped: " + name);
+            skipped++;
+            break;
+          default:
+            System.out.println("\nFailed: " + name);
+            failed++;
+        }
       }
     }
     if(failed == 0 && skipped == 0) {
-      System.out.println("All tests passed!");
+      System.out.println("\nAll tests passed!");
     } else {
-      System.out.println("Failed " + failed + " of " + (failed + passed) + " tests, skipped "+skipped+" tests.");
+      System.out.println("\nFailed " + failed + " of " + (failed + passed) + " tests, skipped "+skipped+" tests.");
     }
     return failed == 0;
   }
