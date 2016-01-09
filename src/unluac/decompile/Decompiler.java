@@ -15,6 +15,7 @@ import unluac.decompile.expression.TableReference;
 import unluac.decompile.expression.Vararg;
 import unluac.decompile.operation.CallOperation;
 import unluac.decompile.operation.GlobalSet;
+import unluac.decompile.operation.LoadNil;
 import unluac.decompile.operation.Operation;
 import unluac.decompile.operation.RegisterSet;
 import unluac.decompile.operation.ReturnOperation;
@@ -162,10 +163,7 @@ public class Decompiler {
         } else {
           maximum = A + B;
         }
-        while(A <= maximum) {
-          operations.add(new RegisterSet(line, A, Expression.NIL));
-          A++;
-        }
+        operations.add(new LoadNil(line, A, maximum));
         break;
       }
       case GETUPVAL:
@@ -472,33 +470,17 @@ public class Decompiler {
       //List<Declaration> newLocals = r.getNewLocals(line);
       Assignment assign = null;
       if(blockHandler == null) {
-        if(code.op(line) == Op.LOADNIL) {
-          assign = new Assignment();
-          int count = 0;
-          for(Operation operation : operations) {
-            RegisterSet set = (RegisterSet) operation;
-            operation.process(r, block);
-            if(r.isAssignable(set.register, set.line)) {
-              assign.addLast(r.getTarget(set.register, set.line), set.value);
-              count++;
-            }
+        //System.out.println("-- Process iterating ... ");
+        for(Operation operation : operations) {
+          //System.out.println("-- iter");
+          Assignment temp = processOperation(operation, line, line + 1, block);
+          if(temp != null) {
+            assign = temp;
+            //System.out.print("-- top assign -> "); temp.getFirstTarget().print(new Output()); System.out.println();
           }
-          if(count > 0) {
-            block.addStatement(assign);
-          }
-        } else {
-          //System.out.println("-- Process iterating ... ");
-          for(Operation operation : operations) {
-            //System.out.println("-- iter");
-            Assignment temp = processOperation(operation, line, line + 1, block);
-            if(temp != null) {
-              assign = temp;
-              //System.out.print("-- top assign -> "); temp.getFirstTarget().print(new Output()); System.out.println();
-            }
-          }
-          if(assign != null && assign.getFirstValue().isMultiple()) {
-            block.addStatement(assign);
-          }
+        }
+        if(assign != null && assign.getFirstValue().isMultiple()) {
+          block.addStatement(assign);
         }
       } else {
         assign = processOperation(blockHandler, line, line, block);
