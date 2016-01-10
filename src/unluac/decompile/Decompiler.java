@@ -96,7 +96,7 @@ public class Decompiler {
     List<Block> myblocks = ControlFlowHandler.process(this, r);
     blocks.addAll(myblocks);
     outer = myblocks.get(0);
-    processSequence(1, length);
+    processSequence();
   }
   
   public void print() {
@@ -403,7 +403,7 @@ public class Decompiler {
     return assign;
   }
   
-  private void processSequence(int begin, int end) {
+  private void processSequence() {
     int blockContainerIndex = 0;
     int blockStatementIndex = 0;
     List<Block> blockContainers = new ArrayList<Block>(blocks.size());
@@ -418,9 +418,9 @@ public class Decompiler {
     Stack<Block> blockStack = new Stack<Block>();
     blockStack.push(blockContainers.get(blockContainerIndex++));
     
-    skip = new boolean[end + 1];
-    int line = begin;
-    while(line <= end) {
+    skip = new boolean[code.length + 1];
+    int line = 1;
+    while(true) {
       int nextline = line;
       List<Operation> operations = null;
       List<Declaration> prevLocals = null;
@@ -430,6 +430,7 @@ public class Decompiler {
       if(blockStack.peek().end <= line) {
         Block endingBlock = blockStack.pop();
         Operation operation = endingBlock.process(this);
+        if(blockStack.isEmpty()) return;
         if(operation == null) throw new IllegalStateException();
         operations = Arrays.asList(operation);
         prevLocals = r.getNewLocals(line - 1);
