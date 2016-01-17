@@ -340,15 +340,15 @@ public class ControlFlowHandler {
     Op forTarget = state.function.header.version.getForTarget();
     blocks.add(new OuterBlock(state.function, state.code.length));
     
-    boolean[] tforloop = new boolean[state.code.length + 1];
+    boolean[] loop = new boolean[state.code.length + 1];
     
     Branch b = state.begin_branch;
     while(b != null) {
       if(b.type == Branch.Type.jump) {
         int line = b.line;
         int target = b.targetFirst;
-        if(code.op(target) == tforTarget && !tforloop[target]) {
-          tforloop[target] = true;
+        if(code.op(target) == tforTarget && !loop[target]) {
+          loop[target] = true;
           int A = code.A(target);
           int C = code.C(target);
           if(C == 0) throw new IllegalStateException();
@@ -363,7 +363,8 @@ public class ControlFlowHandler {
             remove_branch(state, state.branches[target + 1]);
           }
           blocks.add(new TForBlock(state.function, line + 1, target + 2, A, C, r));
-        } else if(code.op(target) == forTarget) {
+        } else if(code.op(target) == forTarget && !loop[target]) {
+          loop[target] = true;
           int A = code.A(target);
           r.setInternalLoopVariable(A, target, line + 1); //TODO: end?
           r.setInternalLoopVariable(A + 1, target, line + 1);
