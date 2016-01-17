@@ -69,7 +69,7 @@ class Version50 extends Version {
 
   @Override
   public Op getTForTarget() {
-    return Op.TFORLOOP;
+    return null;
   }
 
   @Override
