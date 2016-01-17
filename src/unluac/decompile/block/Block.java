@@ -50,11 +50,11 @@ abstract public class Block extends Statement implements Comparable<Block> {
   abstract public boolean isUnprotected();
   
   public int getUnprotectedTarget() {
-    throw new IllegalStateException();
+    throw new IllegalStateException(this.toString());
   }
   
   public int getUnprotectedLine() {
-    throw new IllegalStateException();
+    throw new IllegalStateException(this.toString());
   }
   
   abstract public int getLoopback();

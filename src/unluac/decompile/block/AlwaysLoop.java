@@ -38,6 +38,16 @@ public class AlwaysLoop extends Block {
   }
   
   @Override
+  public int getUnprotectedTarget() {
+    return begin;
+  }
+  
+  @Override
+  public int getUnprotectedLine() {
+    return end - 1;
+  }
+  
+  @Override
   public int getLoopback() {
     return begin;
   }
