@@ -616,7 +616,7 @@ public class ControlFlowHandler {
       if(b.type == Branch.Type.jump) {
         int line = b.line;
         Block enclosing = enclosing_breakable_block(state, line);
-        if(enclosing != null && b.targetFirst == enclosing.end) {
+        if(enclosing != null && (b.targetFirst == enclosing.end || b.targetFirst == state.resolved[enclosing.end])) {
           Break block = new Break(state.function, b.line, b.targetFirst);
           unredirect_break(state, line, enclosing);
           blocks.add(block);
