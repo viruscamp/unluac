@@ -530,7 +530,15 @@ public class ControlFlowHandler {
         } else {
           //System.err.println("if end " + b.targetFirst + " " + b.targetSecond);
           
-          state.blocks.add(new IfThenEndBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond));
+          Block breakable = enclosing_breakable_block(state, b.line);
+          if(breakable != null && breakable.end == b.targetSecond) {
+            // 5.2-style if-break
+            Block block = new IfThenEndBlock(state.function, state.r, b.cond.inverse(), b.targetFirst, b.targetFirst);
+            block.addStatement(new Break(state.function, b.targetFirst, b.targetSecond));
+            state.blocks.add(block);
+          } else {
+            state.blocks.add(new IfThenEndBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond));
+          }
         }
         
         remove_branch(state, b);
