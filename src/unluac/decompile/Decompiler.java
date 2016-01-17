@@ -446,13 +446,13 @@ public class Decompiler {
       
       // Handle other sources of operations (after pushing any new container block)
       if(operations == null) {
-        if(blockStatementIndex < blockStatements.size() && blockStatements.get(blockStatementIndex).begin <= line) {
+        if(blockStack.peek().end <= line) {
+          // If the newly pushed block has already ended, don't put anything in it
+          operations = Collections.emptyList();
+        } else if(blockStatementIndex < blockStatements.size() && blockStatements.get(blockStatementIndex).begin <= line) {
           Block blockStatement = blockStatements.get(blockStatementIndex++);
           Operation operation = blockStatement.process(this);
           operations = Arrays.asList(operation);
-        } else if(blockStack.peek().end <= line) {
-          // If the newly pushed block has already ended, allow processing other blocks, but not lines
-          operations = Collections.emptyList();
         } else {
           // After all blocks are handled for a line, we will reach here
           nextline = line + 1;
