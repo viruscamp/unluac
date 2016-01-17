@@ -650,15 +650,16 @@ public class ControlFlowHandler {
         for(Block block : state.blocks) {
           if(block.contains(decl.begin)) {
             if(block.scopeEnd() == decl.end) {
+              block.useScope();
               needsDoEnd = false;
               break;
             }
           }
         }
         if(needsDoEnd) {
-          //Without accounting for the order of declarations, we might
-          //create another do..end block later that would eliminate the
-          //need for this one. But order of decls should fix this.
+          // Without accounting for the order of declarations, we might
+          // create another do..end block later that would eliminate the
+          // need for this one. But order of decls should fix this.
           state.blocks.add(new DoEndBlock(state.function, decl.begin, decl.end + 1));
         }
       }

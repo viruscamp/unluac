@@ -56,7 +56,7 @@ public class IfThenEndBlock extends Block {
   @Override
   public Operation process(Decompiler d) {
     final int test = cond.register();
-    if(test >= 0 && r.getUpdated(test, end - 1) >= begin) {
+    if(!scopeUsed && test >= 0 && r.getUpdated(test, end - 1) >= begin) {
       // Check for a single assignment
       Assignment assign = null;
       if(statements.size() == 1) {

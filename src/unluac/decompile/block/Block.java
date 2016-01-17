@@ -12,6 +12,7 @@ abstract public class Block extends Statement implements Comparable<Block> {
   public int begin;
   public int end;
   public boolean loopRedirectAdjustment = false;
+  protected boolean scopeUsed = false;
   
   public Block(LFunction function, int begin, int end) {
     this.function = function;
@@ -31,6 +32,10 @@ abstract public class Block extends Statement implements Comparable<Block> {
   
   public int scopeEnd() {
     return end - 1;
+  }
+  
+  public void useScope() {
+    scopeUsed = true;
   }
   
   /**
