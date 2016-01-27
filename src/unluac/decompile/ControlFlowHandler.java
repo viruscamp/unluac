@@ -1,5 +1,6 @@
 package unluac.decompile;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -626,7 +627,39 @@ public class ControlFlowHandler {
       }
       b = b.previous;
     }
-    //TODO: conditional breaks (Lua 5.2) [conflicts with unredirection]
+    
+    b = state.begin_branch;
+    List<Branch> ifStack = new ArrayList<Branch>(); 
+    while(b != null) {
+      Block enclosing = enclosing_breakable_block(state, b.line);
+      while(!ifStack.isEmpty()) {
+        if(enclosing_breakable_block(state, ifStack.get(ifStack.size() - 1).line) != enclosing) {
+          ifStack.remove(ifStack.size() - 1);
+        } else {
+          break;
+        }
+      }
+      if(is_conditional(b)) {
+        if(enclosing != null && b.targetSecond >= enclosing.end) {
+          ifStack.add(b);
+        }
+      } else if(b.type == Branch.Type.jump) {
+        if(enclosing != null && b.targetFirst < enclosing.end && !ifStack.isEmpty()) {
+          if(b.line <= state.code.length - 1 && state.branches[b.line + 1] != null) {
+            Branch prev = state.branches[b.line + 1];
+            if(prev.type == Branch.Type.jump && (prev.targetFirst == enclosing.end || prev.targetFirst == state.resolved[enclosing.end])) {
+              Branch candidate = ifStack.get(ifStack.size() - 1);
+              if(state.resolved[candidate.targetSecond] == state.resolved[prev.targetFirst]) {
+                candidate.targetSecond = prev.line;
+                ifStack.remove(ifStack.size() - 1);
+              }
+            }
+          }
+        }
+      }
+      b = b.next;
+    }
+    
     b = state.begin_branch;
     while(b != null) {
       if(is_conditional(b)) {
@@ -652,6 +685,7 @@ public class ControlFlowHandler {
       }
       b = b.next;
     }
+    
     for(Branch br : breaks) {
       remove_branch(state, br);
     }
