@@ -94,6 +94,7 @@ public class TestFiles {
     "upvalue03",
     "break01",
     "break02",
+    "break03",
     "report01a",
     "report01b",
     "report01c",

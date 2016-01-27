@@ -665,20 +665,29 @@ public class ControlFlowHandler {
     while(b != null) {
       if(is_conditional(b)) {
         Block enclosing = enclosing_breakable_block(state, b.line);
-        if(enclosing != null && b.targetSecond >= enclosing.end) {
-          for(Branch br : breaks) {
-            if(br.line >= b.targetFirst && br.line < b.targetSecond && br.line < enclosing.end) {
-              Branch tbr = br;
-              while(b.targetSecond != tbr.targetSecond) {
-                Branch next = state.branches[tbr.targetSecond];
-                if(next != null && next.type == Branch.Type.jump) {
-                  tbr = next; // TODO: guard against infinite loop
-                } else {
-                  break;
+        //System.err.println("test " + b.line + " " + b.targetSecond);
+        if(enclosing != null && (b.targetSecond >= enclosing.end || b.targetSecond < enclosing.begin)) {
+          //System.err.println("candidate " + b.line);
+          if(state.function.header.version.usesIfBreakRewrite()) {
+            Block block = new IfThenEndBlock(state.function, state.r, b.cond.inverse(), b.targetFirst, b.targetFirst);
+            block.addStatement(new Break(state.function, b.targetFirst, b.targetSecond));
+            state.blocks.add(block);
+            remove_branch(state, b);
+          } else {
+            for(Branch br : breaks) {
+              if(br.line >= b.targetFirst && br.line < b.targetSecond && br.line < enclosing.end) {
+                Branch tbr = br;
+                while(b.targetSecond != tbr.targetSecond) {
+                  Branch next = state.branches[tbr.targetSecond];
+                  if(next != null && next.type == Branch.Type.jump) {
+                    tbr = next; // TODO: guard against infinite loop
+                  } else {
+                    break;
+                  }
                 }
-              }
-              if(b.targetSecond == tbr.targetSecond) {
-                b.targetSecond = br.line;
+                if(b.targetSecond == tbr.targetSecond) {
+                  b.targetSecond = br.line;
+                }
               }
             }
           }

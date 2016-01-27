@@ -39,6 +39,8 @@ public abstract class Version {
   
   public abstract boolean isEnvironmentTable(String name);
   
+  public abstract boolean usesIfBreakRewrite();
+  
 }
 
 class Version50 extends Version {
@@ -89,6 +91,11 @@ class Version50 extends Version {
   
   @Override
   public boolean isEnvironmentTable(String upvalue) {
+    return false;
+  }
+  
+  @Override
+  public boolean usesIfBreakRewrite() {
     return false;
   }
   
@@ -145,6 +152,11 @@ class Version51 extends Version {
     return false;
   }
   
+  @Override
+  public boolean usesIfBreakRewrite() {
+    return false;
+  }
+  
 }
 
 class Version52 extends Version {
@@ -198,6 +210,11 @@ class Version52 extends Version {
     return name.equals("_ENV");
   }
   
+  @Override
+  public boolean usesIfBreakRewrite() {
+    return true;
+  }
+  
 }
 
 class Version53 extends Version {
@@ -249,6 +266,11 @@ class Version53 extends Version {
   @Override
   public boolean isEnvironmentTable(String name) {
     return name.equals("_ENV");
+  }
+  
+  @Override
+  public boolean usesIfBreakRewrite() {
+    return true;
   }
   
 }
