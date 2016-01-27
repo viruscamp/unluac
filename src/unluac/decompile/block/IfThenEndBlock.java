@@ -68,7 +68,7 @@ public class IfThenEndBlock extends Block {
           }
         }
       }
-      if(assign != null && assign.getFirstTarget().getIndex() == test || statements.isEmpty()) {
+      if(assign != null && assign.getFirstTarget().isLocal() && assign.getFirstTarget().getIndex() == test || statements.isEmpty()) {
         Condition finalset = new SetCondition(end - 1, test);
         Condition combined;
         

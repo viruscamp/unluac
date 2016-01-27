@@ -20,6 +20,7 @@ public class TestFiles {
     "repeat",
     "if01",
     "if02",
+    "if03",
     "booleanassign01",
     "booleanassign02",
     "booleanassign03",
