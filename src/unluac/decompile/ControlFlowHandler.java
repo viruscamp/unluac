@@ -633,7 +633,8 @@ public class ControlFlowHandler {
     while(b != null) {
       Block enclosing = enclosing_breakable_block(state, b.line);
       while(!ifStack.isEmpty()) {
-        if(enclosing_breakable_block(state, ifStack.get(ifStack.size() - 1).line) != enclosing) {
+        Block outer = enclosing_breakable_block(state, ifStack.get(ifStack.size() - 1).line); 
+        if(enclosing == null || (outer != enclosing && !outer.contains(enclosing))) {
           ifStack.remove(ifStack.size() - 1);
         } else {
           break;
