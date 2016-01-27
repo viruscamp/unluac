@@ -665,9 +665,7 @@ public class ControlFlowHandler {
     while(b != null) {
       if(is_conditional(b)) {
         Block enclosing = enclosing_breakable_block(state, b.line);
-        //System.err.println("test " + b.line + " " + b.targetSecond);
         if(enclosing != null && (b.targetSecond >= enclosing.end || b.targetSecond < enclosing.begin)) {
-          //System.err.println("candidate " + b.line);
           if(state.function.header.version.usesIfBreakRewrite()) {
             Block block = new IfThenEndBlock(state.function, state.r, b.cond.inverse(), b.targetFirst, b.targetFirst);
             block.addStatement(new Break(state.function, b.targetFirst, b.targetSecond));
@@ -1036,6 +1034,7 @@ public class ControlFlowHandler {
       case GETGLOBAL:
       case GETTABLE:
       case NEWTABLE:
+      case NEWTABLE50:
       case ADD:
       case SUB:
       case MUL:
@@ -1066,6 +1065,7 @@ public class ControlFlowHandler {
       case FORPREP:
       case TFORCALL:
       case TFORLOOP:
+      case TFORPREP:
       case CLOSE:
         return true;
       case SELF:

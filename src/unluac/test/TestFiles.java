@@ -18,6 +18,8 @@ public class TestFiles {
     "ifthenelse",
     "while",
     "repeat",
+    "if01",
+    "if02",
     "booleanassign01",
     "booleanassign02",
     "booleanassign03",
