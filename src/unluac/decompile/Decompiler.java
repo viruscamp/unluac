@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import unluac.Configuration;
 import unluac.Version;
 import unluac.decompile.block.Block;
 import unluac.decompile.expression.ClosureExpression;
@@ -81,6 +82,10 @@ public class Decompiler {
     vararg = function.vararg;
     tforTarget = function.header.version.getTForTarget();
     forTarget = function.header.version.getForTarget();
+  }
+  
+  public Configuration getConfiguration() {
+    return function.header.config;
   }
   
   public Version getVersion() {
@@ -531,7 +536,7 @@ public class Decompiler {
       case SETTABUP: {
         int A = code.A(line);
         int B = code.B(line);
-        return new TableTarget(upvalues.getExpression(A), r.getKExpression(B, line));
+        return new TableTarget(upvalues.getExpression(A), r.getKExpression(B, previous));
       }
       default:
         throw new IllegalStateException();
