@@ -3,6 +3,7 @@ package unluac.decompile.target;
 import unluac.decompile.Declaration;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 
 public class VariableTarget extends Target {
 
@@ -11,6 +12,9 @@ public class VariableTarget extends Target {
   public VariableTarget(Declaration decl) {
     this.decl = decl;
   }
+  
+  @Override
+  public void walk(Walker w) {}
   
   @Override
   public void print(Decompiler d, Output out) {

@@ -5,6 +5,7 @@ import java.util.List;
 import unluac.decompile.Declaration;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 
 public class Declare extends Statement {
 
@@ -14,6 +15,11 @@ public class Declare extends Statement {
     this.decls = decls;
   }
 
+  @Override
+  public void walk(Walker w) {
+    w.visitStatement(this);
+  }
+  
   @Override
   public void print(Decompiler d, Output out) {
     out.print("local ");

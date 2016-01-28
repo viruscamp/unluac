@@ -6,10 +6,12 @@ import java.util.List;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
+import unluac.decompile.Walker;
 import unluac.decompile.condition.AndCondition;
 import unluac.decompile.condition.Condition;
 import unluac.decompile.condition.OrCondition;
 import unluac.decompile.condition.SetCondition;
+import unluac.decompile.expression.Expression;
 import unluac.decompile.operation.Operation;
 import unluac.decompile.statement.Assignment;
 import unluac.decompile.statement.Statement;
@@ -21,13 +23,29 @@ public class IfThenEndBlock extends Block {
   private final Registers r;
   private final List<Statement> statements;
   
+  private Expression condexpr;
+  
   public IfThenEndBlock(LFunction function, Registers r, Condition cond, int begin, int end) {
     super(function, begin, end);
     this.r = r;
     this.cond = cond;
     this.statements = new ArrayList<Statement>(end - begin + 1);
   }
-     
+  
+  @Override
+  public void resolve(Registers r) {
+    condexpr = cond.asExpression(r);
+  }
+  
+  @Override
+  public void walk(Walker w) {
+    w.visitStatement(this);
+    w.visitExpression(condexpr);
+    for(Statement statement : statements) {
+      w.visitStatement(statement);
+    }
+  }
+  
   @Override
   public void addStatement(Statement statement) {
     statements.add(statement);
@@ -103,7 +121,7 @@ public class IfThenEndBlock extends Block {
   @Override
   public void print(Decompiler d, Output out) {
     out.print("if ");
-    cond.asExpression(r).print(d, out);
+    condexpr.print(d, out);
     out.print(" then");
     out.println();
     out.indent();

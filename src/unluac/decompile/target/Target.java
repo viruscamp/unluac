@@ -3,9 +3,12 @@ package unluac.decompile.target;
 import unluac.decompile.Declaration;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 
 abstract public class Target {
 
+  abstract public void walk(Walker w);
+  
   abstract public void print(Decompiler d, Output out);
   
   abstract public void printMethod(Decompiler d, Output out);

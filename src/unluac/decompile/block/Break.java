@@ -2,6 +2,7 @@ package unluac.decompile.block;
 
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 import unluac.decompile.statement.Statement;
 import unluac.parse.LFunction;
 
@@ -14,6 +15,11 @@ public class Break extends Block {
     this.target = target;
   }
 
+  @Override
+  public void walk(Walker w) {
+    w.visitStatement(this);
+  }
+  
   @Override
   public void addStatement(Statement statement) {
     throw new IllegalStateException();

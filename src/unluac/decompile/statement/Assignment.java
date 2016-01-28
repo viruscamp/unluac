@@ -6,6 +6,7 @@ import java.util.List;
 import unluac.decompile.Declaration;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 import unluac.decompile.expression.Expression;
 import unluac.decompile.target.Target;
 
@@ -20,6 +21,14 @@ public class Assignment extends Statement {
   
   public Assignment() {
     
+  }
+  
+  @Override
+  public void walk(Walker w) {
+    w.visitStatement(this);
+    for(Expression expression : values) {
+      w.visitExpression(expression);
+    }
   }
   
   @Override

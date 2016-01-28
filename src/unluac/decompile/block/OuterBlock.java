@@ -5,6 +5,7 @@ import java.util.List;
 
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 import unluac.decompile.statement.Return;
 import unluac.decompile.statement.Statement;
 import unluac.parse.LFunction;
@@ -16,6 +17,14 @@ public class OuterBlock extends Block {
   public OuterBlock(LFunction function, int length) {
     super(function, 0, length + 1);
     statements = new ArrayList<Statement>(length);
+  }
+  
+  @Override
+  public void walk(Walker w) {
+    w.visitStatement(this);
+    for(Statement statement : statements) {
+      w.visitStatement(statement);
+    }
   }
 
   @Override

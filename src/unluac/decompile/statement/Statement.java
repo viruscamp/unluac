@@ -4,6 +4,7 @@ import java.util.List;
 
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 
 abstract public class Statement {
 
@@ -41,6 +42,8 @@ abstract public class Statement {
   public void addComment(String comment) {
     this.comment = comment;
   }
+  
+  public abstract void walk(Walker w);
   
   public boolean beginsWithParen() {
     return false;

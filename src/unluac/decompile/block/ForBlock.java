@@ -7,23 +7,52 @@ import unluac.Version;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
+import unluac.decompile.Walker;
 import unluac.decompile.expression.Expression;
 import unluac.decompile.statement.Statement;
+import unluac.decompile.target.Target;
 import unluac.parse.LFunction;
 
 public class ForBlock extends Block {
 
   private final int register;
-  private final Registers r;
   private final List<Statement> statements;
   
-  public ForBlock(LFunction function, int begin, int end, int register, Registers r) {
+  private Target target;
+  private Expression start;
+  private Expression stop;
+  private Expression step;
+  
+  public ForBlock(LFunction function, int begin, int end, int register) {
     super(function, begin, end);
     this.register = register;
-    this.r = r;
     statements = new ArrayList<Statement>(end - begin + 1);
   }
 
+  @Override
+  public void resolve(Registers r) {
+    if(function.header.version == Version.LUA50) {
+      target = r.getTarget(register, begin - 1);
+      start = r.getValue(register, begin - 2);
+    } else {
+      start = r.getValue(register, begin - 1);
+      target = r.getTarget(register + 3, begin - 1);
+    }
+    stop = r.getValue(register + 1, begin - 1);
+    step = r.getValue(register + 2, begin - 1);
+  }
+  
+  @Override
+  public void walk(Walker w) {
+    w.visitStatement(this);
+    w.visitExpression(start);
+    w.visitExpression(stop);
+    w.visitExpression(step);
+    for(Statement statement : statements) {
+      w.visitStatement(statement);
+    }
+  }
+  
   @Override
   public int scopeEnd() {
     return end - 2;
@@ -57,20 +86,11 @@ public class ForBlock extends Block {
   @Override
   public void print(Decompiler d, Output out) {
     out.print("for ");
-    if (function.header.version == Version.LUA50) {
-      r.getTarget(register, begin - 1).print(d, out);
-    } else {
-      r.getTarget(register + 3, begin - 1).print(d, out);
-    }
+    target.print(d, out);
     out.print(" = ");
-    if(function.header.version == Version.LUA50) {
-      r.getValue(register, begin - 2).print(d, out);
-    } else {
-      r.getValue(register, begin - 1).print(d, out);
-    }
+    start.print(d, out);
     out.print(", ");
-    r.getValue(register + 1, begin - 1).print(d, out);
-    Expression step = r.getValue(register + 2, begin - 1);
+    stop.print(d, out);
     if(!step.isInteger() || step.asInteger() != 1) {
       out.print(", ");
       step.print(d, out);

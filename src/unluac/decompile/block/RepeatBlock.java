@@ -6,21 +6,37 @@ import java.util.List;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
+import unluac.decompile.Walker;
 import unluac.decompile.condition.Condition;
+import unluac.decompile.expression.Expression;
 import unluac.decompile.statement.Statement;
 import unluac.parse.LFunction;
 
 public class RepeatBlock extends Block {
 
-  private final Registers r;
   private final Condition cond;
   private final List<Statement> statements;
   
-  public RepeatBlock(LFunction function, Registers r, Condition cond, int begin, int end) {
+  private Expression condexpr;
+  
+  public RepeatBlock(LFunction function, Condition cond, int begin, int end) {
     super(function, begin, end);
-    this.r = r;
     this.cond = cond;
     statements = new ArrayList<Statement>(end - begin + 1);
+  }
+  
+  @Override
+  public void resolve(Registers r) {
+    condexpr = cond.asExpression(r);
+  }
+  
+  @Override
+  public void walk(Walker w) {
+    w.visitStatement(this);
+    for(Statement statement : statements) {
+      w.visitStatement(statement);
+    }
+    w.visitExpression(condexpr);
   }
   
   @Override
@@ -56,7 +72,7 @@ public class RepeatBlock extends Block {
     Statement.printSequence(d, out, statements);
     out.dedent();
     out.print("until ");
-    cond.asExpression(r).print(d, out);
+    condexpr.print(d, out);
   }
   
 }

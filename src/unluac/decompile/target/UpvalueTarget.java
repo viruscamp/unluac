@@ -2,6 +2,7 @@ package unluac.decompile.target;
 
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 
 public class UpvalueTarget extends Target{
 
@@ -11,6 +12,9 @@ public class UpvalueTarget extends Target{
     this.name = name;
   }
 
+  @Override
+  public void walk(Walker w) {}
+  
   @Override
   public void print(Decompiler d, Output out) {
     out.print(name);    

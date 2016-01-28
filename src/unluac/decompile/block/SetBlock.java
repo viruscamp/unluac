@@ -4,6 +4,7 @@ import unluac.decompile.ControlFlowHandler;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
+import unluac.decompile.Walker;
 import unluac.decompile.condition.Condition;
 import unluac.decompile.expression.Expression;
 import unluac.decompile.operation.Operation;
@@ -31,13 +32,17 @@ public class SetBlock extends Block {
     // System.out.println("-- set block " + begin + " .. " + end);
   }
   
+  public void walk(Walker w) {
+    throw new IllegalStateException();
+  }
+  
   @Override
   public void addStatement(Statement statement) {
     if(!finalize && statement instanceof Assignment) {
       this.assign = (Assignment) statement;
-    } else if(statement instanceof BooleanIndicator) {
+    }/* else if(statement instanceof BooleanIndicator) {
       finalize = true;
-    }
+    }*/
   }
   
   @Override

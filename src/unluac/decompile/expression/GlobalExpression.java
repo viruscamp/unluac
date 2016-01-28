@@ -5,10 +5,10 @@ import unluac.decompile.Output;
 
 public class GlobalExpression extends Expression {
 
-  private final String name;
+  private final ConstantExpression name;
   private final int index;
   
-  public GlobalExpression(String name, int index) {
+  public GlobalExpression(ConstantExpression name, int index) {
     super(PRECEDENCE_ATOMIC);
     this.name = name;
     this.index = index;
@@ -26,7 +26,7 @@ public class GlobalExpression extends Expression {
 
   @Override
   public void print(Decompiler d, Output out) {
-    out.print(name);
+    out.print(name.asName());
   }
   
   @Override

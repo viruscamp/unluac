@@ -97,6 +97,9 @@ public class Decompiler {
     blocks.addAll(myblocks);
     outer = myblocks.get(0);
     processSequence();
+    for(Block block : blocks) {
+      block.resolve(r);
+    }
   }
   
   public void print() {

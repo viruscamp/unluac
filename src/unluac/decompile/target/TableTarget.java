@@ -2,6 +2,7 @@ package unluac.decompile.target;
 
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 import unluac.decompile.expression.Expression;
 import unluac.decompile.expression.TableReference;
 
@@ -15,6 +16,12 @@ public class TableTarget extends Target {
     this.index = index;
   }
 
+  @Override
+  public void walk(Walker w) {
+    w.visitExpression(table);
+    w.visitExpression(index);
+  }
+  
   @Override
   public void print(Decompiler d, Output out) {
     new TableReference(table, index).print(d, out);

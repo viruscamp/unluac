@@ -30,8 +30,9 @@ public class Function {
     return register - constantsOffset;
   }
 
-  public String getGlobalName(int constantIndex) {
-    return constants[constantIndex].asName();
+  public ConstantExpression getGlobalName(int constantIndex) {
+    if(!constants[constantIndex].isIdentifier()) throw new IllegalStateException();
+    return getConstantExpression(constantIndex);
   }
   
   public ConstantExpression getConstantExpression(int constantIndex) {

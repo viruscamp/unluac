@@ -365,14 +365,14 @@ public class ControlFlowHandler {
           if(state.branches[target + 1] != null) {
             remove_branch(state, state.branches[target + 1]);
           }
-          blocks.add(new TForBlock(state.function, line + 1, target + 2, A, C, r));
+          blocks.add(new TForBlock(state.function, line + 1, target + 2, A, C));
         } else if(code.op(target) == forTarget && !loop[target]) {
           loop[target] = true;
           int A = code.A(target);
           r.setInternalLoopVariable(A, target, line + 1); //TODO: end?
           r.setInternalLoopVariable(A + 1, target, line + 1);
           r.setInternalLoopVariable(A + 2, target, line + 1);
-          blocks.add(new ForBlock(state.function, line + 1, target + 1, A, r));
+          blocks.add(new ForBlock(state.function, line + 1, target + 1, A));
           remove_branch(state, b);
         }
       }
@@ -383,7 +383,7 @@ public class ControlFlowHandler {
       switch(code.op(line)) {
         case FORPREP: {
           int target = code.target(line);
-          blocks.add(new ForBlock(state.function, line + 1, target + 1, code.A(line), r));
+          blocks.add(new ForBlock(state.function, line + 1, target + 1, code.A(line)));
           r.setInternalLoopVariable(code.A(line), line, target + 1);
           r.setInternalLoopVariable(code.A(line) + 1, line, target + 1);
           r.setInternalLoopVariable(code.A(line) + 2, line, target + 1);
@@ -399,7 +399,7 @@ public class ControlFlowHandler {
           for(int index = 0; index <= C; index++) {
             r.setExplicitLoopVariable(A + 2 + index, line, target + 2); // TODO: end?
           }
-          blocks.add(new TForBlock(state.function, line + 1, target + 2, A, C, r));
+          blocks.add(new TForBlock(state.function, line + 1, target + 2, A, C));
           remove_branch(state, state.branches[target + 1]);
           break;
         }
@@ -424,7 +424,6 @@ public class ControlFlowHandler {
   
   private static void find_while_loops(State state) {
     List<Block> blocks = state.blocks;
-    Registers r = state.r;
     Branch j = state.end_branch;
     while(j != null) {
       if(j.type == Branch.Type.jump && j.targetFirst < j.line) {
@@ -458,7 +457,7 @@ public class ControlFlowHandler {
         if(b != null) {
           remove_branch(state, b);
           //System.err.println("while " + b.targetFirst + " " + b.targetSecond);
-          loop = new WhileBlock(state.function, r, b.cond, b.targetFirst, b.targetSecond);
+          loop = new WhileBlock(state.function, b.cond, b.targetFirst, b.targetSecond);
           unredirect(state, loopback, end, j.line, loopback);
         } else {
           loop = new AlwaysLoop(state.function, loopback, end);
@@ -490,14 +489,14 @@ public class ControlFlowHandler {
                   }
                 }
                 if(headb != null) {
-                  block = new WhileBlock(state.function, state.r, b.cond.inverse(), head + 1, b.targetFirst);
+                  block = new WhileBlock(state.function, b.cond.inverse(), head + 1, b.targetFirst);
                   remove_branch(state, headb);
                 }
               }
             }
           }
           if(block == null) {
-            block = new RepeatBlock(state.function, state.r, b.cond, b.targetSecond, b.targetFirst);
+            block = new RepeatBlock(state.function, b.cond, b.targetSecond, b.targetFirst);
           }
           remove_branch(state, b);
           blocks.add(block);
@@ -527,7 +526,7 @@ public class ControlFlowHandler {
             }             
           }
           //System.err.println("else end " + b.targetFirst + " " + b.targetSecond + " " + tail.targetSecond + " enclosing " + (enclosing != null ? enclosing.begin : -1) + " " + + (enclosing != null ? enclosing.end : -1));
-          state.blocks.add(new IfThenElseBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond, tail.targetSecond));
+          state.blocks.add(new IfThenElseBlock(state.function, b.cond, b.targetFirst, b.targetSecond, tail.targetSecond));
           if(b.targetSecond != tail.targetSecond) {
             state.blocks.add(new ElseEndBlock(state.function, b.targetSecond, tail.targetSecond));
           } // else "empty else" case

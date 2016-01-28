@@ -22,6 +22,8 @@ abstract public class Block extends Statement implements Comparable<Block> {
   
   abstract public void addStatement(Statement statement);
   
+  public void resolve(Registers r) {}
+  
   public boolean contains(Block block) {
     return begin <= block.begin && end >= block.end;
   }

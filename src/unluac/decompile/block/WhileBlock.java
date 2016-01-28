@@ -6,21 +6,37 @@ import java.util.List;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
+import unluac.decompile.Walker;
 import unluac.decompile.condition.Condition;
+import unluac.decompile.expression.Expression;
 import unluac.decompile.statement.Statement;
 import unluac.parse.LFunction;
 
 public class WhileBlock extends Block {
 
-  private final Registers r;
   private final Condition cond;
   private final List<Statement> statements;
   
-  public WhileBlock(LFunction function, Registers r, Condition cond, int begin, int end) {
+  private Expression condexpr;
+  
+  public WhileBlock(LFunction function, Condition cond, int begin, int end) {
     super(function, begin, end);
-    this.r = r;
     this.cond = cond;
     statements = new ArrayList<Statement>(end - begin + 1);
+  }
+  
+  @Override
+  public void resolve(Registers r) {
+    condexpr = cond.asExpression(r);
+  }
+  
+  @Override
+  public void walk(Walker w) {
+    w.visitStatement(this);
+    w.visitExpression(condexpr);
+    for(Statement statement : statements) {
+      w.visitStatement(statement);
+    }
   }
   
   @Override
@@ -56,7 +72,7 @@ public class WhileBlock extends Block {
   @Override
   public void print(Decompiler d, Output out) {
     out.print("while ");
-    cond.asExpression(r).print(d, out);
+    condexpr.print(d, out);
     out.print(" do");
     out.println();
     out.indent();

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 import unluac.decompile.expression.Expression;
 
 public class Return extends Statement {
@@ -21,6 +22,13 @@ public class Return extends Statement {
   
   public Return(Expression[] values) {
     this.values = values;
+  }
+  
+  public void walk(Walker w) {
+    w.visitStatement(this);
+    for(Expression expression : values) {
+      w.visitExpression(expression);
+    }
   }
   
   @Override
