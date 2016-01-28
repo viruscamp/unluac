@@ -305,12 +305,16 @@ public class ControlFlowHandler {
           }
           case JMP: {
             int target = code.target(line);
-            int loadboolblock = find_loadboolblock(state, target);
-            if(loadboolblock >= 1) {
-              handle_loadboolblock(state, skip, loadboolblock, new ConstantCondition(-1, false), line, target);
+            if(target == line + 1 && code.A(line) != 0) {
+              // ignore -- this is acting as CLOSE
             } else {
-              Branch b = new Branch(line, Branch.Type.jump, null, target, target);
-              insert_branch(state, b);
+              int loadboolblock = find_loadboolblock(state, target);
+              if(loadboolblock >= 1) {
+                handle_loadboolblock(state, skip, loadboolblock, new ConstantCondition(-1, false), line, target);
+              } else {
+                Branch b = new Branch(line, Branch.Type.jump, null, target, target);
+                insert_branch(state, b);
+              }
             }
             break;
           }
