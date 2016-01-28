@@ -18,13 +18,11 @@ public class SetBlock extends Block {
   private Assignment assign;
   public final Condition cond;
   private Registers r;
-  private boolean empty;
   private boolean finalize = false;
   
   public SetBlock(LFunction function, Condition cond, int target, int line,
-      int begin, int end, boolean empty, Registers r) {
+      int begin, int end, Registers r) {
     super(function, begin, end);
-    this.empty = empty;
     if(begin == end)
       this.begin -= 1;
     this.target = target;

@@ -5,12 +5,10 @@ import unluac.decompile.Output;
 
 public class Vararg extends Expression {
 
-  private final int length;
   private final boolean multiple;
   
   public Vararg(int length, boolean multiple) {
     super(PRECEDENCE_ATOMIC);
-    this.length = length;
     this.multiple = multiple;
   }
 

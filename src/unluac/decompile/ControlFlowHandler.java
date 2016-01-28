@@ -314,6 +314,8 @@ public class ControlFlowHandler {
             }
             break;
           }
+          default:
+            break;
         }
       }
     }
@@ -401,6 +403,8 @@ public class ControlFlowHandler {
           remove_branch(state, state.branches[target + 1]);
           break;
         }
+        default:
+          break;
       }
     }
   }
@@ -504,7 +508,6 @@ public class ControlFlowHandler {
   }
   
   private static void find_if_blocks(State state) {
-    List<Block> blocks = state.blocks;
     Branch b = state.begin_branch;
     while(b != null) {
       if(is_conditional(b)) {
@@ -554,7 +557,7 @@ public class ControlFlowHandler {
     Branch b = state.begin_branch;
     while(b != null) {
       if(is_assignment(b) || b.type == Branch.Type.finalset) {
-        Block block = new SetBlock(state.function, b.cond, b.target, b.line, b.targetFirst, b.targetSecond, false, state.r);
+        Block block = new SetBlock(state.function, b.cond, b.target, b.line, b.targetFirst, b.targetSecond, state.r);
         blocks.add(block);
         remove_branch(state, b);
       }
@@ -724,10 +727,6 @@ public class ControlFlowHandler {
   
   private static boolean is_conditional(Branch b) {
     return b.type == Branch.Type.comparison || b.type == Branch.Type.test;
-  }
-  
-  private static boolean is_conditional(Branch b, int r) {
-    return b.type == Branch.Type.comparison || b.type == Branch.Type.test && b.target != r;
   }
   
   private static boolean is_assignment(Branch b) {

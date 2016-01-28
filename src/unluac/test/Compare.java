@@ -98,8 +98,9 @@ public class Compare {
   }
   
   public static LFunction file_to_function(String filename) {
+    RandomAccessFile file = null;
     try {
-      RandomAccessFile file = new RandomAccessFile(filename, "r");
+      file = new RandomAccessFile(filename, "r");
       ByteBuffer buffer = ByteBuffer.allocate((int) file.length());
       buffer.order(ByteOrder.LITTLE_ENDIAN);
       int len = (int) file.length();
@@ -110,6 +111,12 @@ public class Compare {
       return header.main;
     } catch(IOException e) {
       return null;
+    } finally {
+      if(file != null) {
+        try {
+          file.close();
+        } catch(IOException e) {}
+      }
     }
   }
   

@@ -50,9 +50,6 @@ public class Decompiler {
   private final int params;
   private final int vararg;
   
-  private final Op tforTarget;
-  private final Op forTarget;
-  
   public Decompiler(LFunction function) {
     this(function, null, -1);
   }
@@ -80,8 +77,6 @@ public class Decompiler {
     functions = function.functions;
     params = function.numParams;
     vararg = function.vararg;
-    tforTarget = function.header.version.getTForTarget();
-    forTarget = function.header.version.getForTarget();
   }
   
   public Configuration getConfiguration() {
@@ -353,7 +348,7 @@ public class Decompiler {
         break;
       case CLOSURE: {
         LFunction f = functions[Bx];
-        operations.add(new RegisterSet(line, A, new ClosureExpression(f, declList, line + 1)));
+        operations.add(new RegisterSet(line, A, new ClosureExpression(f, line + 1)));
         if(function.header.version.usesInlineUpvalueDeclarations()) {
           // Skip upvalue declarations
           for(int i = 0; i < f.numUpvalues; i++) {

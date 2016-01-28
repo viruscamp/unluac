@@ -27,7 +27,6 @@ public class VariableFinder {
     
     RegisterStates(int registers, int lines) {
       this.registers = registers;
-      this.lines = lines;
       states = new RegisterState[lines][registers];
       for(int line = 0; line < lines; line++) {
         for(int register = 0; register < registers; register++) {
@@ -53,7 +52,6 @@ public class VariableFinder {
     }
     
     private int registers;
-    private int lines;
     private RegisterState[][] states;
     
   }
@@ -184,6 +182,8 @@ public class VariableFinder {
           }
           break;
         }
+        default:
+          break;
       }
     }
     List<Declaration> declList = new ArrayList<Declaration>(registers); 
@@ -192,7 +192,7 @@ public class VariableFinder {
       boolean local = false;
       boolean temporary = false;
       int read = 0;
-      int written = 0;
+      //int written = 0;
       if(register < args) {
         local = true;
         id = "A";
@@ -203,7 +203,7 @@ public class VariableFinder {
           if(state.local) local = true;
           if(state.temporary) temporary = true;
           if(state.read) read++;
-          if(state.written) written++;
+          //if(state.written) written++;
         }
       }
       if(!local && !temporary) {

@@ -11,10 +11,13 @@ public class Validator {
 						line + 1 <= code.length && code.op(line + 1) == Op.JMP,
 						"ByteCode validation failed; EQ instruction is not followed by JMP"
 					);
+					break;
 				}
 				case LT: {
-					
+					break;
 				}
+				default:
+				  break;
 			}
 		}
 	}

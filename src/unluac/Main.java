@@ -61,15 +61,22 @@ public class Main {
   }
   
   private static LFunction file_to_function(String fn, Configuration config) throws IOException {
-    RandomAccessFile file = new RandomAccessFile(fn, "r");
-    ByteBuffer buffer = ByteBuffer.allocate((int) file.length());
-    buffer.order(ByteOrder.LITTLE_ENDIAN);
-    int len = (int) file.length();
-    FileChannel in = file.getChannel();
-    while(len > 0) len -= in.read(buffer);
-    buffer.rewind();
-    BHeader header = new BHeader(buffer, config);
-    return header.main;
+    RandomAccessFile file = null;
+    try {
+      file = new RandomAccessFile(fn, "r");
+      ByteBuffer buffer = ByteBuffer.allocate((int) file.length());
+      buffer.order(ByteOrder.LITTLE_ENDIAN);
+      int len = (int) file.length();
+      FileChannel in = file.getChannel();
+      while(len > 0) len -= in.read(buffer);
+      buffer.rewind();
+      BHeader header = new BHeader(buffer, config);
+      return header.main;
+    } finally {
+      if(file != null) {
+        file.close();
+      }
+    }
   }
   
   public static void decompile(String in, String out) throws IOException {

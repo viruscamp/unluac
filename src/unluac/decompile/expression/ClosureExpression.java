@@ -1,6 +1,5 @@
 package unluac.decompile.expression;
 
-import unluac.decompile.Declaration;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.target.TableTarget;
@@ -13,13 +12,11 @@ public class ClosureExpression extends Expression {
 
   private final LFunction function;
   private int upvalueLine;
-  private Declaration[] declList;
   
-  public ClosureExpression(LFunction function, Declaration[] declList, int upvalueLine) {
+  public ClosureExpression(LFunction function, int upvalueLine) {
     super(PRECEDENCE_ATOMIC);
     this.function = function;
     this.upvalueLine = upvalueLine;
-    this.declList = declList;
   }
 
   public int getConstantIndex() {
