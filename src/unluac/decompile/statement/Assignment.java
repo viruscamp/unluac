@@ -26,11 +26,11 @@ public class Assignment extends Statement {
   @Override
   public void walk(Walker w) {
     w.visitStatement(this);
-    for(Expression expression : values) {
-      expression.walk(w);
-    }
     for(Target target : targets) {
       target.walk(w);
+    }
+    for(Expression expression : values) {
+      expression.walk(w);
     }
   }
   

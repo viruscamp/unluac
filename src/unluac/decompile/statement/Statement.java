@@ -3,6 +3,7 @@ package unluac.decompile.statement;
 import java.util.List;
 
 import unluac.decompile.Decompiler;
+import unluac.decompile.Function;
 import unluac.decompile.Output;
 import unluac.decompile.Walker;
 
@@ -50,6 +51,10 @@ abstract public class Statement {
   }
   
   public boolean suppressNewline() {
+    return false;
+  }
+  
+  public boolean useConstant(Function f, int index) {
     return false;
   }
   

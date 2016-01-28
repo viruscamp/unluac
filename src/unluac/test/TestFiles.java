@@ -98,6 +98,7 @@ public class TestFiles {
     "break01",
     "break02",
     "break03",
+    "unused01",
     "report01a",
     "report01b",
     "report01c",

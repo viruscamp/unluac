@@ -3,8 +3,10 @@ package unluac.decompile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import unluac.Configuration;
 import unluac.Version;
@@ -100,6 +102,7 @@ public class Decompiler {
     for(Block block : blocks) {
       block.resolve(r);
     }
+    handleUnusedConstants(outer);
   }
   
   public void print() {
@@ -113,6 +116,54 @@ public class Decompiler {
   public void print(Output out) {
     handleInitialDeclares(out);
     outer.print(this, out);
+  }
+  
+  private void handleUnusedConstants(Block outer) {
+    Set<Integer> unusedConstants = new HashSet<Integer>(function.constants.length);
+    outer.walk(new Walker() {
+      
+      private int nextConstant = 0;
+      
+      @Override
+      public void visitExpression(Expression expression) {
+        if(expression.isConstant()) {
+          int index = expression.getConstantIndex();
+          if(index >= 0) {
+            while(index > nextConstant) {
+              unusedConstants.add(nextConstant++);
+            }
+            if(index == nextConstant) {
+              nextConstant++;
+            }
+          }
+        }
+      }
+      
+    });
+    outer.walk(new Walker() {
+      
+      private int nextConstant = 0;
+      
+      @Override
+      public void visitStatement(Statement statement) {
+        if(unusedConstants.contains(nextConstant)) {
+          if(statement.useConstant(f, nextConstant)) {
+            nextConstant++;
+          }
+        }
+      }
+      
+      @Override
+      public void visitExpression(Expression expression) {
+        if(expression.isConstant()) {
+          int index = expression.getConstantIndex();
+          if(index >= nextConstant) {
+            nextConstant = index + 1;
+          }
+        }
+      }
+      
+    });
   }
   
   private void handleInitialDeclares(Output out) {
