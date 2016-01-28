@@ -30,17 +30,7 @@ public class AndCondition implements Condition {
   
   @Override
   public int register() {
-    int leftr = left.register();
-    int rightr = right.register();
-    if(leftr == rightr) {
-      return leftr;
-    } else if(leftr == -1) {
-      return rightr;
-    } else if(rightr == -1) {
-      return leftr;
-    } else {
-      return -2;
-    }
+    return right.register();
   }
   
   @Override
