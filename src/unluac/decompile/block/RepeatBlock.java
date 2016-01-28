@@ -34,9 +34,9 @@ public class RepeatBlock extends Block {
   public void walk(Walker w) {
     w.visitStatement(this);
     for(Statement statement : statements) {
-      w.visitStatement(statement);
+      statement.walk(w);
     }
-    w.visitExpression(condexpr);
+    condexpr.walk(w);
   }
   
   @Override

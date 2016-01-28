@@ -16,7 +16,7 @@ public class GlobalTarget extends Target {
 
   @Override
   public void walk(Walker w) {
-    w.visitExpression(name);
+    name.walk(w);
   }
   
   @Override

@@ -45,11 +45,11 @@ public class ForBlock extends Block {
   @Override
   public void walk(Walker w) {
     w.visitStatement(this);
-    w.visitExpression(start);
-    w.visitExpression(stop);
-    w.visitExpression(step);
+    start.walk(w);
+    stop.walk(w);
+    step.walk(w);
     for(Statement statement : statements) {
-      w.visitStatement(statement);
+      statement.walk(w);
     }
   }
   

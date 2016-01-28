@@ -2,6 +2,7 @@ package unluac.decompile.expression;
 
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 
 public class GlobalExpression extends Expression {
 
@@ -12,6 +13,12 @@ public class GlobalExpression extends Expression {
     super(PRECEDENCE_ATOMIC);
     this.name = name;
     this.index = index;
+  }
+  
+  @Override
+  public void walk(Walker w) {
+    w.visitExpression(this);
+    name.walk(w);
   }
   
   @Override

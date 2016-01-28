@@ -2,6 +2,7 @@ package unluac.decompile.expression;
 
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 import unluac.decompile.target.TableTarget;
 import unluac.decompile.target.Target;
 import unluac.decompile.target.VariableTarget;
@@ -19,6 +20,11 @@ public class ClosureExpression extends Expression {
     this.upvalueLine = upvalueLine;
   }
 
+  @Override
+  public void walk(Walker w) {
+    w.visitExpression(this);
+  }
+  
   public int getConstantIndex() {
     return -1;
   }

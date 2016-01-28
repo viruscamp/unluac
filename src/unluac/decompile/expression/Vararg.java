@@ -2,6 +2,7 @@ package unluac.decompile.expression;
 
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 
 public class Vararg extends Expression {
 
@@ -12,6 +13,11 @@ public class Vararg extends Expression {
     this.multiple = multiple;
   }
 
+  @Override
+  public void walk(Walker w) {
+    w.visitExpression(this);
+  }
+  
   @Override
   public int getConstantIndex() {
     return -1;

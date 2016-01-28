@@ -40,9 +40,9 @@ public class IfThenEndBlock extends Block {
   @Override
   public void walk(Walker w) {
     w.visitStatement(this);
-    w.visitExpression(condexpr);
+    condexpr.walk(w);
     for(Statement statement : statements) {
-      w.visitStatement(statement);
+      statement.walk(w);
     }
   }
   

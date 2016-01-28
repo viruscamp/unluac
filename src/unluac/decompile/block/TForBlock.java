@@ -63,10 +63,10 @@ public class TForBlock extends Block {
   public void walk(Walker w) {
     w.visitStatement(this);
     for(Expression expression : values) {
-      w.visitExpression(expression);
+      expression.walk(w);
     }
     for(Statement statement : statements) {
-      w.visitStatement(statement);
+      statement.walk(w);
     }
   }
   

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 
 public class FunctionCall extends Expression {
 
@@ -18,6 +19,15 @@ public class FunctionCall extends Expression {
     this.multiple = multiple;
   }
 
+  @Override
+  public void walk(Walker w) {
+    w.visitExpression(this);
+    function.walk(w);
+    for(Expression expression : arguments) {
+      expression.walk(w);
+    }
+  }
+  
   @Override
   public int getConstantIndex() {
     int index = function.getConstantIndex();

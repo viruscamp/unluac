@@ -16,7 +16,7 @@ public class FunctionCallStatement extends Statement {
   @Override
   public void walk(Walker w) {
     w.visitStatement(this);
-    w.visitExpression(call);
+    call.walk(w);
   }
   
   @Override

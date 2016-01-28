@@ -27,7 +27,7 @@ public class Return extends Statement {
   public void walk(Walker w) {
     w.visitStatement(this);
     for(Expression expression : values) {
-      w.visitExpression(expression);
+      expression.walk(w);
     }
   }
   

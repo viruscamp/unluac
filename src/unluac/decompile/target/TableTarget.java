@@ -18,8 +18,8 @@ public class TableTarget extends Target {
 
   @Override
   public void walk(Walker w) {
-    w.visitExpression(table);
-    w.visitExpression(index);
+    table.walk(w);
+    index.walk(w);
   }
   
   @Override

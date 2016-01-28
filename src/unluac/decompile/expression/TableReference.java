@@ -2,6 +2,7 @@ package unluac.decompile.expression;
 
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 
 public class TableReference extends Expression {
 
@@ -14,6 +15,13 @@ public class TableReference extends Expression {
     this.index = index;
   }
 
+  @Override
+  public void walk(Walker w) {
+    w.visitExpression(this);
+    table.walk(w);
+    index.walk(w);
+  }
+  
   @Override
   public int getConstantIndex() {
     return Math.max(table.getConstantIndex(), index.getConstantIndex());

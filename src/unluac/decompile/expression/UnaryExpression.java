@@ -2,6 +2,7 @@ package unluac.decompile.expression;
 
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 
 public class UnaryExpression extends Expression {
 
@@ -14,6 +15,12 @@ public class UnaryExpression extends Expression {
     this.expression = expression;
   }
 
+  @Override
+  public void walk(Walker w) {
+    w.visitExpression(this);
+    expression.walk(w);
+  }
+  
   @Override
   public boolean isUngrouped() {
     return true;

@@ -5,6 +5,7 @@ import java.util.Collections;
 
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 
 public class TableLiteral extends Expression {
 
@@ -41,6 +42,15 @@ public class TableLiteral extends Expression {
     capacity = arraySize + hashSize;
   }
 
+  @Override
+  public void walk(Walker w) {
+    w.visitExpression(this);
+    for(Entry entry : entries) {
+      entry.key.walk(w);
+      entry.value.walk(w);
+    }
+  }
+  
   @Override
   public int getConstantIndex() {
     int index = -1;

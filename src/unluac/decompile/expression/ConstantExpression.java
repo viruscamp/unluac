@@ -3,6 +3,7 @@ package unluac.decompile.expression;
 import unluac.decompile.Constant;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 
 public class ConstantExpression extends Expression {
 
@@ -15,6 +16,11 @@ public class ConstantExpression extends Expression {
     this.index = index;
   }
 
+  @Override
+  public void walk(Walker w) {
+    w.visitExpression(this);
+  }
+  
   public int getConstantIndex() {
     return index;
   }

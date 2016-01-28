@@ -5,6 +5,7 @@ import java.util.List;
 import unluac.decompile.Constant;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 import unluac.decompile.target.Target;
 import unluac.parse.LNil;
 
@@ -148,6 +149,8 @@ abstract public class Expression {
     out.print(" ");
     right.print(d, out);
   }
+  
+  abstract public void walk(Walker w);
   
   abstract public void print(Decompiler d, Output out);
   

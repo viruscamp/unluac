@@ -27,7 +27,10 @@ public class Assignment extends Statement {
   public void walk(Walker w) {
     w.visitStatement(this);
     for(Expression expression : values) {
-      w.visitExpression(expression);
+      expression.walk(w);
+    }
+    for(Target target : targets) {
+      target.walk(w);
     }
   }
   

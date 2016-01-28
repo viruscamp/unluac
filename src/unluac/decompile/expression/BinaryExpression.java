@@ -2,6 +2,7 @@ package unluac.decompile.expression;
 
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Walker;
 
 public class BinaryExpression extends Expression {
 
@@ -18,6 +19,13 @@ public class BinaryExpression extends Expression {
     this.associativity = associativity;
   }
 
+  @Override
+  public void walk(Walker w) {
+    w.visitExpression(this);
+    left.walk(w);
+    right.walk(w);
+  }
+  
   @Override
   public boolean isUngrouped() {
     return !beginsWithParen();
