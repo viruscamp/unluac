@@ -1,6 +1,7 @@
 package unluac.decompile.statement;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import unluac.decompile.Declaration;
@@ -131,7 +132,27 @@ public class Assignment extends Statement {
         }
         if(!declare || !allnil) {
           out.print(" = ");
-          Expression.printSequence(d, out, values, false, false);
+          
+          // In Lua 5.2 and above, explicit and implicit nils are compiled differently.
+          // Explicit nils get put in the constant list (and thus have a constantIndex).
+          // Implicit nils come from LOADNIL
+          LinkedList<Expression> expressions = new LinkedList<Expression>();
+          boolean include = false;
+          for(int i = values.size() - 1; i >= 0; i--) {
+            Expression value = values.get(i);
+            if(include || !value.isNil() || value.getConstantIndex() != -1) {
+              include = true;
+            }
+            if(include) {
+              expressions.addFirst(value);
+            }
+          }
+          
+          if(expressions.isEmpty() && !declare) {
+            expressions.addAll(values);
+          }
+          
+          Expression.printSequence(d, out, expressions, false, false);
         }
       } else {
         values.get(0).printClosure(d, out, targets.get(0));
