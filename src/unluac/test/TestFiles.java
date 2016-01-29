@@ -17,6 +17,7 @@ public class TestFiles {
     "nestedif02",
     "ifthenelse",
     "while",
+    "while02",
     "repeat",
     "repeat02",
     "if01",

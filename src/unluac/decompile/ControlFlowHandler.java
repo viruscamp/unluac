@@ -440,7 +440,7 @@ public class ControlFlowHandler {
         int end = j.line + 1;
         Branch b = state.begin_branch;
         while(b != null) {
-          if(is_conditional(b) && b.line >= loopback && b.line < j.line && b.targetSecond == end) {
+          if(is_conditional(b) && b.line >= loopback && b.line < j.line && state.resolved[b.targetSecond] == state.resolved[end]) {
             break;
           }
           b = b.next;
@@ -463,6 +463,7 @@ public class ControlFlowHandler {
         }
         Block loop;
         if(b != null) {
+          b.targetSecond = end;
           remove_branch(state, b);
           //System.err.println("while " + b.targetFirst + " " + b.targetSecond);
           loop = new WhileBlock(state.function, b.cond, b.targetFirst, b.targetSecond);
