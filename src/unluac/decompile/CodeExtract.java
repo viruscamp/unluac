@@ -8,6 +8,8 @@ public interface CodeExtract {
 
   int extract_B(int codepoint);
 
+  int extract_Ax(int codepoint);
+  
   int extract_Bx(int codepoint);
 
   int extract_sBx(int codepoint);

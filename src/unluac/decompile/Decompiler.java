@@ -210,6 +210,10 @@ public class Decompiler {
       case LOADK:
         operations.add(new RegisterSet(line, A, f.getConstantExpression(Bx)));
         break;
+      case LOADKX:
+        if(line + 1 >= code.length || code.op(line + 1) != Op.EXTRAARG) throw new IllegalStateException();
+        operations.add(new RegisterSet(line, A, f.getConstantExpression(code.Ax(line + 1))));
+        break;
       case LOADBOOL:
         operations.add(new RegisterSet(line, A, new ConstantExpression(new Constant(B != 0 ? LBoolean.LTRUE : LBoolean.LFALSE), -1)));
         break;
@@ -382,7 +386,9 @@ public class Decompiler {
       }
       case SETLIST: {
         if(C == 0) {
-          C = code.codepoint(line + 1);
+          //TODO: Lua 5.1 -- C = code.codepoint(line + 1);
+          if(line + 1 >= code.length || code.op(line + 1) != Op.EXTRAARG) throw new IllegalStateException();
+          C = code.Ax(line + 1);
           skip[line + 1] = true;
         }
         if(B == 0) {
@@ -415,6 +421,9 @@ public class Decompiler {
         operations.add(new MultipleRegisterSet(line, A, A + B - 2, value));
         break;
       }
+      case EXTRAARG:
+        /* Do nothing ... handled by previous instruction */
+        break;
       default:
         throw new IllegalStateException("Illegal instruction: " + code.op(line));
     }

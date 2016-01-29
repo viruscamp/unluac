@@ -42,6 +42,11 @@ public class Code50 implements CodeExtract {
   }
 
   @Override
+  public int extract_Ax(int codepoint) {
+    throw new IllegalStateException();
+  }
+  
+  @Override
   public int extract_Bx(int codepoint) {
     return (codepoint >> shiftBx) & maskBx;
   }

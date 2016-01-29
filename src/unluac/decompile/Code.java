@@ -31,6 +31,14 @@ public class Code {
     }
 
     /**
+     * Returns the Ax (A extended) field of the given codepoint.
+     */
+    @Override
+    public int extract_Ax(int codepoint) {
+      return codepoint >>> 6;
+    }
+    
+    /**
      * Returns the Bx (B extended) field of the given codepoint.
      */
     @Override
@@ -106,6 +114,13 @@ public class Code {
    */
   public int B(int line) {
     return extractor.extract_B(code[line - 1]);
+  }
+  
+  /**
+   * Returns the Ax field (A extended) of the instruction at the given line.
+   */
+  public int Ax(int line) {
+    return extractor.extract_Ax(code[line - 1]);
   }
   
   /**
