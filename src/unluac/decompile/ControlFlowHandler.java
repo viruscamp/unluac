@@ -535,6 +535,7 @@ public class ControlFlowHandler {
             state.blocks.add(new ElseEndBlock(state.function, b.targetSecond, tail.targetSecond));
           } // else "empty else" case
           remove_branch(state, tail);
+          unredirect(state, b.targetFirst, b.targetSecond, b.targetSecond - 1, tail.targetSecond);
         } else {
           //System.err.println("if end " + b.targetFirst + " " + b.targetSecond);
           
