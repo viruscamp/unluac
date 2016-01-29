@@ -998,12 +998,19 @@ public class ControlFlowHandler {
       case TESTSET:
       case TEST50:
         return code.A(line);
-      case LOADNIL:
-        if(code.A(line) == code.B(line)) {
+      case LOADNIL: {
+        boolean single;
+        if(state.function.header.version.usesOldLoadNilEncoding()) {
+          single = code.A(line) == code.B(line);
+        } else {
+          single = code.B(line) == 0;
+        }
+        if(single) {
           return code.A(line);
         } else {
           return -1;
         }
+      }
       case SETGLOBAL:
       case SETUPVAL:
       case SETTABUP:
