@@ -64,6 +64,7 @@ public class Code {
   private final CodeExtract extractor;
   private final OpcodeMap map;
   private final int[] code;
+  private final boolean[] extraByte;
   public final int length;
   
   public Code(LFunction function) {
@@ -71,6 +72,11 @@ public class Code {
     this.length = code.length;
     map = function.header.version.getOpcodeMap();
     extractor = function.header.extractor;
+    extraByte = new boolean[length];
+    for(int i = 0; i < length; i++) {
+      int line = i + 1;
+      extraByte[i] = op(line).hasExtraByte(codepoint(line), extractor);
+    }
   }
   
   public CodeExtract getExtractor() {
@@ -88,7 +94,11 @@ public class Code {
       System.out.println("line " + line + ": " + toString(line));
       reentered = false;
     }*/
-    return map.get(opcode(line));
+    if(line >= 2 && extraByte[line - 2]) {
+      return Op.EXTRABYTE;
+    } else {
+      return map.get(opcode(line));
+    }
   }
   
   public int opcode(int line) {

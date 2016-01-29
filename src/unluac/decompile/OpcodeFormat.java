@@ -8,5 +8,6 @@ public enum OpcodeFormat {
   A_Bx,
   A_sBx,
   Ax,
-  sBx;
+  sBx,
+  ALL;
 }

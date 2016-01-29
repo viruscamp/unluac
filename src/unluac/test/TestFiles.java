@@ -65,6 +65,7 @@ public class TestFiles {
     "compareorder05",
     "table01",
     "table02",
+    "table03",
     "localfunction01",
     "localfunction02",
     "localfunction03",

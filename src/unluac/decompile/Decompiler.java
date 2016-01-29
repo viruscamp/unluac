@@ -384,11 +384,15 @@ public class Decompiler {
         }
         break;
       }
-      case SETLIST: {
+      case SETLIST:
+      case SETLIST52: {
         if(C == 0) {
-          //TODO: Lua 5.1 -- C = code.codepoint(line + 1);
-          if(line + 1 >= code.length || code.op(line + 1) != Op.EXTRAARG) throw new IllegalStateException();
-          C = code.Ax(line + 1);
+          if(code.op(line) == Op.SETLIST) {
+            C = code.codepoint(line + 1);
+          } else {
+            if(line + 1 >= code.length || code.op(line + 1) != Op.EXTRAARG) throw new IllegalStateException();
+            C = code.Ax(line + 1);
+          }
           skip[line + 1] = true;
         }
         if(B == 0) {
@@ -422,10 +426,9 @@ public class Decompiler {
         break;
       }
       case EXTRAARG:
+      case EXTRABYTE:
         /* Do nothing ... handled by previous instruction */
         break;
-      default:
-        throw new IllegalStateException("Illegal instruction: " + code.op(line));
     }
     return operations;
   }

@@ -24,7 +24,7 @@ public enum Op {
   NOT(OpcodeFormat.A_B),
   LEN(OpcodeFormat.A_B),
   CONCAT(OpcodeFormat.A_B_C),
-  JMP(OpcodeFormat.sBx), // Different in 5.2
+  JMP(OpcodeFormat.sBx), // TODO: Different in 5.2
   EQ(OpcodeFormat.A_B_C),
   LT(OpcodeFormat.A_B_C),
   LE(OpcodeFormat.A_B_C),
@@ -45,6 +45,7 @@ public enum Op {
   LOADKX(OpcodeFormat.A),
   GETTABUP(OpcodeFormat.A_B_C),
   SETTABUP(OpcodeFormat.A_B_C),
+  SETLIST52(OpcodeFormat.A_B_C),
   TFORCALL(OpcodeFormat.A_C),
   EXTRAARG(OpcodeFormat.Ax),
   // Lua 5.0 Opcodes
@@ -60,12 +61,26 @@ public enum Op {
   BXOR(OpcodeFormat.A_B_C),
   SHL(OpcodeFormat.A_B_C),
   SHR(OpcodeFormat.A_B_C),
-  BNOT(OpcodeFormat.A_B);
+  BNOT(OpcodeFormat.A_B),
+  // Special
+  EXTRABYTE(OpcodeFormat.ALL);
   
   private final OpcodeFormat format;
   
   private Op(OpcodeFormat format) {
     this.format = format;
+  }
+  
+  /**
+   * SETLIST sometimes uses an extra byte without tagging it.
+   * This means that the value in the extra byte can be detected as any other opcode unless it is recognzied.
+   */
+  public boolean hasExtraByte(int codepoint, CodeExtract ex) {
+    if(this == Op.SETLIST) {
+      return ex.extract_C(codepoint) == 0;
+    } else {
+      return false;
+    }
   }
   
   /**
@@ -137,6 +152,7 @@ public enum Op {
       case LE:
       case TEST:
       case SETLIST:
+      case SETLIST52:
       case SETLIST50:
       case SETLISTO:
         return -1;
@@ -158,6 +174,8 @@ public enum Op {
           return -1;
         }
       }
+      case EXTRABYTE:
+        return -1;
     }
     throw new IllegalStateException();
   }

@@ -1045,9 +1045,11 @@ public class ControlFlowHandler {
       case TESTSET:
       case TEST50:
       case SETLIST:
+      case SETLIST52:
       case SETLIST50:
       case SETLISTO:
       case EXTRAARG:
+      case EXTRABYTE:
         return false;
       case JMP:
         if(line == 1) {
