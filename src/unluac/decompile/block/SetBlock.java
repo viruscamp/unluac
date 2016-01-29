@@ -21,8 +21,7 @@ public class SetBlock extends Block {
   private Registers r;
   private boolean finalize = false;
   
-  public SetBlock(LFunction function, Condition cond, int target, int line,
-      int begin, int end, Registers r) {
+  public SetBlock(LFunction function, Condition cond, int target, int line, int begin, int end, Registers r) {
     super(function, begin, end, 2);
     if(begin == end)
       this.begin -= 1;

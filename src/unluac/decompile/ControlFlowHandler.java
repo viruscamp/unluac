@@ -76,6 +76,8 @@ public class ControlFlowHandler {
     public Branch begin_branch;
     public Branch end_branch;
     public Branch[] branches;
+    public Branch[] setbranches;
+    public Branch[] finalsetbranches;
     public boolean[] reverse_targets;
     public int[] resolved;
     public List<Block> blocks;
@@ -176,12 +178,12 @@ public class ControlFlowHandler {
     b.target = state.code.A(loadboolblock);
     b.inverseValue = inverse;
     insert_branch(state, b);
-    if(constant && final_line < begin && state.branches[final_line + 1] == null) {
+    if(constant && final_line < begin && state.finalsetbranches[final_line + 1] == null) {
       c = new TestCondition(final_line + 1, state.code.A(target));
       b = new Branch(final_line + 1, Branch.Type.finalset, c, final_line, loadboolblock + 2);
       insert_branch(state, b);
     }
-    if(final_line >= begin && state.branches[final_line] == null) {
+    if(final_line >= begin && state.finalsetbranches[final_line] == null) {
       c = new SetCondition(final_line, get_target(state, final_line));
       b = new Branch(final_line, Branch.Type.finalset, c, final_line, loadboolblock + 2);
       b.target = state.code.A(loadboolblock);
@@ -192,6 +194,8 @@ public class ControlFlowHandler {
   private static void find_branches(State state) {
     Code code = state.code;
     state.branches = new Branch[state.code.length + 1];
+    state.setbranches = new Branch[state.code.length + 1];
+    state.finalsetbranches = new Branch[state.code.length + 1];
     boolean[] skip = new boolean[code.length + 1];
     for(int line = 1; line <= code.length; line++) {
       if(!skip[line]) {
@@ -243,7 +247,7 @@ public class ControlFlowHandler {
               skip[line + 1] = true;
               insert_branch(state, b);
               int final_line = target - 1;
-              if(state.branches[final_line] == null) {
+              if(state.finalsetbranches[final_line] == null) {
                 int loadboolblock = find_loadboolblock(state, target - 2);
                 if(loadboolblock == -1) {
                   if(line + 2 == target) {
@@ -287,7 +291,7 @@ public class ControlFlowHandler {
             skip[line + 1] = true;
             insert_branch(state, b);
             int final_line = target - 1;
-            if(state.branches[final_line] == null) {
+            if(state.finalsetbranches[final_line] == null) {
               int loadboolblock = find_loadboolblock(state, target - 2);
               if(loadboolblock == -1) {
                 if(line + 2 == target) {
@@ -887,9 +891,19 @@ public class ControlFlowHandler {
     return branch1;
   }
   
+  private static Branch[] branches(State state, Branch b) {
+    if(b.type == Branch.Type.finalset) {
+      return state.finalsetbranches;
+    } else if(b.type == Branch.Type.testset) {
+      return state.setbranches;
+    } else {
+      return state.branches;
+    }
+  }
+  
   private static void replace_branch(State state, Branch branch0, Branch branch1, Branch branchn) {
-    state.branches[branch0.line] = null;
-    state.branches[branch1.line] = null;
+    branches(state, branch0)[branch0.line] = null;
+    branches(state, branch1)[branch1.line] = null;
     branchn.previous = branch0.previous;
     if(branchn.previous == null) {
       state.begin_branch = branchn;
@@ -902,11 +916,11 @@ public class ControlFlowHandler {
     } else {
       branchn.next.previous = branchn;
     }
-    state.branches[branchn.line] = branchn;
+    branches(state, branchn)[branchn.line] = branchn;
   }
   
   private static void remove_branch(State state, Branch b) {
-    state.branches[b.line] = null;
+    branches(state, b)[b.line] = null;
     Branch prev = b.previous;
     Branch next = b.next;
     if(prev != null) {
@@ -922,21 +936,31 @@ public class ControlFlowHandler {
   }
   
   private static void insert_branch(State state, Branch b) {
-    state.branches[b.line] = b;
+    branches(state, b)[b.line] = b;
   }
   
   private static void link_branches(State state) {
     Branch previous = null;
     for(int index = 0; index < state.branches.length; index++) {
-      Branch b = state.branches[index];
-      if(b != null) {
-        b.previous = previous;
-        if(previous != null) {
-          previous.next = b;
+      for(int array = 0; array < 3; array ++) {
+        Branch[] branches;
+        if(array == 0) {
+          branches = state.finalsetbranches;
+        } else if(array == 1) {
+          branches = state.setbranches;
         } else {
-          state.begin_branch = b;
+          branches = state.branches;
         }
-        previous = b;
+        Branch b = branches[index];
+        if(b != null) {
+          b.previous = previous;
+          if(previous != null) {
+            previous.next = b;
+          } else {
+            state.begin_branch = b;
+          }
+          previous = b;
+        }
       }
     }
     state.end_branch = previous;
