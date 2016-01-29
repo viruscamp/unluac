@@ -129,6 +129,8 @@ public class Registers {
       decl = new Declaration("_FOR_", begin, end);
       decl.register = register;
       newDeclaration(decl, register, begin, end);
+    } else {
+      if(decl.begin != begin || decl.end != end) throw new IllegalStateException();
     }
     decl.forLoop = true;
   }
@@ -139,6 +141,8 @@ public class Registers {
       decl = new Declaration("_FORV_" + register + "_", begin, end);
       decl.register = register;
       newDeclaration(decl, register, begin, end);
+    } else {
+      if(decl.begin != begin || decl.end != end) throw new IllegalStateException();
     }
     decl.forLoopExplicit = true;
   }
