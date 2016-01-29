@@ -213,16 +213,12 @@ public class Decompiler {
       case LOADBOOL:
         operations.add(new RegisterSet(line, A, new ConstantExpression(new Constant(B != 0 ? LBoolean.LTRUE : LBoolean.LFALSE), -1)));
         break;
-      case LOADNIL: {
-        int maximum;
-        if(function.header.version.usesOldLoadNilEncoding()) {
-          maximum = B;
-        } else {
-          maximum = A + B;
-        }
-        operations.add(new LoadNil(line, A, maximum));
+      case LOADNIL:
+        operations.add(new LoadNil(line, A, B));
         break;
-      }
+      case LOADNIL52:
+        operations.add(new LoadNil(line, A, A + B));
+        break;
       case GETUPVAL:
         operations.add(new RegisterSet(line, A, upvalues.getExpression(B)));
         break;

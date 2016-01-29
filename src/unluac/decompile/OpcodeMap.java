@@ -88,7 +88,7 @@ public class OpcodeMap {
       map[1] = Op.LOADK;
       map[2] = Op.LOADKX;
       map[3] = Op.LOADBOOL;
-      map[4] = Op.LOADNIL;
+      map[4] = Op.LOADNIL52;
       map[5] = Op.GETUPVAL;
       map[6] = Op.GETTABUP;
       map[7] = Op.GETTABLE;
@@ -130,7 +130,7 @@ public class OpcodeMap {
       map[1] = Op.LOADK;
       map[2] = Op.LOADKX;
       map[3] = Op.LOADBOOL;
-      map[4] = Op.LOADNIL;
+      map[4] = Op.LOADNIL52;
       map[5] = Op.GETUPVAL;
       map[6] = Op.GETTABUP;
       map[7] = Op.GETTABLE;

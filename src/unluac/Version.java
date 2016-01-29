@@ -25,8 +25,6 @@ public abstract class Version {
   
   public abstract int getOuterBlockScopeAdjustment();
 
-  public abstract boolean usesOldLoadNilEncoding();
-  
   public abstract boolean usesInlineUpvalueDeclarations();
   
   public abstract Op getTForTarget();
@@ -57,11 +55,6 @@ class Version50 extends Version {
   @Override
   public int getOuterBlockScopeAdjustment() {
     return -1;
-  }
-
-  @Override
-  public boolean usesOldLoadNilEncoding() {
-    return true;
   }
 
   @Override
@@ -118,11 +111,6 @@ class Version51 extends Version {
   }
   
   @Override
-  public boolean usesOldLoadNilEncoding() {
-    return true;
-  }
-  
-  @Override
   public boolean usesInlineUpvalueDeclarations() {
     return true;
   }
@@ -176,11 +164,6 @@ class Version52 extends Version {
   }
   
   @Override
-  public boolean usesOldLoadNilEncoding() {
-    return false;
-  }
-  
-  @Override
   public boolean usesInlineUpvalueDeclarations() {
     return false;
   }
@@ -231,11 +214,6 @@ class Version53 extends Version {
   @Override
   public int getOuterBlockScopeAdjustment() {
     return 0;
-  }
-  
-  @Override
-  public boolean usesOldLoadNilEncoding() {
-    return false;
   }
   
   @Override

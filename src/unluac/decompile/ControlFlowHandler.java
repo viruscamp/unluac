@@ -967,92 +967,11 @@ public class ControlFlowHandler {
     state.end_branch = previous;
   }
   
-  /**
-   * Returns the target register of the instruction at the given
-   * line or -1 if the instruction does not have a unique target.
-   * 
-   * TODO: this probably needs a more careful pass
-   */
   private static int get_target(State state, int line) {
     Code code = state.code;
-    switch(code.op(line)) {
-      case MOVE:
-      case LOADK:
-      case LOADBOOL:
-      case GETUPVAL:
-      case GETTABUP:
-      case GETGLOBAL:
-      case GETTABLE:
-      case NEWTABLE:
-      case ADD:
-      case SUB:
-      case MUL:
-      case DIV:
-      case MOD:
-      case POW:
-      case UNM:
-      case NOT:
-      case LEN:
-      case CONCAT:
-      case CLOSURE:
-      case TESTSET:
-      case TEST50:
-        return code.A(line);
-      case LOADNIL: {
-        boolean single;
-        if(state.function.header.version.usesOldLoadNilEncoding()) {
-          single = code.A(line) == code.B(line);
-        } else {
-          single = code.B(line) == 0;
-        }
-        if(single) {
-          return code.A(line);
-        } else {
-          return -1;
-        }
-      }
-      case SETGLOBAL:
-      case SETUPVAL:
-      case SETTABUP:
-      case SETTABLE:
-      case JMP:
-      case TAILCALL:
-      case RETURN:
-      case FORLOOP:
-      case FORPREP:
-      case TFORCALL:
-      case TFORLOOP:
-      case CLOSE:
-        return -1;
-      case SELF:
-        return -1;
-      case EQ:
-      case LT:
-      case LE:
-      case TEST:
-      case SETLIST:
-        return -1;
-      case CALL: {
-        int a = code.A(line);
-        int c = code.C(line);
-        if(c == 2) {
-          return a;
-        } else {
-          return -1; 
-        }
-      }
-      case VARARG: {
-        int a = code.A(line);
-        int b = code.B(line);
-        if(b == 1) {
-          return a;
-        } else {
-          return -1;
-        }
-      }
-      default:
-        throw new IllegalStateException();
-    }
+    Op op = code.op(line);
+    int codepoint = code.codepoint(line);
+    return op.target(codepoint, code.getExtractor());
   }
   
   private static boolean is_statement(State state, int line) {
@@ -1084,6 +1003,13 @@ public class ControlFlowHandler {
         return r.isLocal(code.A(line), line) || code.A(line) == testRegister;
       case LOADNIL:
         for(int register = code.A(line); register <= code.B(line); register++) {
+          if(r.isLocal(register, line)) {
+            return true;
+          }
+        }
+        return false;
+      case LOADNIL52:
+        for(int register = code.A(line); register <= code.A(line) + code.B(line); register++) {
           if(r.isLocal(register, line)) {
             return true;
           }

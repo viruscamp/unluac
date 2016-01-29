@@ -41,6 +41,7 @@ public enum Op {
   CLOSURE(OpcodeFormat.A_Bx),
   VARARG(OpcodeFormat.A_B),
   // Lua 5.2 Opcodes
+  LOADNIL52(OpcodeFormat.A_B),
   LOADKX(OpcodeFormat.A),
   GETTABUP(OpcodeFormat.A_B_C),
   SETTABUP(OpcodeFormat.A_B_C),
@@ -65,6 +66,100 @@ public enum Op {
   
   private Op(OpcodeFormat format) {
     this.format = format;
+  }
+  
+  /**
+   * Returns the target register of the instruction at the given
+   * line or -1 if the instruction does not have a unique target.
+   */
+  public int target(int codepoint, CodeExtract ex) {
+    switch(this) {
+      case MOVE:
+      case LOADK:
+      case LOADKX:
+      case LOADBOOL:
+      case GETUPVAL:
+      case GETTABUP:
+      case GETGLOBAL:
+      case GETTABLE:
+      case NEWTABLE:
+      case NEWTABLE50:
+      case ADD:
+      case SUB:
+      case MUL:
+      case DIV:
+      case MOD:
+      case POW:
+      case IDIV:
+      case BAND:
+      case BOR:
+      case BXOR:
+      case SHL:
+      case SHR:
+      case UNM:
+      case NOT:
+      case LEN:
+      case BNOT:
+      case CONCAT:
+      case CLOSURE:
+      case TESTSET:
+      case TEST50:
+        return ex.extract_A(codepoint);
+      case LOADNIL:
+        if(ex.extract_A(codepoint) == ex.extract_B(codepoint)) {
+          return ex.extract_A(codepoint);
+        } else {
+          return -1;
+        }
+      case LOADNIL52:
+        if(ex.extract_B(codepoint) == 0) {
+          return ex.extract_A(codepoint);
+        } else {
+          return -1;
+        }
+      case SETGLOBAL:
+      case SETUPVAL:
+      case SETTABUP:
+      case SETTABLE:
+      case JMP:
+      case TAILCALL:
+      case RETURN:
+      case FORLOOP:
+      case FORPREP:
+      case TFORPREP:
+      case TFORCALL:
+      case TFORLOOP:
+      case CLOSE:
+      case EXTRAARG:
+      case SELF:
+      case EQ:
+      case LT:
+      case LE:
+      case TEST:
+      case SETLIST:
+      case SETLIST50:
+      case SETLISTO:
+        return -1;
+      case CALL: {
+        int a = ex.extract_A(codepoint);
+        int c = ex.extract_C(codepoint);
+        if(c == 2) {
+          return a;
+        } else {
+          return -1; 
+        }
+      }
+      case VARARG: {
+        int a = ex.extract_A(codepoint);
+        int b = ex.extract_B(codepoint);
+        if(b == 1) {
+          return a;
+        } else {
+          return -1;
+        }
+      }
+    }
+    throw new IllegalStateException();
   }
   
   public String codePointToString(int codepoint, CodeExtract ex) {

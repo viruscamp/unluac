@@ -65,6 +65,10 @@ public class Code {
     extractor = function.header.extractor;
   }
   
+  public CodeExtract getExtractor() {
+    return extractor;
+  }
+  
   //public boolean reentered = false;
   
   /**
