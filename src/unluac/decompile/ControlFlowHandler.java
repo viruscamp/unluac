@@ -1086,7 +1086,6 @@ public class ControlFlowHandler {
       case SETUPVAL:
       case SETTABUP:
       case SETTABLE:
-      case JMP:
       case TAILCALL:
       case RETURN:
       case FORLOOP:
@@ -1106,6 +1105,19 @@ public class ControlFlowHandler {
       case TEST50:
       case SETLIST:
         return false;
+      case JMP:
+        if(line == 1) {
+          return true;
+        } else {
+          Op prev = code.op(line - 1);
+          if(prev == Op.EQ) return false;
+          if(prev == Op.LT) return false;
+          if(prev == Op.LE) return false;
+          if(prev == Op.TEST) return false;
+          if(prev == Op.TESTSET) return false;
+          if(prev == Op.TEST50) return false;
+          return true;
+        }
       case CALL: {
         int a = code.A(line);
         int c = code.C(line);

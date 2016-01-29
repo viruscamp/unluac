@@ -18,6 +18,7 @@ public class TestFiles {
     "ifthenelse",
     "while",
     "while02",
+    "while03",
     "repeat",
     "repeat02",
     "if01",
