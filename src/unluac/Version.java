@@ -31,8 +31,6 @@ public abstract class Version {
 
   public abstract Op getForTarget();
   
-  public abstract boolean isBreakableLoopEnd(Op op);
-  
   public abstract boolean isAllowedPreceedingSemicolon();
   
   public abstract boolean isEnvironmentTable(String name);
@@ -70,11 +68,6 @@ class Version50 extends Version {
   @Override
   public Op getForTarget() {
     return Op.FORLOOP;
-  }
-
-  @Override
-  public boolean isBreakableLoopEnd(Op op) {
-    return op == Op.JMP || op == Op.FORLOOP;
   }
 
   @Override
@@ -126,11 +119,6 @@ class Version51 extends Version {
   }
 
   @Override
-  public boolean isBreakableLoopEnd(Op op) {
-    return op == Op.JMP || op == Op.FORLOOP;
-  }
-  
-  @Override
   public boolean isAllowedPreceedingSemicolon() {
     return false;
   }
@@ -179,11 +167,6 @@ class Version52 extends Version {
   }
 
   @Override
-  public boolean isBreakableLoopEnd(Op op) {
-    return op == Op.JMP || op == Op.FORLOOP || op == Op.TFORLOOP;
-  }
-  
-  @Override
   public boolean isAllowedPreceedingSemicolon() {
     return true;
   }
@@ -231,11 +214,6 @@ class Version53 extends Version {
     return null;
   }
 
-  @Override
-  public boolean isBreakableLoopEnd(Op op) {
-    return op == Op.JMP || op == Op.FORLOOP || op == Op.TFORLOOP;
-  }
-  
   @Override
   public boolean isAllowedPreceedingSemicolon() {
     return true;
