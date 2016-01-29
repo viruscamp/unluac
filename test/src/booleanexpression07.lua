@@ -1,6 +1,6 @@
-function CachedClass.__init(self, class)
-	self = {}
-	self.proxy = setmetatable(class and table.clear(class) or {}, self)
-	ClassMap[self.class] = self.proxy
+function obj.method(self, x)
+	self = {name = "asdf"}
+	self.field = setmetatable(x and table.copy(x) or {}, self)
+	t[self.name] = self.field
 	return self
 end
