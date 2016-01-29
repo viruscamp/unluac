@@ -11,13 +11,15 @@ abstract public class Block extends Statement implements Comparable<Block> {
   protected final LFunction function;
   public int begin;
   public int end;
+  private final int priority;
   public boolean loopRedirectAdjustment = false;
   protected boolean scopeUsed = false;
   
-  public Block(LFunction function, int begin, int end) {
+  public Block(LFunction function, int begin, int end, int priority) {
     this.function = function;
     this.begin = begin;
     this.end = end;
+    this.priority = priority;
   }
   
   abstract public void addStatement(Statement statement);
@@ -78,7 +80,7 @@ abstract public class Block extends Statement implements Comparable<Block> {
         } else if(!this.isContainer() && block.isContainer()) {
           return 1;
         } else {
-          return 0;
+          return this.priority - block.priority;
         }
       } else {
         return -1;

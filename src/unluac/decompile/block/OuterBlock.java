@@ -15,7 +15,7 @@ public class OuterBlock extends Block {
   private final List<Statement> statements;
   
   public OuterBlock(LFunction function, int length) {
-    super(function, 0, length + 1);
+    super(function, 0, length + 1, -2);
     statements = new ArrayList<Statement>(length);
   }
   

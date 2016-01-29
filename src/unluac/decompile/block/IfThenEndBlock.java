@@ -26,7 +26,7 @@ public class IfThenEndBlock extends Block {
   private Expression condexpr;
   
   public IfThenEndBlock(LFunction function, Registers r, Condition cond, int begin, int end) {
-    super(function, begin, end);
+    super(function, begin, end, -1);
     this.r = r;
     this.cond = cond;
     this.statements = new ArrayList<Statement>(end - begin + 1);

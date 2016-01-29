@@ -24,7 +24,7 @@ public class ForBlock extends Block {
   private Expression step;
   
   public ForBlock(LFunction function, int begin, int end, int register) {
-    super(function, begin, end);
+    super(function, begin, end, -1);
     this.register = register;
     statements = new ArrayList<Statement>(end - begin + 1);
   }

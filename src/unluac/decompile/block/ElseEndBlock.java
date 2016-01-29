@@ -15,7 +15,7 @@ public class ElseEndBlock extends Block {
   public IfThenElseBlock partner;
   
   public ElseEndBlock(LFunction function, int begin, int end) {
-    super(function, begin, end);
+    super(function, begin, end, 0);
     statements = new ArrayList<Statement>(end - begin + 1);
   }
   

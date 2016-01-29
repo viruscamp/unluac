@@ -11,7 +11,7 @@ public class Break extends Block {
   public final int target;
   
   public Break(LFunction function, int line, int target) {
-    super(function, line, line);
+    super(function, line, line, 2);
     this.target = target;
   }
 

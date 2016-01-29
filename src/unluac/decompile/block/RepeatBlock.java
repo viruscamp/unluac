@@ -20,7 +20,7 @@ public class RepeatBlock extends Block {
   private Expression condexpr;
   
   public RepeatBlock(LFunction function, Condition cond, int begin, int end) {
-    super(function, begin, end);
+    super(function, begin, end, 0);
     this.cond = cond;
     statements = new ArrayList<Statement>(end - begin + 1);
   }

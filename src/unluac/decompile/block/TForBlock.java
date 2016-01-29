@@ -23,7 +23,7 @@ public class TForBlock extends Block {
   private Expression[] values;
   
   public TForBlock(LFunction function, int begin, int end, int register, int length) {
-    super(function, begin, end);
+    super(function, begin, end, -1);
     this.register = register;
     this.length = length;
     statements = new ArrayList<Statement>(end - begin + 1);

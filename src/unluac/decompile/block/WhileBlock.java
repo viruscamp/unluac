@@ -20,7 +20,7 @@ public class WhileBlock extends Block {
   private Expression condexpr;
   
   public WhileBlock(LFunction function, Condition cond, int begin, int end) {
-    super(function, begin, end);
+    super(function, begin, end, -1);
     this.cond = cond;
     statements = new ArrayList<Statement>(end - begin + 1);
   }

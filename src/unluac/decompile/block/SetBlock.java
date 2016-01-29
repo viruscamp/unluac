@@ -23,7 +23,7 @@ public class SetBlock extends Block {
   
   public SetBlock(LFunction function, Condition cond, int target, int line,
       int begin, int end, Registers r) {
-    super(function, begin, end);
+    super(function, begin, end, 2);
     if(begin == end)
       this.begin -= 1;
     this.target = target;

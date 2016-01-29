@@ -18,7 +18,7 @@ public class AlwaysLoop extends Block {
   private ConstantExpression condition;
   
   public AlwaysLoop(LFunction function, int begin, int end) {
-    super(function, begin, end);
+    super(function, begin, end, 0);
     statements = new ArrayList<Statement>();
     condition = null;
   }

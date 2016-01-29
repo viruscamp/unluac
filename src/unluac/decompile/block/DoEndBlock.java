@@ -14,7 +14,7 @@ public class DoEndBlock extends Block {
   private final List<Statement> statements;
   
   public DoEndBlock(LFunction function, int begin, int end) {
-    super(function, begin, end);
+    super(function, begin, end, 1);
     statements = new ArrayList<Statement>(end - begin + 1);
   }
 

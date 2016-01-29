@@ -22,7 +22,7 @@ public class IfThenElseBlock extends Block {
   private Expression condexpr;
   
   public IfThenElseBlock(LFunction function, Condition cond, int begin, int end, int elseTarget) {
-    super(function, begin, end);
+    super(function, begin, end, -1);
     this.cond = cond;
     this.elseTarget = elseTarget;
     statements = new ArrayList<Statement>(end - begin + 1);
