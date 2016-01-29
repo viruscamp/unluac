@@ -75,13 +75,7 @@ abstract public class Block extends Statement implements Comparable<Block> {
       if(this.end < block.end) {
         return 1;
       } else if(this.end == block.end) {
-        if(this.isContainer() && !block.isContainer()) {
-          return -1;
-        } else if(!this.isContainer() && block.isContainer()) {
-          return 1;
-        } else {
-          return this.priority - block.priority;
-        }
+        return this.priority - block.priority;
       } else {
         return -1;
       }
