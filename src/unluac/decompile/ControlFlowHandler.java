@@ -982,6 +982,7 @@ public class ControlFlowHandler {
     switch(code.op(line)) {
       case MOVE:
       case LOADK:
+      case LOADKX:
       case LOADBOOL:
       case GETUPVAL:
       case GETTABUP:
@@ -995,9 +996,16 @@ public class ControlFlowHandler {
       case DIV:
       case MOD:
       case POW:
+      case IDIV:
+      case BAND:
+      case BOR:
+      case BXOR:
+      case SHL:
+      case SHR:
       case UNM:
       case NOT:
       case LEN:
+      case BNOT:
       case CONCAT:
       case CLOSURE:
         return r.isLocal(code.A(line), line) || code.A(line) == testRegister;
@@ -1037,6 +1045,9 @@ public class ControlFlowHandler {
       case TESTSET:
       case TEST50:
       case SETLIST:
+      case SETLIST50:
+      case SETLISTO:
+      case EXTRAARG:
         return false;
       case JMP:
         if(line == 1) {
@@ -1076,9 +1087,8 @@ public class ControlFlowHandler {
         }
         return false;
       }
-      default:
-        throw new IllegalStateException("Illegal opcode: " + code.op(line));
     }
+    throw new IllegalStateException("Illegal opcode: " + code.op(line));
   }
   
   // static only
