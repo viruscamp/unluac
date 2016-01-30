@@ -1,7 +1,6 @@
 package unluac.decompile.block;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import unluac.Version;
 import unluac.decompile.Decompiler;
@@ -13,11 +12,10 @@ import unluac.decompile.statement.Statement;
 import unluac.decompile.target.Target;
 import unluac.parse.LFunction;
 
-public class TForBlock extends Block {
+public class TForBlock extends ContainerBlock {
 
   private final int register;
   private final int length;
-  private final List<Statement> statements;
   
   private Target[] targets;
   private Expression[] values;
@@ -26,7 +24,6 @@ public class TForBlock extends Block {
     super(function, begin, end, -1);
     this.register = register;
     this.length = length;
-    statements = new ArrayList<Statement>(end - begin + 1);
   }
 
   @Override
@@ -80,16 +77,6 @@ public class TForBlock extends Block {
     return true;
   }
   
-  @Override
-  public boolean isContainer() {
-    return true;
-  }
-  
-  @Override
-  public void addStatement(Statement statement) {
-    statements.add(statement);    
-  }
-
   @Override
   public boolean isUnprotected() {
     return false;

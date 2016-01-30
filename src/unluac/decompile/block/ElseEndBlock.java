@@ -1,30 +1,16 @@
 package unluac.decompile.block;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
-import unluac.decompile.Walker;
 import unluac.decompile.statement.Statement;
 import unluac.parse.LFunction;
 
-public class ElseEndBlock extends Block {
+public class ElseEndBlock extends ContainerBlock {
 
-  private final List<Statement> statements;
   public IfThenElseBlock partner;
   
   public ElseEndBlock(LFunction function, int begin, int end) {
     super(function, begin, end, 0);
-    statements = new ArrayList<Statement>(end - begin + 1);
-  }
-  
-  @Override
-  public void walk(Walker w) {
-    w.visitStatement(this);
-    for(Statement statement : statements) {
-      statement.walk(w);
-    }
   }
   
   @Override
@@ -40,16 +26,6 @@ public class ElseEndBlock extends Block {
   @Override
   public boolean breakable() {
     return false;
-  }
-  
-  @Override
-  public boolean isContainer() {
-    return true;
-  }
-  
-  @Override
-  public void addStatement(Statement statement) {
-    statements.add(statement);
   }
   
   @Override

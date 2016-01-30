@@ -1,8 +1,5 @@
 package unluac.decompile.block;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import unluac.Version;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
@@ -13,10 +10,9 @@ import unluac.decompile.statement.Statement;
 import unluac.decompile.target.Target;
 import unluac.parse.LFunction;
 
-public class ForBlock extends Block {
+public class ForBlock extends ContainerBlock {
 
   private final int register;
-  private final List<Statement> statements;
   
   private Target target;
   private Expression start;
@@ -26,7 +22,6 @@ public class ForBlock extends Block {
   public ForBlock(LFunction function, int begin, int end, int register) {
     super(function, begin, end, -1);
     this.register = register;
-    statements = new ArrayList<Statement>(end - begin + 1);
   }
 
   @Override
@@ -59,17 +54,7 @@ public class ForBlock extends Block {
   }
   
   @Override
-  public void addStatement(Statement statement) {
-    statements.add(statement);    
-  }
-
-  @Override
   public boolean breakable() {
-    return true;
-  }
-  
-  @Override
-  public boolean isContainer() {
     return true;
   }
   

@@ -1,45 +1,20 @@
 package unluac.decompile.block;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
-import unluac.decompile.Walker;
 import unluac.decompile.statement.Return;
 import unluac.decompile.statement.Statement;
 import unluac.parse.LFunction;
 
-public class OuterBlock extends Block {
+public class OuterBlock extends ContainerBlock {
 
-  private final List<Statement> statements;
-  
   public OuterBlock(LFunction function, int length) {
     super(function, 0, length + 1, -2);
-    statements = new ArrayList<Statement>(length);
-  }
-  
-  @Override
-  public void walk(Walker w) {
-    w.visitStatement(this);
-    for(Statement statement : statements) {
-      statement.walk(w);
-    }
-  }
-
-  @Override
-  public void addStatement(Statement statement) {
-    statements.add(statement);
   }
   
   @Override
   public boolean breakable() {
     return false;
-  }
-  
-  @Override
-  public boolean isContainer() {
-    return true;
   }
   
   @Override

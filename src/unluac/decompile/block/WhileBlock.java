@@ -12,17 +12,15 @@ import unluac.decompile.expression.Expression;
 import unluac.decompile.statement.Statement;
 import unluac.parse.LFunction;
 
-public class WhileBlock extends Block {
+public class WhileBlock extends ContainerBlock {
 
   private final Condition cond;
-  private final List<Statement> statements;
   
   private Expression condexpr;
   
   public WhileBlock(LFunction function, Condition cond, int begin, int end) {
     super(function, begin, end, -1);
     this.cond = cond;
-    statements = new ArrayList<Statement>(end - begin + 1);
   }
   
   @Override
@@ -47,16 +45,6 @@ public class WhileBlock extends Block {
   @Override
   public boolean breakable() {
     return true;
-  }
-  
-  @Override
-  public boolean isContainer() {
-    return true;
-  }
-  
-  @Override
-  public void addStatement(Statement statement) {
-    statements.add(statement);
   }
   
   @Override

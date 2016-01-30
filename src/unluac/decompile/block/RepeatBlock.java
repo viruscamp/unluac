@@ -1,8 +1,5 @@
 package unluac.decompile.block;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
@@ -12,17 +9,15 @@ import unluac.decompile.expression.Expression;
 import unluac.decompile.statement.Statement;
 import unluac.parse.LFunction;
 
-public class RepeatBlock extends Block {
+public class RepeatBlock extends ContainerBlock {
 
   private final Condition cond;
-  private final List<Statement> statements;
   
   private Expression condexpr;
   
   public RepeatBlock(LFunction function, Condition cond, int begin, int end) {
     super(function, begin, end, 0);
     this.cond = cond;
-    statements = new ArrayList<Statement>(end - begin + 1);
   }
   
   @Override
@@ -42,16 +37,6 @@ public class RepeatBlock extends Block {
   @Override
   public boolean breakable() {
     return true;
-  }
-  
-  @Override
-  public boolean isContainer() {
-    return true;
-  }
-    
-  @Override
-  public void addStatement(Statement statement) {
-    statements.add(statement);
   }
   
   @Override

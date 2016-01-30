@@ -1,8 +1,5 @@
 package unluac.decompile.block;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
@@ -12,10 +9,9 @@ import unluac.decompile.expression.Expression;
 import unluac.decompile.statement.Statement;
 import unluac.parse.LFunction;
 
-public class IfThenElseBlock extends Block {
+public class IfThenElseBlock extends ContainerBlock {
 
   private final Condition cond;
-  private final List<Statement> statements;
   private final int elseTarget;
   public ElseEndBlock partner;
   
@@ -25,7 +21,6 @@ public class IfThenElseBlock extends Block {
     super(function, begin, end, -1);
     this.cond = cond;
     this.elseTarget = elseTarget;
-    statements = new ArrayList<Statement>(end - begin + 1);
   }
   
   @Override
@@ -59,16 +54,6 @@ public class IfThenElseBlock extends Block {
   @Override
   public boolean breakable() {
     return false;
-  }
-  
-  @Override
-  public boolean isContainer() {
-    return true;
-  }
-  
-  @Override
-  public void addStatement(Statement statement) {
-    statements.add(statement);
   }
   
   @Override
