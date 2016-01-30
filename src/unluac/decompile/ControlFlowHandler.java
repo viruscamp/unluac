@@ -171,6 +171,7 @@ public class ControlFlowHandler {
     boolean constant = is_jmp(state, line);
     Branch b;
     int begin = line + 2;
+    
     if(constant) {
       begin--;
       b = new Branch(line, Branch.Type.testset, c, begin, loadboolblock + 2);
@@ -182,6 +183,7 @@ public class ControlFlowHandler {
     b.target = state.code.A(loadboolblock);
     b.inverseValue = inverse;
     insert_branch(state, b);
+    
     if(constant && final_line < begin && state.finalsetbranches[final_line + 1] == null) {
       c = new TestCondition(final_line + 1, state.code.A(target));
       b = new Branch(final_line + 1, Branch.Type.finalset, c, final_line, loadboolblock + 2);
@@ -190,6 +192,12 @@ public class ControlFlowHandler {
     if(final_line >= begin && state.finalsetbranches[final_line] == null) {
       c = new SetCondition(final_line, get_target(state, final_line));
       b = new Branch(final_line, Branch.Type.finalset, c, final_line, loadboolblock + 2);
+      b.target = state.code.A(loadboolblock);
+      insert_branch(state, b);
+    }
+    if(final_line + 1 == begin && state.finalsetbranches[final_line + 1] == null) {
+      c = new RegisterSetCondition(loadboolblock, get_target(state, loadboolblock));
+      b = new Branch(final_line + 1, Branch.Type.finalset, c, final_line, loadboolblock + 2);
       b.target = state.code.A(loadboolblock);
       insert_branch(state, b);
     }

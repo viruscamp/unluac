@@ -61,6 +61,7 @@ public class TestFiles {
     "combinebexpression02",
     "combinebexpression03",
     "combinebexpression04",
+    "combinebassign01",
     "complexassign01",
     "complexassign02",
     "complexassign03",
