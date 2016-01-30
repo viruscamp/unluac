@@ -809,6 +809,15 @@ public class ControlFlowHandler {
   
   private static Branch combine_conditional(State state, Branch branch1) {
     Branch branch0 = branch1.previous;
+    Branch branchn = branch1;
+    while(branch0 != null && branchn == branch1) {
+      branchn = combine_conditional_helper(state, branch0, branch1);
+      branch0 = branch0.previous;
+    }
+    return branchn;
+  }
+  
+  private static Branch combine_conditional_helper(State state, Branch branch0, Branch branch1) {
     if(adjacent(state, branch0, branch1) && is_conditional(branch0) && is_conditional(branch1)) {
       int branch0TargetSecond = branch0.targetSecond;
       if(is_jmp(state, branch1.targetFirst) && state.code.target(branch1.targetFirst) == branch0TargetSecond) {
@@ -840,6 +849,15 @@ public class ControlFlowHandler {
   
   private static Branch combine_assignment(State state, Branch branch1) {
     Branch branch0 = branch1.previous;
+    Branch branchn = branch1;
+    while(branch0 != null && branchn == branch1) {
+      branchn = combine_assignment_helper(state, branch0, branch1);
+      branch0 = branch0.previous;
+    }
+    return branchn;
+  }
+  
+  private static Branch combine_assignment_helper(State state, Branch branch0, Branch branch1) {
     if(adjacent(state, branch0, branch1)) {
       int register = branch1.target;
       //System.err.println("blah " + branch1.line + " " + branch0.line);
@@ -937,9 +955,9 @@ public class ControlFlowHandler {
   }
   
   private static void replace_branch(State state, Branch branch0, Branch branch1, Branch branchn) {
-    branches(state, branch0)[branch0.line] = null;
+    remove_branch(state, branch0);
     branches(state, branch1)[branch1.line] = null;
-    branchn.previous = branch0.previous;
+    branchn.previous = branch1.previous;
     if(branchn.previous == null) {
       state.begin_branch = branchn;
     } else {
@@ -1102,15 +1120,16 @@ public class ControlFlowHandler {
       case TFORLOOP:
       case TFORPREP:
       case CLOSE:
+      case TESTSET:
         return true;
+      case TEST50:
+        return code.A(line) != code.B(line);
       case SELF:
         return r.isLocal(code.A(line), line) || r.isLocal(code.A(line) + 1, line);
       case EQ:
       case LT:
       case LE:
       case TEST:
-      case TESTSET:
-      case TEST50:
       case SETLIST:
       case SETLIST52:
       case SETLIST50:
@@ -1123,13 +1142,15 @@ public class ControlFlowHandler {
         if(line == 1) {
           return true;
         } else {
-          Op prev = code.op(line - 1);
+          Op prev = line >= 2 ? code.op(line - 1) : null;
+          Op next = line + 1 <= code.length ? code.op(line + 1) : null;
           if(prev == Op.EQ) return false;
           if(prev == Op.LT) return false;
           if(prev == Op.LE) return false;
           if(prev == Op.TEST) return false;
           if(prev == Op.TESTSET) return false;
           if(prev == Op.TEST50) return false;
+          if(next == Op.LOADBOOL && code.C(line + 1) != 0) return false;
           return true;
         }
       case CALL: {
