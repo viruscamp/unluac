@@ -374,11 +374,11 @@ public class ControlFlowHandler {
           boolean forvarClose = false;
           boolean innerClose = false;
           int close = target - 1;
-          if(close >= line + 1 && code.op(close) == Op.CLOSE && code.A(close) == A + 3) {
+          if(close >= line + 1 && is_close(state, close) && code.A(close) == A + 3) {
             forvarClose = true;
             close--;
           }
-          if(close >= line + 1 && code.op(close) == Op.CLOSE && code.A(close) == A + 3 + C) {
+          if(close >= line + 1 && is_close(state, close) && code.A(close) <= A + 3 + C) {
             innerClose = true;
           }
           
@@ -391,7 +391,7 @@ public class ControlFlowHandler {
           
           boolean innerClose = false;
           int close = target - 1;
-          if(close >= line + 1 && code.op(close) == Op.CLOSE && code.A(close) == A + 3) {
+          if(close >= line + 1 && is_close(state, close) && code.A(close) == A + 3) {
             innerClose = true;
           }
           
@@ -415,11 +415,11 @@ public class ControlFlowHandler {
           boolean forvarClose = false;
           boolean innerClose = false;
           int close = target - 1;
-          if(close >= line + 1 && code.op(close) == Op.CLOSE && code.A(close) == A + 3) {
+          if(close >= line + 1 && is_close(state, close) && code.A(close) == A + 3) {
             forvarClose = true;
             close--;
           }
-          if(close >= line + 1 && code.op(close) == Op.CLOSE && code.A(close) == A + 4) {
+          if(close >= line + 1 && is_close(state, close) && code.A(close) <= A + 4) {
             innerClose = true;
           }
           
@@ -435,7 +435,7 @@ public class ControlFlowHandler {
           
           boolean innerClose = false;
           int close = target - 1;
-          if(close >= line + 1 && code.op(close) == Op.CLOSE && code.A(close) == A + 3 + C) {
+          if(close >= line + 1 && is_close(state, close) && code.A(close) == A + 3 + C) {
             innerClose = true;
           }
           
