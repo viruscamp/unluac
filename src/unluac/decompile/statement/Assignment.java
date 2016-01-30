@@ -133,23 +133,29 @@ public class Assignment extends Statement {
         if(!declare || !allnil) {
           out.print(" = ");
           
-          // In Lua 5.2 and above, explicit and implicit nils are compiled differently.
-          // Explicit nils get put in the constant list (and thus have a constantIndex).
-          // Implicit nils come from LOADNIL
           LinkedList<Expression> expressions = new LinkedList<Expression>();
-          boolean include = false;
-          for(int i = values.size() - 1; i >= 0; i--) {
-            Expression value = values.get(i);
-            if(include || !value.isNil() || value.getConstantIndex() != -1) {
-              include = true;
-            }
-            if(include) {
-              expressions.addFirst(value);
-            }
-          }
           
-          if(expressions.isEmpty() && !declare) {
+          int size = values.size();
+          if(size >= 2 && values.get(size - 1).isNil() && values.get(size - 2).isNil() && values.get(size - 1) != values.get(size - 2)) {
+            
             expressions.addAll(values);
+            
+          } else {
+          
+            boolean include = false;
+            for(int i = size - 1; i >= 0; i--) {
+              Expression value = values.get(i);
+              if(include || !value.isNil() || value.getConstantIndex() != -1) {
+                include = true;
+              }
+              if(include) {
+                expressions.addFirst(value);
+              }
+            }
+            
+            if(expressions.isEmpty() && !declare) {
+              expressions.addAll(values);
+            }
           }
           
           Expression.printSequence(d, out, expressions, false, false);

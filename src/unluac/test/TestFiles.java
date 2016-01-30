@@ -7,6 +7,7 @@ public class TestFiles {
     "literal",
     "multiassign",
     "multiassign02",
+    "multiassign03",
     "expression",
     "functioncall",
     "literallist",

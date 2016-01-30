@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import unluac.decompile.expression.ConstantExpression;
 import unluac.decompile.expression.Expression;
 import unluac.decompile.expression.LocalVariable;
 import unluac.decompile.target.Target;
@@ -35,8 +36,9 @@ public class Registers {
       }
     }
     values = new Expression[registers][length + 1];
+    Expression nil = ConstantExpression.createNil(0);
     for(int register = 0; register < registers; register++) {
-      values[register][0] = Expression.NIL;
+      values[register][0] = nil;
     }
     updated = new int[registers][length + 1];
     startedLines = new boolean[length + 1];

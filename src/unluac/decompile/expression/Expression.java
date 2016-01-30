@@ -2,12 +2,10 @@ package unluac.decompile.expression;
 
 import java.util.List;
 
-import unluac.decompile.Constant;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Walker;
 import unluac.decompile.target.Target;
-import unluac.parse.LNil;
 
 abstract public class Expression {
 
@@ -28,8 +26,6 @@ abstract public class Expression {
   public static final int ASSOCIATIVITY_NONE = 0;
   public static final int ASSOCIATIVITY_LEFT = 1;
   public static final int ASSOCIATIVITY_RIGHT = 2;
-  
-  public static final Expression NIL = new ConstantExpression(new Constant(LNil.NIL), -1);
   
   public static BinaryExpression makeCONCAT(Expression left, Expression right) {
     return new BinaryExpression("..", left, right, PRECEDENCE_CONCAT, ASSOCIATIVITY_RIGHT);
@@ -177,6 +173,10 @@ abstract public class Expression {
    * If there is no constant in the expression, return -1.
    */
   abstract public int getConstantIndex();
+  
+  public int getConstantLine() {
+    return -1;
+  }
   
   public boolean beginsWithParen() {
     return false;
