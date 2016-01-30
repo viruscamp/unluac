@@ -1,3 +1,2 @@
-local hour, apm
-hour = hour and tonum(hour,0,apm and 12 or 24,'hour') or 12
---hour = hour and tonum() or 12
+local x, y
+x = x and f(x,0,y and 1 or 2,"asdf") or 3
