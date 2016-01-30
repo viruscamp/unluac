@@ -902,10 +902,10 @@ public class ControlFlowHandler {
       }
       
       if(is_assignment(branch0, register) && is_assignment(branch1) && branch0.inverseValue == branch1.inverseValue) {
-        if(branch0.type == Branch.Type.test && branch0.inverseValue) {
-          branch0.cond = branch0.cond.inverse(); // inverse has been double handled; undo it
-        }
         if(branch0.targetSecond == branch1.targetSecond) {
+          if(branch0.type == Branch.Type.test && branch0.inverseValue) {
+            branch0.cond = branch0.cond.inverse(); // inverse has been double handled; undo it
+          }
           Condition c;
           //System.err.println("preassign " + branch1.line + " " + branch0.line + " " + branch0.targetSecond);
           boolean inverse = branch0.inverseValue;

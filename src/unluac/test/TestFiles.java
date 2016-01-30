@@ -16,6 +16,7 @@ public class TestFiles {
     "ifthen",
     "condition",
     "condition02",
+    "condition03",
     "nestedif",
     "nestedif02",
     "ifthenelse",
