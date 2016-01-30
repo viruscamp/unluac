@@ -812,6 +812,7 @@ public class ControlFlowHandler {
     Branch branchn = branch1;
     while(branch0 != null && branchn == branch1) {
       branchn = combine_conditional_helper(state, branch0, branch1);
+      if(branch0.targetSecond > branch1.targetFirst) break;
       branch0 = branch0.previous;
     }
     return branchn;
@@ -852,6 +853,7 @@ public class ControlFlowHandler {
     Branch branchn = branch1;
     while(branch0 != null && branchn == branch1) {
       branchn = combine_assignment_helper(state, branch0, branch1);
+      if(branch0.targetSecond > branch1.targetFirst) break;
       branch0 = branch0.previous;
     }
     return branchn;
