@@ -12,10 +12,14 @@ import unluac.decompile.block.Break;
 import unluac.decompile.block.DoEndBlock;
 import unluac.decompile.block.ForBlock;
 import unluac.decompile.block.ElseEndBlock;
+import unluac.decompile.block.ForBlock50;
+import unluac.decompile.block.ForBlock51;
 import unluac.decompile.block.IfThenElseBlock;
 import unluac.decompile.block.IfThenEndBlock;
 import unluac.decompile.block.RepeatBlock;
 import unluac.decompile.block.SetBlock;
+import unluac.decompile.block.TForBlock50;
+import unluac.decompile.block.TForBlock51;
 import unluac.decompile.block.WhileBlock;
 import unluac.decompile.block.OuterBlock;
 import unluac.decompile.block.TForBlock;
@@ -378,16 +382,23 @@ public class ControlFlowHandler {
             innerClose = true;
           }
           
-          TForBlock block = new TForBlock(state.function, line + 1, target + 2, A, C, forvarClose, innerClose);
+          TForBlock block = new TForBlock51(state.function, line + 1, target + 2, A, C, forvarClose, innerClose);
           block.handleVariableDeclarations(r);
           blocks.add(block);
         } else if(code.op(target) == forTarget && !loop[target]) {
           loop[target] = true;
           int A = code.A(target);
-          r.setInternalLoopVariable(A, line, target);
-          r.setInternalLoopVariable(A + 1, line, target);
-          r.setInternalLoopVariable(A + 2, line, target);
-          blocks.add(new ForBlock(state.function, line + 1, target + 1, A, false, false));
+          
+          boolean innerClose = false;
+          int close = target - 1;
+          if(close >= line + 1 && code.op(close) == Op.CLOSE && code.A(close) == A + 3) {
+            innerClose = true;
+          }
+          
+          ForBlock block = new ForBlock50(state.function, line + 1, target + 1, A, innerClose);
+          block.handleVariableDeclarations(r);
+          
+          blocks.add(block);
           remove_branch(state, b);
         }
       }
@@ -412,7 +423,7 @@ public class ControlFlowHandler {
             innerClose = true;
           }
           
-          ForBlock block = new ForBlock(state.function, line + 1, target + 1, A, forvarClose, innerClose);
+          ForBlock block = new ForBlock51(state.function, line + 1, target + 1, A, forvarClose, innerClose);
           block.handleVariableDeclarations(r);
           blocks.add(block);
           break;
@@ -421,12 +432,16 @@ public class ControlFlowHandler {
           int target = code.target(line);
           int A = code.A(target);
           int C = code.C(target);
-          r.setInternalLoopVariable(A, line, target + 1);
-          r.setInternalLoopVariable(A + 1, line, target + 1);
-          for(int index = 0; index <= C; index++) {
-            r.setExplicitLoopVariable(A + 2 + index, line, target + 1);
+          
+          boolean innerClose = false;
+          int close = target - 1;
+          if(close >= line + 1 && code.op(close) == Op.CLOSE && code.A(close) == A + 3 + C) {
+            innerClose = true;
           }
-          blocks.add(new TForBlock(state.function, line + 1, target + 2, A, C, false, false));
+          
+          TForBlock block = new TForBlock50(state.function, line + 1, target + 2, A, C, innerClose);
+          block.handleVariableDeclarations(r);
+          blocks.add(block);
           remove_branch(state, state.branches[target + 1]);
           break;
         }

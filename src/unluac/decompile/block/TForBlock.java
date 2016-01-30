@@ -1,8 +1,8 @@
 package unluac.decompile.block;
 
 import java.util.ArrayList;
+import java.util.List;
 
-import unluac.Version;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
@@ -12,12 +12,12 @@ import unluac.decompile.statement.Statement;
 import unluac.decompile.target.Target;
 import unluac.parse.LFunction;
 
-public class TForBlock extends ContainerBlock {
+abstract public class TForBlock extends ContainerBlock {
 
-  private final int register;
-  private final int length;
-  private final boolean forvarClose;
-  private final boolean innerClose;
+  protected final int register;
+  protected final int length;
+  protected final boolean forvarClose;
+  protected final boolean innerClose;
   
   private Target[] targets;
   private Expression[] values;
@@ -30,11 +30,18 @@ public class TForBlock extends ContainerBlock {
     this.innerClose = innerClose;
   }
 
+  abstract protected List<Target> getTargets(Registers r);
+  
+  abstract protected int getInternalLoopVariableBeginOffset();
+  
+  abstract protected int getExplicitLoopVariableEndOffset();
+  
   public void handleVariableDeclarations(Registers r) {
-    r.setInternalLoopVariable(register, begin - 2, end - 1);
-    r.setInternalLoopVariable(register + 1, begin - 2, end - 1);
-    r.setInternalLoopVariable(register + 2, begin - 2, end - 1);
-    int explicitEnd = end - 3;
+    int internalBegin = begin + getInternalLoopVariableBeginOffset();
+    r.setInternalLoopVariable(register, internalBegin, end - 1);
+    r.setInternalLoopVariable(register + 1, internalBegin, end - 1);
+    r.setInternalLoopVariable(register + 2, internalBegin, end - 1);
+    int explicitEnd = end + getExplicitLoopVariableEndOffset();
     if(forvarClose) explicitEnd--;
     for(int index = 1; index <= length; index++) {
       r.setExplicitLoopVariable(register + 2 + index, begin - 1, explicitEnd);
@@ -43,18 +50,7 @@ public class TForBlock extends ContainerBlock {
   
   @Override
   public void resolve(Registers r) {
-    ArrayList<Target> targets = new ArrayList<Target>();
-    if(function.header.version == Version.LUA50) {
-      targets.add(r.getTarget(register + 2, begin - 1));
-      for(int r1 = register + 3; r1 <= register + 2 + length; r1++) {
-        targets.add(r.getTarget(r1, begin - 1));
-      }
-    } else {
-      targets.add(r.getTarget(register + 3, begin - 1));
-      for(int r1 = register + 4; r1 <= register + 2 + length; r1++) {
-        targets.add(r.getTarget(r1, begin - 1));
-      }
-    }
+    List<Target> targets = getTargets(r);
     ArrayList<Expression> values = new ArrayList<Expression>(3);
     Expression value;
     value = r.getValue(register, begin - 1);

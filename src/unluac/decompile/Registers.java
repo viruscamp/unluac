@@ -131,6 +131,8 @@ public class Registers {
       decl = new Declaration("_FOR_", begin, end);
       decl.register = register;
       newDeclaration(decl, register, begin, end);
+      throw new IllegalStateException("TEMP");
+      
     } else {
       if(decl.begin != begin || decl.end != end) {
         System.err.println("given: " + begin + " " + end);
@@ -147,6 +149,8 @@ public class Registers {
       decl = new Declaration("_FORV_" + register + "_", begin, end);
       decl.register = register;
       newDeclaration(decl, register, begin, end);
+      throw new IllegalStateException("TEMP");
+      
     } else {
       if(decl.begin != begin || decl.end != end) {
         System.err.println("given: " + begin + " " + end);

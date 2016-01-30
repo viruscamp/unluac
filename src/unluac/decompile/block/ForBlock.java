@@ -10,11 +10,11 @@ import unluac.decompile.statement.Statement;
 import unluac.decompile.target.Target;
 import unluac.parse.LFunction;
 
-public class ForBlock extends ContainerBlock {
+abstract public class ForBlock extends ContainerBlock {
 
-  private final int register;
-  private final boolean forvarClose;
-  private final boolean innerClose;
+  protected final int register;
+  protected final boolean forvarClose;
+  protected final boolean innerClose;
   
   private Target target;
   private Expression start;
@@ -28,14 +28,7 @@ public class ForBlock extends ContainerBlock {
     this.innerClose = innerClose;
   }
 
-  public void handleVariableDeclarations(Registers r) {
-    r.setInternalLoopVariable(register, begin - 2, end - 1);
-    r.setInternalLoopVariable(register + 1, begin - 2, end - 1);
-    r.setInternalLoopVariable(register + 2, begin - 2, end - 1);
-    int explicitEnd = end - 2;
-    if(forvarClose) explicitEnd--;
-    r.setExplicitLoopVariable(register + 3, begin - 1, explicitEnd);
-  }
+  abstract public void handleVariableDeclarations(Registers r);
   
   @Override
   public void resolve(Registers r) {
@@ -43,8 +36,8 @@ public class ForBlock extends ContainerBlock {
       target = r.getTarget(register, begin - 1);
       start = r.getValue(register, begin - 2);
     } else {
-      start = r.getValue(register, begin - 1);
       target = r.getTarget(register + 3, begin - 1);
+      start = r.getValue(register, begin - 1);
     }
     stop = r.getValue(register + 1, begin - 1);
     step = r.getValue(register + 2, begin - 1);
