@@ -128,6 +128,7 @@ public class VariableFinder {
           states.setTemporary(code.A(line) + 1, line);
           break;
         case JMP:
+        case JMP52:
           break;
         case EQ:
         case LT:

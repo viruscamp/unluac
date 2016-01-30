@@ -318,6 +318,7 @@ public class Decompiler {
         break;
       }
       case JMP:
+      case JMP52:
       case EQ:
       case LT:
       case LE:

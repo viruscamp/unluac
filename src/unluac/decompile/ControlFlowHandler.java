@@ -117,7 +117,7 @@ public class ControlFlowHandler {
     Code code = state.code;
     boolean[] reverse_targets = state.reverse_targets = new boolean[state.code.length + 1];
     for(int line = 1; line <= code.length; line++) {
-      if(code.op(line) == Op.JMP) {
+      if(code.isJMP(line)) {
         int target = code.target(line);
         if(target <= line) {
           reverse_targets[target] = true;
@@ -155,7 +155,7 @@ public class ControlFlowHandler {
   private static void handle_loadboolblock(State state, boolean[] skip, int loadboolblock, Condition c, int line, int target) {
     int loadboolvalue = state.code.B(target);
     int final_line = -1;
-    if(loadboolblock - 1 >= 1 && state.code.op(loadboolblock - 1) == Op.JMP && state.code.target(loadboolblock - 1) == loadboolblock + 2) {
+    if(loadboolblock - 1 >= 1 && state.code.isJMP(loadboolblock - 1) && state.code.target(loadboolblock - 1) == loadboolblock + 2) {
       skip[loadboolblock - 1] = true;
       final_line = loadboolblock - 2;
     }
@@ -164,7 +164,7 @@ public class ControlFlowHandler {
       inverse = true;
       c = c.inverse();
     }
-    boolean constant = state.code.op(line) == Op.JMP;
+    boolean constant = state.code.isJMP(line);
     Branch b;
     int begin = line + 2;
     if(constant) {
@@ -307,11 +307,10 @@ public class ControlFlowHandler {
             }
             break;
           }
-          case JMP: {
-            int target = code.target(line);
-            if(target == line + 1 && code.A(line) != 0) {
-              // ignore -- this is acting as CLOSE
-            } else {
+          case JMP:
+          case JMP52: {
+            if(code.isJMP(line)) {
+              int target = code.target(line);
               int loadboolblock = find_loadboolblock(state, target);
               if(loadboolblock >= 1) {
                 handle_loadboolblock(state, skip, loadboolblock, new ConstantCondition(-1, false), line, target);
@@ -777,7 +776,7 @@ public class ControlFlowHandler {
     Branch branch0 = branch1.previous;
     if(adjacent(state, branch0, branch1) && is_conditional(branch0) && is_conditional(branch1)) {
       int branch0TargetSecond = branch0.targetSecond;
-      if(state.code.op(branch1.targetFirst) == Op.JMP && state.code.target(branch1.targetFirst) == branch0TargetSecond) {
+      if(state.code.isJMP(branch1.targetFirst) && state.code.target(branch1.targetFirst) == branch0TargetSecond) {
         // Handle redirected target
         branch0TargetSecond = branch1.targetFirst;
       }
@@ -1052,6 +1051,7 @@ public class ControlFlowHandler {
       case EXTRABYTE:
         return false;
       case JMP:
+      case JMP52: // TODO: CLOSE?
         if(line == 1) {
           return true;
         } else {

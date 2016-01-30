@@ -8,7 +8,7 @@ public class Validator {
 			switch(code.op(line)) {
 				case EQ: {
 					AssertionManager.assertCritical(
-						line + 1 <= code.length && code.op(line + 1) == Op.JMP,
+						line + 1 <= code.length && code.isJMP(line + 1),
 						"ByteCode validation failed; EQ instruction is not followed by JMP"
 					);
 					break;

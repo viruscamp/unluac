@@ -107,7 +107,7 @@ public class OpcodeMap {
       map[20] = Op.NOT;
       map[21] = Op.LEN;
       map[22] = Op.CONCAT;
-      map[23] = Op.JMP;
+      map[23] = Op.JMP52;
       map[24] = Op.EQ;
       map[25] = Op.LT;
       map[26] = Op.LE;
@@ -156,7 +156,7 @@ public class OpcodeMap {
       map[27] = Op.NOT;
       map[28] = Op.LEN;
       map[29] = Op.CONCAT;
-      map[30] = Op.JMP;
+      map[30] = Op.JMP52;
       map[31] = Op.EQ;
       map[32] = Op.LT;
       map[33] = Op.LE;

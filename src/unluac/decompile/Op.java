@@ -24,7 +24,7 @@ public enum Op {
   NOT(OpcodeFormat.A_B),
   LEN(OpcodeFormat.A_B),
   CONCAT(OpcodeFormat.A_B_C),
-  JMP(OpcodeFormat.sBx), // TODO: Different in 5.2
+  JMP(OpcodeFormat.sBx),
   EQ(OpcodeFormat.A_B_C),
   LT(OpcodeFormat.A_B_C),
   LE(OpcodeFormat.A_B_C),
@@ -41,6 +41,7 @@ public enum Op {
   CLOSURE(OpcodeFormat.A_Bx),
   VARARG(OpcodeFormat.A_B),
   // Lua 5.2 Opcodes
+  JMP52(OpcodeFormat.A_sBx),
   LOADNIL52(OpcodeFormat.A_B),
   LOADKX(OpcodeFormat.A),
   GETTABUP(OpcodeFormat.A_B_C),
@@ -78,6 +79,20 @@ public enum Op {
   public boolean hasExtraByte(int codepoint, CodeExtract ex) {
     if(this == Op.SETLIST) {
       return ex.extract_C(codepoint) == 0;
+    } else {
+      return false;
+    }
+  }
+  
+  /**
+   * Normally an instruction is JMP exactly if the Op is JMP (or JMP52).
+   * However, in the case of JMP52 that acts purely as CLOSE, it doesn't count as JMP.
+   */
+  public boolean isJMP(int codepoint, CodeExtract ex) {
+    if(this == Op.JMP) {
+      return true;
+    } else if(this == Op.JMP52) {
+      return ex.extract_sBx(codepoint) != 0 || ex.extract_A(codepoint) == 0;
     } else {
       return false;
     }
@@ -137,6 +152,7 @@ public enum Op {
       case SETTABUP:
       case SETTABLE:
       case JMP:
+      case JMP52:
       case TAILCALL:
       case RETURN:
       case FORLOOP:

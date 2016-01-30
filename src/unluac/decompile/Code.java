@@ -161,6 +161,10 @@ public class Code {
     return code[line - 1];
   }
   
+  public boolean isJMP(int line) {
+    return op(line).isJMP(codepoint(line), extractor);
+  }
+  
   public int length() {
     return code.length;
   }
