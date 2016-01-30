@@ -85,20 +85,6 @@ public enum Op {
   }
   
   /**
-   * Normally an instruction is JMP exactly if the Op is JMP (or JMP52).
-   * However, in the case of JMP52 that acts purely as CLOSE, it doesn't count as JMP.
-   */
-  public boolean isJMP(int codepoint, CodeExtract ex) {
-    if(this == Op.JMP) {
-      return true;
-    } else if(this == Op.JMP52) {
-      return ex.extract_sBx(codepoint) != 0 || ex.extract_A(codepoint) == 0;
-    } else {
-      return false;
-    }
-  }
-  
-  /**
    * Returns the target register of the instruction at the given
    * line or -1 if the instruction does not have a unique target.
    */

@@ -7,11 +7,12 @@ public class Validator {
 		for(int line = 1; line <= code.length; line++) {
 			switch(code.op(line)) {
 				case EQ: {
+				  /* TODO
 					AssertionManager.assertCritical(
 						line + 1 <= code.length && code.isJMP(line + 1),
 						"ByteCode validation failed; EQ instruction is not followed by JMP"
 					);
-					break;
+					break;*/
 				}
 				case LT: {
 					break;
