@@ -25,7 +25,7 @@ public class OrCondition implements Condition {
 
   @Override
   public boolean invertible() {
-    return left.invertible() && right.invertible();
+    return right.invertible();
   }
   
   @Override
