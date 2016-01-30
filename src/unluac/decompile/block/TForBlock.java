@@ -16,16 +16,31 @@ public class TForBlock extends ContainerBlock {
 
   private final int register;
   private final int length;
+  private final boolean forvarClose;
+  private final boolean innerClose;
   
   private Target[] targets;
   private Expression[] values;
   
-  public TForBlock(LFunction function, int begin, int end, int register, int length) {
+  public TForBlock(LFunction function, int begin, int end, int register, int length, boolean forvarClose, boolean innerClose) {
     super(function, begin, end, -1);
     this.register = register;
     this.length = length;
+    this.forvarClose = forvarClose;
+    this.innerClose = innerClose;
   }
 
+  public void handleVariableDeclarations(Registers r) {
+    r.setInternalLoopVariable(register, begin - 2, end - 1);
+    r.setInternalLoopVariable(register + 1, begin - 2, end - 1);
+    r.setInternalLoopVariable(register + 2, begin - 2, end - 1);
+    int explicitEnd = end - 3;
+    if(forvarClose) explicitEnd--;
+    for(int index = 1; index <= length; index++) {
+      r.setExplicitLoopVariable(register + 2 + index, begin - 1, explicitEnd);
+    }
+  }
+  
   @Override
   public void resolve(Registers r) {
     ArrayList<Target> targets = new ArrayList<Target>();
@@ -69,7 +84,10 @@ public class TForBlock extends ContainerBlock {
   
   @Override
   public int scopeEnd() {
-    return end - 3;
+    int scopeEnd = end - 3;
+    if(forvarClose) scopeEnd--;
+    if(innerClose) scopeEnd--;
+    return scopeEnd;
   }
   
   @Override
@@ -109,5 +127,4 @@ public class TForBlock extends ContainerBlock {
     out.print("end");
   }
 
-  
 }

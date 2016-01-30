@@ -362,24 +362,32 @@ public class ControlFlowHandler {
           int A = code.A(target);
           int C = code.C(target);
           if(C == 0) throw new IllegalStateException();
-          r.setInternalLoopVariable(A, line - 1, target + 1);
-          r.setInternalLoopVariable(A + 1, line - 1, target + 1);
-          r.setInternalLoopVariable(A + 2, line - 1, target + 1);
-          for(int index = 1; index <= C; index++) {
-            r.setExplicitLoopVariable(A + 2 + index, line, target - 1);
-          }
           remove_branch(state, state.branches[line]);
           if(state.branches[target + 1] != null) {
             remove_branch(state, state.branches[target + 1]);
           }
-          blocks.add(new TForBlock(state.function, line + 1, target + 2, A, C));
+          
+          boolean forvarClose = false;
+          boolean innerClose = false;
+          int close = target - 1;
+          if(close >= line + 1 && code.op(close) == Op.CLOSE && code.A(close) == A + 3) {
+            forvarClose = true;
+            close--;
+          }
+          if(close >= line + 1 && code.op(close) == Op.CLOSE && code.A(close) == A + 3 + C) {
+            innerClose = true;
+          }
+          
+          TForBlock block = new TForBlock(state.function, line + 1, target + 2, A, C, forvarClose, innerClose);
+          block.handleVariableDeclarations(r);
+          blocks.add(block);
         } else if(code.op(target) == forTarget && !loop[target]) {
           loop[target] = true;
           int A = code.A(target);
           r.setInternalLoopVariable(A, line, target);
           r.setInternalLoopVariable(A + 1, line, target);
           r.setInternalLoopVariable(A + 2, line, target);
-          blocks.add(new ForBlock(state.function, line + 1, target + 1, A));
+          blocks.add(new ForBlock(state.function, line + 1, target + 1, A, false, false));
           remove_branch(state, b);
         }
       }
@@ -389,12 +397,24 @@ public class ControlFlowHandler {
     for(int line = 1; line <= code.length; line++) {
       switch(code.op(line)) {
         case FORPREP: {
+          
+          int A = code.A(line);
           int target = code.target(line);
-          blocks.add(new ForBlock(state.function, line + 1, target + 1, code.A(line)));
-          r.setInternalLoopVariable(code.A(line), line - 1, target);
-          r.setInternalLoopVariable(code.A(line) + 1, line - 1, target);
-          r.setInternalLoopVariable(code.A(line) + 2, line - 1, target);
-          r.setExplicitLoopVariable(code.A(line) + 3, line, target - 1);
+          
+          boolean forvarClose = false;
+          boolean innerClose = false;
+          int close = target - 1;
+          if(close >= line + 1 && code.op(close) == Op.CLOSE && code.A(close) == A + 3) {
+            forvarClose = true;
+            close--;
+          }
+          if(close >= line + 1 && code.op(close) == Op.CLOSE && code.A(close) == A + 4) {
+            innerClose = true;
+          }
+          
+          ForBlock block = new ForBlock(state.function, line + 1, target + 1, A, forvarClose, innerClose);
+          block.handleVariableDeclarations(r);
+          blocks.add(block);
           break;
         }
         case TFORPREP: {
@@ -406,7 +426,7 @@ public class ControlFlowHandler {
           for(int index = 0; index <= C; index++) {
             r.setExplicitLoopVariable(A + 2 + index, line, target + 1);
           }
-          blocks.add(new TForBlock(state.function, line + 1, target + 2, A, C));
+          blocks.add(new TForBlock(state.function, line + 1, target + 2, A, C, false, false));
           remove_branch(state, state.branches[target + 1]);
           break;
         }

@@ -13,17 +13,30 @@ import unluac.parse.LFunction;
 public class ForBlock extends ContainerBlock {
 
   private final int register;
+  private final boolean forvarClose;
+  private final boolean innerClose;
   
   private Target target;
   private Expression start;
   private Expression stop;
   private Expression step;
   
-  public ForBlock(LFunction function, int begin, int end, int register) {
+  public ForBlock(LFunction function, int begin, int end, int register, boolean forvarClose, boolean innerClose) {
     super(function, begin, end, -1);
     this.register = register;
+    this.forvarClose = forvarClose;
+    this.innerClose = innerClose;
   }
 
+  public void handleVariableDeclarations(Registers r) {
+    r.setInternalLoopVariable(register, begin - 2, end - 1);
+    r.setInternalLoopVariable(register + 1, begin - 2, end - 1);
+    r.setInternalLoopVariable(register + 2, begin - 2, end - 1);
+    int explicitEnd = end - 2;
+    if(forvarClose) explicitEnd--;
+    r.setExplicitLoopVariable(register + 3, begin - 1, explicitEnd);
+  }
+  
   @Override
   public void resolve(Registers r) {
     if(function.header.version == Version.LUA50) {
@@ -50,7 +63,10 @@ public class ForBlock extends ContainerBlock {
   
   @Override
   public int scopeEnd() {
-    return end - 2;
+    int scopeEnd = end - 2;
+    if(forvarClose) scopeEnd--;
+    if(innerClose) scopeEnd--;
+    return scopeEnd;
   }
   
   @Override
