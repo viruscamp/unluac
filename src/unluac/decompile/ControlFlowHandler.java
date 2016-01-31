@@ -904,15 +904,19 @@ public class ControlFlowHandler {
       
       if(is_assignment(branch0, register) && is_assignment(branch1) && branch0.inverseValue == branch1.inverseValue) {
         if(branch0.targetSecond == branch1.targetSecond) {
-          if(branch0.type == Branch.Type.test && branch0.inverseValue) {
-            branch0.cond = branch0.cond.inverse(); // inverse has been double handled; undo it
-          }
           Condition c;
           //System.err.println("preassign " + branch1.line + " " + branch0.line + " " + branch0.targetSecond);
-          boolean inverse = branch0.inverseValue;
-          if(verbose) System.err.println("assign " + (inverse ? "or" : "and") + " " + branch1.line + " " + branch0.line);
-          branch0 = combine_assignment(state, branch0);
-          if(inverse != branch0.inverseValue) throw new IllegalStateException();
+          if(verbose) System.err.println("assign " + (branch0.inverseValue ? "or" : "and") + " " + branch1.line + " " + branch0.line);
+          if(is_conditional(branch0)) {
+            branch0 = combine_conditional(state, branch0);
+            if(branch0.inverseValue) {
+              branch0.cond = branch0.cond.inverse(); // inverse has been double handled; undo it
+            }
+          } else {
+            boolean inverse = branch0.inverseValue;
+            branch0 = combine_assignment(state, branch0);
+            if(inverse != branch0.inverseValue) throw new IllegalStateException();
+          }
           if(branch0.inverseValue) {
             //System.err.println("assign and " + branch1.line + " " + branch0.line);
             c = new OrCondition(branch0.cond, branch1.cond);
@@ -929,15 +933,20 @@ public class ControlFlowHandler {
       }
       if(is_assignment(branch0, register) && branch1.type == Branch.Type.finalset) {
         if(branch0.targetSecond == branch1.targetSecond) {
-          if(branch0.type == Branch.Type.test && branch0.inverseValue) {
-            branch0.cond = branch0.cond.inverse(); // inverse has been double handled; undo it
-          }
           Condition c;
           //System.err.println("final preassign " + branch1.line + " " + branch0.line);
-          boolean inverse = branch0.inverseValue;
-          if(verbose) System.err.println("final assign " + (inverse ? "or" : "and") + " " + branch1.line + " " + branch0.line);
-          branch0 = combine_assignment(state, branch0);
-          if(inverse != branch0.inverseValue) throw new IllegalStateException();
+          if(is_conditional(branch0)) {
+            branch0 = combine_conditional(state, branch0);
+            if(branch0.inverseValue) {
+              branch0.cond = branch0.cond.inverse(); // inverse has been double handled; undo it
+            }
+          } else {
+            boolean inverse = branch0.inverseValue;
+            branch0 = combine_assignment(state, branch0);
+            if(inverse != branch0.inverseValue) throw new IllegalStateException();
+          }
+          if(verbose) System.err.println("final assign " + (branch0.inverseValue ? "or" : "and") + " " + branch1.line + " " + branch0.line);
+          
           if(branch0.inverseValue) {
             //System.err.println("final assign or " + branch1.line + " " + branch0.line);
             c = new OrCondition(branch0.cond, branch1.cond);
