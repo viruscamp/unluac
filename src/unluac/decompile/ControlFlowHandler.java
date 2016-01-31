@@ -1072,6 +1072,7 @@ public class ControlFlowHandler {
   private static boolean is_statement(State state, int line) {
     if(state.reverse_targets[line]) return true;
     Registers r = state.r;
+    if(!r.getNewLocals(line).isEmpty()) return true;
     int testRegister = -1;
     Code code = state.code;
     switch(code.op(line)) {
