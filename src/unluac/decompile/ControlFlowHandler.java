@@ -589,11 +589,12 @@ public class ControlFlowHandler {
           Block breakable = enclosing_breakable_block(state, b.line);
           if(breakable != null && breakable.end == b.targetSecond) {
             // 5.2-style if-break
-            Block block = new IfThenEndBlock(state.function, state.r, b.cond.inverse(), b.targetFirst - 1, b.targetFirst - 1);
+            Block block = new IfThenEndBlock(state.function, state.r, b.cond.inverse(), b.targetFirst - 1, b.targetFirst - 1, false);
             block.addStatement(new Break(state.function, b.targetFirst - 1, b.targetSecond));
             state.blocks.add(block);
           } else {
-            state.blocks.add(new IfThenEndBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond));
+            int literalEnd = state.code.target(b.targetFirst - 1);
+            state.blocks.add(new IfThenEndBlock(state.function, state.r, b.cond, b.targetFirst, b.targetSecond, literalEnd != b.targetSecond));
           }
         }
         
@@ -721,7 +722,7 @@ public class ControlFlowHandler {
         Block enclosing = enclosing_breakable_block(state, b.line);
         if(enclosing != null && (b.targetSecond >= enclosing.end || b.targetSecond < enclosing.begin)) {
           if(state.function.header.version.usesIfBreakRewrite()) {
-            Block block = new IfThenEndBlock(state.function, state.r, b.cond.inverse(), b.targetFirst - 1, b.targetFirst - 1);
+            Block block = new IfThenEndBlock(state.function, state.r, b.cond.inverse(), b.targetFirst - 1, b.targetFirst - 1, false);
             block.addStatement(new Break(state.function, b.targetFirst - 1, b.targetSecond));
             state.blocks.add(block);
             remove_branch(state, b);

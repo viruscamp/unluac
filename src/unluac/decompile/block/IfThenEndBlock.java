@@ -17,14 +17,16 @@ import unluac.parse.LFunction;
 public class IfThenEndBlock extends ContainerBlock {
 
   private final Condition cond;
+  private final boolean redirected;
   private final Registers r;
   
   private Expression condexpr;
   
-  public IfThenEndBlock(LFunction function, Registers r, Condition cond, int begin, int end) {
+  public IfThenEndBlock(LFunction function, Registers r, Condition cond, int begin, int end, boolean redirected) {
     super(function, begin == end ? begin - 1 : begin, end, -1);
     this.r = r;
     this.cond = cond;
+    this.redirected = redirected;
   }
   
   @Override
@@ -59,7 +61,7 @@ public class IfThenEndBlock extends ContainerBlock {
   @Override
   public Operation process(Decompiler d) {
     final int test = cond.register();
-    if(!scopeUsed && test >= 0 && r.getUpdated(test, end - 1) >= begin) {
+    if(!scopeUsed && !redirected && test >= 0 && r.getUpdated(test, end - 1) >= begin) {
       // Check for a single assignment
       Assignment assign = null;
       if(statements.size() == 1) {
