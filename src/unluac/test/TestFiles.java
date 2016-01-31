@@ -28,6 +28,7 @@ public class TestFiles {
     "if01",
     "if02",
     "if03",
+    "if04",
     "else01",
     "booleanassign01",
     "booleanassign02",

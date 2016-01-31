@@ -22,7 +22,7 @@ public class IfThenEndBlock extends ContainerBlock {
   private Expression condexpr;
   
   public IfThenEndBlock(LFunction function, Registers r, Condition cond, int begin, int end) {
-    super(function, begin, end, -1);
+    super(function, begin == end ? begin - 1 : begin, end, -1);
     this.r = r;
     this.cond = cond;
   }
@@ -114,5 +114,5 @@ public class IfThenEndBlock extends ContainerBlock {
     out.dedent();
     out.print("end");
   }
-    
+  
 }
