@@ -47,6 +47,7 @@ public class TestFiles {
     "booleanassign15",
     "booleanassign16",
     "booleanassign17",
+    "booleanassign18",
     "booleanselfassign01",
     "booleanexpression01",
     "booleanexpression02",

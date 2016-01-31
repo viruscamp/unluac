@@ -66,12 +66,9 @@ public class IfThenEndBlock extends ContainerBlock {
         Statement stmt = statements.get(0);
         if(stmt instanceof Assignment) {
           assign = (Assignment)stmt;
-          if(assign.getArity() != 1) {
-            assign = null;
-          }
         }
       }
-      if(assign != null && assign.getFirstTarget().isLocal() && assign.getFirstTarget().getIndex() == test || statements.isEmpty()) {
+      if(assign != null && assign.getLastTarget().isLocal() && assign.getLastTarget().getIndex() == test || statements.isEmpty()) {
         Condition finalset = new SetCondition(end - 1, test);
         Condition combined;
         
@@ -82,7 +79,8 @@ public class IfThenEndBlock extends ContainerBlock {
         }
         final Assignment fassign;
         if(assign != null) {
-          fassign = new Assignment(assign.getFirstTarget(), combined.asExpression(r));
+          fassign = assign;
+          fassign.replaceLastValue(combined.asExpression(r));
         } else {
           fassign = null;
         }

@@ -44,8 +44,16 @@ public class Assignment extends Statement {
     return targets.get(0);
   }
   
+  public Target getLastTarget() {
+    return targets.get(targets.size() - 1);
+  }
+  
   public Expression getFirstValue() {
     return values.get(0);
+  }
+  
+  public void replaceLastValue(Expression value) {
+    values.set(values.size() - 1, value);
   }
   
   public boolean assignsTarget(Declaration decl) {
