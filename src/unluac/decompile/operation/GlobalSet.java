@@ -21,7 +21,7 @@ public class GlobalSet extends Operation {
 
   @Override
   public Statement process(Registers r, Block block) {
-    return new Assignment(new GlobalTarget(global), value);
+    return new Assignment(new GlobalTarget(global), value, line);
   }
   
 }

@@ -57,7 +57,7 @@ public class SetBlock extends Block {
   @Override
   public void print(Decompiler d, Output out) {
     if(assign != null && assign.getFirstTarget() != null) {
-      Assignment assignOut = new Assignment(assign.getFirstTarget(), getValue());
+      Assignment assignOut = new Assignment(assign.getFirstTarget(), getValue(), assign.getFirstLine());
       assignOut.print(d, out);
     } else {
       out.print("-- unhandled set block");
@@ -94,13 +94,14 @@ public class SetBlock extends Block {
     if(assign != null) {
       // branch.useExpression(assign.getFirstValue());
       final Target target = assign.getFirstTarget();
+      final int targetLine = assign.getFirstLine();
       final Expression value = getValue();
       return new Operation(end - 1) {
         
         @Override
         public Statement process(Registers r, Block block) {
           // System.out.println(begin + " .. " + end);
-          return new Assignment(target, value);
+          return new Assignment(target, value, targetLine);
         }
         
       };
@@ -111,7 +112,7 @@ public class SetBlock extends Block {
         public Statement process(Registers r, Block block) {
           if(r.isLocal(target, end - 1)) {
             return new Assignment(r.getTarget(target, end - 1), cond
-                .asExpression(r));
+                .asExpression(r), end - 1);
           }
           r.setValue(target, end - 1, cond.asExpression(r));
           return null;

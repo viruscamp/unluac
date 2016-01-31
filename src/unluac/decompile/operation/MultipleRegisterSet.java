@@ -26,7 +26,7 @@ public class MultipleRegisterSet extends Operation {
     for(int register = registerFirst; register <= registerLast; register++) {
       r.setValue(register, line, value);
       if(r.isAssignable(register, line)) {
-        assignment.addLast(r.getTarget(register, line), value);
+        assignment.addLast(r.getTarget(register, line), value, line);
         count++;
       }
     }

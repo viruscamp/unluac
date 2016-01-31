@@ -15,6 +15,7 @@ public class Assignment extends Statement {
 
   private final ArrayList<Target> targets = new ArrayList<Target>(5);
   private final ArrayList<Expression> values = new ArrayList<Expression>(5);
+  private final ArrayList<Integer> lines = new ArrayList<Integer>(5);
 
   private boolean allnil = true;
   private boolean declare = false;
@@ -56,6 +57,10 @@ public class Assignment extends Statement {
     values.set(values.size() - 1, value);
   }
   
+  public int getFirstLine() {
+    return lines.get(0);
+  }
+  
   public boolean assignsTarget(Declaration decl) {
     for(Target target : targets) {
       if(target.isDeclaration(decl)) {
@@ -69,26 +74,30 @@ public class Assignment extends Statement {
     return targets.size();
   }
   
-  public Assignment(Target target, Expression value) {
+  public Assignment(Target target, Expression value, int line) {
     targets.add(target);
     values.add(value);
+    lines.add(line);
     allnil = allnil && value.isNil();
   }
 
-  public void addFirst(Target target, Expression value) {
+  public void addFirst(Target target, Expression value, int line) {
     targets.add(0, target);
     values.add(0, value);
+    lines.add(0, line);
     allnil = allnil && value.isNil();
   }
   
-  public void addLast(Target target, Expression value) {
+  public void addLast(Target target, Expression value, int line) {
     if(targets.contains(target)) {
       int index = targets.indexOf(target);
       targets.remove(index);
       value = values.remove(index);
+      lines.remove(index);
     }
     targets.add(target);
     values.add(value);
+    lines.add(0, line);
     allnil = allnil && value.isNil();
   }
   

@@ -20,7 +20,7 @@ public class UpvalueSet extends Operation {
 
   @Override
   public Statement process(Registers r, Block block) {
-    return new Assignment(target, value);
+    return new Assignment(target, value, line);
   }
   
 }

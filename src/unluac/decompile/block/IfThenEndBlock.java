@@ -66,6 +66,12 @@ public class IfThenEndBlock extends ContainerBlock {
         Statement stmt = statements.get(0);
         if(stmt instanceof Assignment) {
           assign = (Assignment)stmt;
+          if(assign.getArity() > 1) {
+            int line = assign.getFirstLine();
+            if(line >= begin && line < end) {
+              assign = null;
+            }
+          }
         }
       }
       if(assign != null && assign.getLastTarget().isLocal() && assign.getLastTarget().getIndex() == test || statements.isEmpty()) {

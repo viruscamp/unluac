@@ -461,7 +461,7 @@ public class Decompiler {
           //System.out.println("-- found multiassign @" + nextLine);
           Target target = getMoveIntoTargetTarget(nextLine, line + 1);
           Expression value = getMoveIntoTargetValue(nextLine, line + 1); //updated?
-          assign.addFirst(target, value);
+          assign.addFirst(target, value, nextLine);
           skip[nextLine] = true;
           nextLine++;
         }
@@ -559,7 +559,7 @@ public class Decompiler {
         }
         assignment.declare(locals.get(0).begin);
         for(Declaration decl : locals) {
-          assignment.addLast(new VariableTarget(decl), r.getValue(decl.register, line + 1));
+          assignment.addLast(new VariableTarget(decl), r.getValue(decl.register, line + 1), r.getUpdated(decl.register, line - 1));
         }
       }
       

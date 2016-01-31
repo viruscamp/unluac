@@ -26,7 +26,7 @@ public class LoadNil extends Operation {
     for(int register = registerFirst; register <= registerLast; register++) {
       r.setValue(register, line, nil);
       if(r.isAssignable(register, line)) {
-        assignment.addLast(r.getTarget(register, line), nil);
+        assignment.addLast(r.getTarget(register, line), nil, line);
         count++;
       }
     }

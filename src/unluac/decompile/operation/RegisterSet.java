@@ -33,7 +33,7 @@ public class RegisterSet extends Operation {
     */
     if(r.isAssignable(register, line)) {
       //System.out.println("-- assignment!");
-      return new Assignment(r.getTarget(register, line), value);
+      return new Assignment(r.getTarget(register, line), value, line);
     } else {
       return null;
     }
