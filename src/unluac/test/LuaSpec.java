@@ -23,6 +23,12 @@ public class LuaSpec {
     this.strip = false;
   }
   
+  public String id() {
+    String id = "lua";
+    id += Integer.toHexString(version);
+    return id;
+  }
+  
   public void setNumberFormat(NumberFormat format) {
     this.numberFormat = format;
   }

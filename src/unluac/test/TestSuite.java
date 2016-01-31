@@ -12,13 +12,23 @@ public class TestSuite {
   private static String decompiled = "unluac.out";
   private static String recompiled = "test.out";
   
-  private String[] files;
+  private String name;
   private String path;
+  private String[] files;
   private String ext = ".lua";
   
-  public TestSuite(String path, String[] files) {
-    this.files = files;
+  public TestSuite(String name, String path, String[] files) {
+    this.name = name;
     this.path = path;
+    this.files = files;
+  }
+  
+  public String testName(LuaSpec spec, String file) {
+    if(name == null) {
+      return spec.id() + ":" + file;
+    } else {
+      return spec.id() + name + "/" + file;
+    }
   }
   
   private TestResult test(LuaSpec spec, String file) throws IOException {
@@ -39,9 +49,7 @@ public class TestSuite {
     }
   }
   
-  public boolean run(LuaSpec spec) throws IOException {
-    int passed = 0;
-    int skipped = 0;
+  public boolean run(LuaSpec spec, TestReport report) throws IOException {
     int failed = 0;
     File working = new File(working_dir);
     if(!working.exists()) {
@@ -49,25 +57,20 @@ public class TestSuite {
     }
     for(String name : files) {
       if(spec.compatible(name)) {
-        switch (test(spec, path + name + ext)) {
+        TestResult result = test(spec, path + name + ext);
+        report.result(testName(spec, name), result);
+        switch(result) {
           case OK:
             System.out.print(".");
-            passed++;
             break;
           case SKIPPED:
-            System.out.println("\nSkipped: " + name);
-            skipped++;
+            System.out.print(",");
             break;
           default:
-            System.out.println("\nFailed: " + name);
+            System.out.print("!");
             failed++;
         }
       }
-    }
-    if(failed == 0 && skipped == 0) {
-      System.out.println("\nAll tests passed!");
-    } else {
-      System.out.println("\nFailed " + failed + " of " + (failed + passed) + " tests, skipped "+skipped+" tests.");
     }
     return failed == 0;
   }

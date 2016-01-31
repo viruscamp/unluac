@@ -144,6 +144,6 @@ public class TestFiles {
     "52_loadkx01",
   };
   
-  public static TestSuite suite = new TestSuite(".\\test\\src\\", tests);
+  public static TestSuite suite = new TestSuite(null, ".\\test\\src\\", tests);
   
 }
