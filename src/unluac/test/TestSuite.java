@@ -27,7 +27,7 @@ public class TestSuite {
     if(name == null) {
       return spec.id() + ":" + file;
     } else {
-      return spec.id() + name + "/" + file;
+      return spec.id() + ":" + name + "/" + file.replace('\\', '/');
     }
   }
   
