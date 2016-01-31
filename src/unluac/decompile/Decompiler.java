@@ -449,8 +449,15 @@ public class Decompiler {
       }
       //System.out.println("-- added statemtent @" + line);
       if(assign != null) {
+        boolean declare = false;
+        for(Declaration newLocal : r.getNewLocals(line)) {
+          if(assign.getFirstTarget().isDeclaration(newLocal)) {
+            declare = true;
+            break;
+          }
+        }
         //System.out.println("-- checking for multiassign @" + nextLine);
-        while(nextLine < block.end && isMoveIntoTarget(nextLine)) {
+        while(!declare && nextLine < block.end && isMoveIntoTarget(nextLine)) {
           //System.out.println("-- found multiassign @" + nextLine);
           Target target = getMoveIntoTargetTarget(nextLine, line + 1);
           Expression value = getMoveIntoTargetValue(nextLine, line + 1); //updated?

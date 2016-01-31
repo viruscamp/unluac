@@ -104,6 +104,22 @@ public class Assignment extends Statement {
     this.declareStart = declareStart;
   }
   
+  public boolean canDeclare(List<Declaration> locals) {
+    for(Target target : targets) {
+      boolean isNewLocal = false;
+      for(Declaration decl : locals) {
+        if(target.isDeclaration(decl)) {
+          isNewLocal = true;
+          break;
+        }
+      }
+      if(!isNewLocal) {
+        return false;
+      }
+    }
+    return true;
+  }
+  
   @Override
   public void print(Decompiler d, Output out) {
     if(!targets.isEmpty()) {
