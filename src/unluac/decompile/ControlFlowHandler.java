@@ -880,7 +880,7 @@ public class ControlFlowHandler {
           branch0 = combine_conditional(state, branch0);
           if(inverse != branch0.inverseValue) throw new IllegalStateException();
           Condition c;
-          if(inverse) {
+          if(!branch1.inverseValue) {
             //System.err.println("bridge or " + branch0.line + " " + branch0.inverseValue);
             c = new OrCondition(branch0.cond.inverse(), branch1.cond); 
           } else {
