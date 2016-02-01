@@ -169,7 +169,7 @@ public class Assignment extends Statement {
           LinkedList<Expression> expressions = new LinkedList<Expression>();
           
           int size = values.size();
-          if(size >= 2 && values.get(size - 1).isNil() && values.get(size - 2).isNil() && values.get(size - 1) != values.get(size - 2)) {
+          if(size >= 2 && values.get(size - 1).isNil() && (lines.get(size - 1) == values.get(size - 1).getConstantLine() || values.get(size - 1).getConstantLine() == -1)) {
             
             expressions.addAll(values);
             
