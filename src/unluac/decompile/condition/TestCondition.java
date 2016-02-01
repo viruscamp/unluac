@@ -29,6 +29,11 @@ public class TestCondition implements Condition {
   }
   
   @Override
+  public boolean isRegisterTest() {
+    return true;
+  }
+  
+  @Override
   public Expression asExpression(Registers r) {
     return r.getExpression(register, line);
   }

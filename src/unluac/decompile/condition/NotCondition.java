@@ -28,6 +28,11 @@ public class NotCondition implements Condition {
   }
   
   @Override
+  public boolean isRegisterTest() {
+    return cond.isRegisterTest();
+  }
+  
+  @Override
   public Expression asExpression(Registers r) {
     return new UnaryExpression("not ", cond.asExpression(r), Expression.PRECEDENCE_UNARY);
   }

@@ -34,6 +34,11 @@ public class OrCondition implements Condition {
   }
   
   @Override
+  public boolean isRegisterTest() {
+    return false;
+  }
+  
+  @Override
   public Expression asExpression(Registers r) {
     return new BinaryExpression("or", left.asExpression(r), right.asExpression(r), Expression.PRECEDENCE_OR, Expression.ASSOCIATIVITY_NONE);
   }

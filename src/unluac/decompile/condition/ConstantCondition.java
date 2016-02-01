@@ -32,6 +32,11 @@ public class ConstantCondition implements Condition {
   }
 
   @Override
+  public boolean isRegisterTest() {
+    return false;
+  }
+  
+  @Override
   public Expression asExpression(Registers r) {
     return new ConstantExpression(new Constant(value ? LBoolean.LTRUE : LBoolean.LFALSE), -1);
   }

@@ -11,6 +11,8 @@ public interface Condition {
   
   public int register();
   
+  public boolean isRegisterTest();
+  
   public Expression asExpression(Registers r);
   
   @Override

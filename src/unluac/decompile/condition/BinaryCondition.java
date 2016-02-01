@@ -59,6 +59,11 @@ public class BinaryCondition implements Condition {
   }
   
   @Override
+  public boolean isRegisterTest() {
+    return false;
+  }
+  
+  @Override
   public Expression asExpression(Registers r) {
     boolean transpose = false;
     Expression leftExpression = r.getKExpression(left, line);

@@ -61,6 +61,7 @@ public class IfThenEndBlock extends ContainerBlock {
   @Override
   public Operation process(Decompiler d) {
     final int test = cond.register();
+    //System.err.println(cond);
     if(!scopeUsed && !redirected && test >= 0 && r.getUpdated(test, end - 1) >= begin) {
       // Check for a single assignment
       Assignment assign = null;
@@ -76,7 +77,7 @@ public class IfThenEndBlock extends ContainerBlock {
           }
         }
       }
-      if(assign != null && assign.getLastTarget().isLocal() && assign.getLastTarget().getIndex() == test || statements.isEmpty()) {
+      if(assign != null && (cond.isRegisterTest() || assign.isDeclaration()) && assign.getLastTarget().isLocal() && assign.getLastTarget().getIndex() == test || statements.isEmpty()) {
         Condition finalset = new SetCondition(end - 1, test);
         Condition combined;
         

@@ -32,6 +32,11 @@ public class SetCondition implements Condition {
   }
 
   @Override
+  public boolean isRegisterTest() {
+    return false;
+  }
+  
+  @Override
   public Expression asExpression(Registers r) {
     return r.getValue(register, line + 1);
   }

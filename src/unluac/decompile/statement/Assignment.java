@@ -121,6 +121,10 @@ public class Assignment extends Statement {
     this.declareStart = declareStart;
   }
   
+  public boolean isDeclaration() {
+    return declare;
+  }
+  
   public boolean canDeclare(List<Declaration> locals) {
     for(Target target : targets) {
       boolean isNewLocal = false;
