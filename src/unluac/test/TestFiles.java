@@ -146,6 +146,7 @@ public class TestFiles {
     "report05",
     "51_expression",
     "51_ellipsis",
+    "51_ellipsis02",
     "51_adjust02",
     "51_adjust03",
     "51_method03",

@@ -170,7 +170,7 @@ public enum Op {
       case VARARG: {
         int a = ex.extract_A(codepoint);
         int b = ex.extract_B(codepoint);
-        if(b == 1) {
+        if(b == 2) {
           return a;
         } else {
           return -1;
