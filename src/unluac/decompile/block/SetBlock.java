@@ -10,7 +10,6 @@ import unluac.decompile.expression.Expression;
 import unluac.decompile.operation.Operation;
 import unluac.decompile.statement.Assignment;
 import unluac.decompile.statement.Statement;
-import unluac.decompile.target.Target;
 import unluac.parse.LFunction;
 
 public class SetBlock extends Block {
@@ -28,6 +27,9 @@ public class SetBlock extends Block {
     this.target = target;
     this.cond = cond;
     this.r = r;
+    if(target == -1) {
+      throw new IllegalStateException();
+    }
     // System.out.println("-- set block " + begin + " .. " + end);
   }
   
@@ -97,16 +99,12 @@ public class SetBlock extends Block {
       System.out.println();
     }
     if(assign != null) {
-      // branch.useExpression(assign.getFirstValue());
-      final Target target = assign.getFirstTarget();
-      final int targetLine = assign.getFirstLine();
-      final Expression value = getValue();
+      assign.replaceValue(target, getValue());
       return new Operation(end - 1) {
         
         @Override
         public Statement process(Registers r, Block block) {
-          // System.out.println(begin + " .. " + end);
-          return new Assignment(target, value, targetLine);
+          return assign;
         }
         
       };
