@@ -99,11 +99,9 @@ public class Decompiler {
   public State decompile() {
     State state = new State();
     state.r = new Registers(registers, length, declList, f);
-    blocks = new ArrayList<Block>();
-    List<Block> myblocks = ControlFlowHandler.process(this, state.r);
-    blocks.addAll(myblocks);
-    state.outer = myblocks.get(0);
-    processSequence(state);
+    List<Block> blocks = ControlFlowHandler.process(this, state.r);
+    state.outer = blocks.get(0);
+    processSequence(state, blocks, 1, code.length);
     for(Block block : blocks) {
       block.resolve(state.r);
     }
@@ -477,7 +475,7 @@ public class Decompiler {
     return assign;
   }
   
-  private void processSequence(State state) {
+  private void processSequence(State state, List<Block> blocks, int begin, int end) {
     Registers r = state.r;
     int blockContainerIndex = 0;
     int blockStatementIndex = 0;
@@ -533,7 +531,7 @@ public class Decompiler {
         } else {
           // After all blocks are handled for a line, we will reach here
           nextline = line + 1;
-          if(!skip[line]) {
+          if(!skip[line] && line >= begin && line <= end) {
             operations = processLine(state, line);
           } else {
             operations = Collections.emptyList();
@@ -636,7 +634,5 @@ public class Decompiler {
         throw new IllegalStateException();
     }
   }
-  
-  private ArrayList<Block> blocks;
   
 }
