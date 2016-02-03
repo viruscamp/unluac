@@ -3,6 +3,7 @@ package unluac.decompile;
 import java.util.HashSet;
 import java.util.Set;
 
+import unluac.Version;
 import unluac.parse.LBoolean;
 import unluac.parse.LNil;
 import unluac.parse.LNumber;
@@ -99,7 +100,13 @@ public class Constant {
             unprintable++;
           }
         }
-        if(unprintable == 0 && !string.contains("[[") && (newlines > 1 || (newlines == 1 && string.indexOf('\n') != string.length() - 1))) {
+        boolean longString = (newlines > 1 || (newlines == 1 && string.indexOf('\n') != string.length() - 1)); // heuristic
+        longString = longString && unprintable == 0; // can't escape and for robustness, don't want to allow non-ASCII output
+        longString = longString && !string.contains("[["); // triggers compatibility error in 5.1 TODO: avoidable?
+        if(d.function.header.version == Version.LUA50) {
+          longString = longString && !string.contains("]]") && !string.endsWith("]"); // no piping TODO: allow proper nesting
+        }
+        if(longString) {
           int pipe = 0;
           String pipeString = "]]";
           String startPipeString = "]";
