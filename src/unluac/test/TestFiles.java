@@ -5,6 +5,7 @@ public class TestFiles {
   public static final String[] tests = {
     "assign",
     "literal",
+    "number01",
     "multiassign",
     "multiassign02",
     "multiassign03",
