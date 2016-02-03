@@ -102,11 +102,13 @@ public class Constant {
         if(unprintable == 0 && !string.contains("[[") && (newlines > 1 || (newlines == 1 && string.indexOf('\n') != string.length() - 1))) {
           int pipe = 0;
           String pipeString = "]]";
-          while(string.indexOf(pipeString) >= 0) {
+          String startPipeString = "]";
+          while(string.endsWith(startPipeString) || string.indexOf(pipeString) >= 0) {
             pipe++;
             pipeString = "]";
             int i = pipe;
             while(i-- > 0) pipeString += "=";
+            startPipeString = pipeString;
             pipeString += "]";
           }
           if(braced) out.print("(");

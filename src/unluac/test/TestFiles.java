@@ -123,6 +123,7 @@ public class TestFiles {
     "inlineconstant01",
     "string01",
     "string02",
+    "string03",
     "upvalue01",
     "upvalue02",
     "upvalue03",
