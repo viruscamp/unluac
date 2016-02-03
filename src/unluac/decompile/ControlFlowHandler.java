@@ -189,6 +189,7 @@ public class ControlFlowHandler {
     if(constant && final_line < begin && state.finalsetbranches[final_line + 1] == null) {
       c = new TestCondition(final_line + 1, state.code.A(target));
       b = new Branch(final_line + 1, Branch.Type.finalset, c, final_line, loadboolblock + 2);
+      b.target = state.code.A(loadboolblock);
       insert_branch(state, b);
     }
     if(final_line >= begin && state.finalsetbranches[final_line] == null) {
@@ -799,8 +800,10 @@ public class ControlFlowHandler {
   private static Branch combine_left(State state, Branch branch1) {
     if(is_conditional(branch1)) {
       return combine_conditional(state, branch1);
-    } else {
+    } else if(is_assignment(branch1) || branch1.type == Branch.Type.finalset) {
       return combine_assignment(state, branch1);
+    } else {
+      return branch1;
     }
   }
   
@@ -859,6 +862,9 @@ public class ControlFlowHandler {
   private static Branch combine_assignment_helper(State state, Branch branch0, Branch branch1) {
     if(adjacent(state, branch0, branch1)) {
       int register = branch1.target;
+      if(branch1.target == -1) {
+        throw new IllegalStateException();
+      }
       //System.err.println("blah " + branch1.line + " " + branch0.line);
       if(is_conditional(branch0) && is_assignment(branch1)) {
         //System.err.println("bridge cand " + branch1.line + " " + branch0.line);
