@@ -530,11 +530,8 @@ public class ControlFlowHandler {
             if(head >= 1 && state.branches[head] != null && state.branches[head].type == Branch.Type.jump) {
               Branch headb = state.branches[head];
               if(headb.targetSecond <= b.line) {
-                for(int l = headb.targetSecond; l < b.line; l++) {
-                  if(is_statement(state, l)) {
-                    headb = null;
-                    break;
-                  }
+                if(has_statement(state, headb.targetSecond, b.line - 1)) {
+                  headb = null;
                 }
                 if(headb != null) {
                   block = new WhileBlock(state.function, b.cond.inverse(), head + 1, b.targetFirst);
