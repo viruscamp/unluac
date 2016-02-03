@@ -1046,7 +1046,21 @@ public class ControlFlowHandler {
     Code code = state.code;
     Op op = code.op(line);
     int codepoint = code.codepoint(line);
-    return op.target(codepoint, code.getExtractor());
+    int target = op.target(codepoint, code.getExtractor());
+    if(target == -1) {
+      // Special handling for table literals
+      switch(op) {
+      case SETLIST:
+      case SETLISTO:
+      case SETLIST50:
+      case SETTABLE:
+        target = code.A(line);
+        break;
+      default:
+        break;
+      }
+    }
+    return target;
   }
   
   private static boolean is_jmp(State state, int line) {
