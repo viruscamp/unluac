@@ -1169,7 +1169,6 @@ public class ControlFlowHandler {
       case SETGLOBAL:
       case SETUPVAL:
       case SETTABUP:
-      case SETTABLE:
       case TAILCALL:
       case RETURN:
       case FORLOOP:
@@ -1236,6 +1235,9 @@ public class ControlFlowHandler {
         }
         return false;
       }
+      case SETTABLE:
+        // special case -- this is actually ambiguous and must be resolved by the decompiler check
+        return false;
     }
     throw new IllegalStateException("Illegal opcode: " + code.op(line));
   }
