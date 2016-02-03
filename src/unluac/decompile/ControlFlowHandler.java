@@ -792,13 +792,6 @@ public class ControlFlowHandler {
     } else {
       boolean adjacent = branch0.targetFirst <= branch1.line;
       if(adjacent) {
-        /*for(int line = branch0.targetFirst; line < branch1.line; line++) {
-          if(is_statement(state, line)) {
-            if(verbose) System.out.println("Found statement at " + line + " between " + branch0.line + " and " + branch1.line);
-            adjacent = false;
-            break;
-          }
-        }*/
         adjacent = !has_statement(state, branch0.targetFirst, branch1.line - 1);
         adjacent = adjacent && !state.reverse_targets[branch1.line];
       }
