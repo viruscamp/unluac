@@ -35,7 +35,7 @@ class LFloatNumber extends LNumber {
   @Override
   public boolean equals(Object o) {
     if(o instanceof LFloatNumber) {
-      return number == ((LFloatNumber) o).number;
+      return Float.floatToRawIntBits(number) == Float.floatToRawIntBits(((LFloatNumber) o).number);
     } else if(o instanceof LNumber) {
       return value() == ((LNumber) o).value();
     }
@@ -71,7 +71,7 @@ class LDoubleNumber extends LNumber {
   @Override
   public boolean equals(Object o) {
     if(o instanceof LDoubleNumber) {
-      return number == ((LDoubleNumber) o).number;
+      return Double.doubleToRawLongBits(number) == Double.doubleToRawLongBits(((LDoubleNumber) o).number);
     } else if(o instanceof LNumber) {
       return value() == ((LNumber) o).value();
     }
