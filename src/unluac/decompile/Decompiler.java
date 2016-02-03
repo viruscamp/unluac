@@ -482,28 +482,6 @@ public class Decompiler {
     state.outer = new DoEndBlock(function, begin, end + 1);
     List<Block> blocks = Arrays.asList(state.outer);
     processSequence(state, blocks, begin, end);
-    if(!state.outer.isEmpty()) {
-      System.err.println("found statement " + begin + " " + end + ":");
-      state.outer.print(this, new Output(new OutputProvider() {
-
-        @Override
-        public void print(String s) {
-          System.err.print(s);
-        }
-
-        @Override
-        public void print(byte b) {
-          System.err.write(b);
-        }
-        
-        @Override
-        public void println() {
-          System.err.println();
-        }
-        
-      }));
-      System.err.println();
-    }
     return !state.outer.isEmpty();
   }
   
