@@ -157,6 +157,7 @@ public class TestFiles {
     "51_adjust03",
     "51_method03",
     "52_loadkx01",
+    "53_expression",
   };
   
   public static TestSuite suite = new TestSuite(null, ".\\test\\src\\", tests);
