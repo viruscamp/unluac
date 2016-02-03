@@ -24,6 +24,7 @@ public class TestFiles {
     "while",
     "while02",
     "while03",
+    "while04",
     "repeat",
     "repeat02",
     "if01",

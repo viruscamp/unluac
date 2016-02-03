@@ -492,13 +492,8 @@ public class ControlFlowHandler {
         if(b != null) {
           boolean reverse = state.reverse_targets[loopback];
           state.reverse_targets[loopback] = false;
-          for(int l = loopback; l < b.line; l++) {
-            
-            if(is_statement(state, l)) {
-              //System.err.println("not while " + l);
-              b = null;
-              break;
-            }
+          if(has_statement(state, loopback, b.line - 1)) {
+            b = null;
           }
           state.reverse_targets[loopback] = reverse;
         }
