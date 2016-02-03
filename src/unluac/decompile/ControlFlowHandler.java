@@ -1053,8 +1053,19 @@ public class ControlFlowHandler {
       case SETLIST:
       case SETLISTO:
       case SETLIST50:
+      case SETLIST52:
       case SETTABLE:
         target = code.A(line);
+        break;
+      case EXTRABYTE:
+        if(line >= 2 && code.op(line - 1) == Op.SETLIST) {
+          target = code.A(line - 1);
+        }
+        break;
+      case EXTRAARG:
+        if(line >= 2 && code.op(line - 1) == Op.SETLIST52) {
+          target = code.A(line - 1);
+        }
         break;
       default:
         break;
