@@ -7,6 +7,7 @@ public class TestFiles {
     "literal",
     "number01",
     "number02",
+    "number03",
     "multiassign",
     "multiassign02",
     "multiassign03",
