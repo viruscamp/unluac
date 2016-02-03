@@ -26,7 +26,11 @@ class LFloatNumber extends LNumber {
   @Override
   public String toString() {
     if(mode == LNumberType.NumberMode.MODE_NUMBER && number == (float) Math.round(number)) {
-      return Integer.toString((int) number);
+      if(Float.floatToRawIntBits(number) == Float.floatToRawIntBits(-0.0f)) {
+        return "-0";
+      } else {
+        return Integer.toString((int) number);
+      }
     } else {
       return Float.toString(number);
     }
@@ -62,7 +66,11 @@ class LDoubleNumber extends LNumber {
   @Override
   public String toString() {
     if(mode == LNumberType.NumberMode.MODE_NUMBER && number == (double) Math.round(number)) {
-      return Long.toString((long) number);
+      if(Double.doubleToRawLongBits(number) == Double.doubleToRawLongBits(-0.0)) {
+        return "-0";
+      } else {
+        return Long.toString((long) number);
+      }
     } else {
       return Double.toString(number);
     }
