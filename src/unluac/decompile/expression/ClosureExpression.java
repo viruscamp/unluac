@@ -100,8 +100,8 @@ public class ClosureExpression extends Expression {
     out.print(")");
     out.println();
     out.indent();
-    d.decompile();
-    d.print(out);
+    Decompiler.State result = d.decompile();
+    d.print(result, out);
     out.dedent();
     out.print("end");
     //out.println(); //This is an extra space for formatting

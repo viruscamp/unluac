@@ -44,8 +44,8 @@ public class Main {
         error(e.getMessage(), false);
       }
       Decompiler d = new Decompiler(lmain);
-      d.decompile();
-      d.print();
+      Decompiler.State result = d.decompile();
+      d.print(result);
       System.exit(0);
     }
   }
@@ -82,9 +82,9 @@ public class Main {
   public static void decompile(String in, String out) throws IOException {
     LFunction lmain = file_to_function(in, new Configuration());
     Decompiler d = new Decompiler(lmain);
-    d.decompile();
+    Decompiler.State result = d.decompile();
     final PrintStream pout = new PrintStream(out);
-    d.print(new Output(new OutputProvider() {
+    d.print(result, new Output(new OutputProvider() {
 
       @Override
       public void print(String s) {

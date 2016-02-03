@@ -40,17 +40,24 @@ import unluac.util.Stack;
 
 public class Decompiler {
   
-  private final int registers;
-  private final int length;
+  public final LFunction function;
   public final Code code;
-  private final Upvalues upvalues;
   public final Declaration[] declList;
   
-  protected Function f;
-  protected LFunction function;
+  private final int registers;
+  private final int length;
+  private final Upvalues upvalues;
+  
+  private final Function f;
   private final LFunction[] functions;  
   private final int params;
   private final int vararg;
+  
+  public static class State {
+    private Registers r;
+    private boolean[] skip;
+    private Block outer;
+  }
   
   public Decompiler(LFunction function) {
     this(function, null, -1);
@@ -89,33 +96,32 @@ public class Decompiler {
     return function.header.version;
   }
   
-  private Registers r;
-  private Block outer;
-  
-  public void decompile() {
-    r = new Registers(registers, length, declList, f);
+  public State decompile() {
+    State state = new State();
+    state.r = new Registers(registers, length, declList, f);
     blocks = new ArrayList<Block>();
-    List<Block> myblocks = ControlFlowHandler.process(this, r);
+    List<Block> myblocks = ControlFlowHandler.process(this, state.r);
     blocks.addAll(myblocks);
-    outer = myblocks.get(0);
-    processSequence();
+    state.outer = myblocks.get(0);
+    processSequence(state);
     for(Block block : blocks) {
-      block.resolve(r);
+      block.resolve(state.r);
     }
-    handleUnusedConstants(outer);
+    handleUnusedConstants(state.outer);
+    return state;
   }
   
-  public void print() {
-    print(new Output());
+  public void print(State state) {
+    print(state, new Output());
   }
   
-  public void print(OutputProvider out) {
-    print(new Output(out));
+  public void print(State state, OutputProvider out) {
+    print(state, new Output(out));
   }
   
-  public void print(Output out) {
+  public void print(State state, Output out) {
     handleInitialDeclares(out);
-    outer.print(this, out);
+    state.outer.print(this, out);
   }
   
   private void handleUnusedConstants(Block outer) {
@@ -197,7 +203,9 @@ public class Decompiler {
     }
   }
   
-  private List<Operation> processLine(int line) {
+  private List<Operation> processLine(State state, int line) {
+    Registers r = state.r;
+    boolean[] skip = state.skip;
     List<Operation> operations = new LinkedList<Operation>();
     int A = code.A(line);
     int B = code.B(line);
@@ -434,13 +442,9 @@ public class Decompiler {
     return operations;
   }
   
-  /**
-   * When lines are processed out of order, they are noted
-   * here so they can be skipped when encountered normally.
-   */
-  boolean[] skip;
-
-  private Assignment processOperation(Operation operation, int line, int nextLine, Block block) {
+  private Assignment processOperation(State state, Operation operation, int line, int nextLine, Block block) {
+    Registers r = state.r;
+    boolean[] skip = state.skip;
     Assignment assign = null;
     Statement stmt = operation.process(r, block);
     if(stmt != null) {
@@ -457,10 +461,10 @@ public class Decompiler {
           }
         }
         //System.out.println("-- checking for multiassign @" + nextLine);
-        while(!declare && nextLine < block.end && isMoveIntoTarget(nextLine)) {
+        while(!declare && nextLine < block.end && isMoveIntoTarget(r, nextLine)) {
           //System.out.println("-- found multiassign @" + nextLine);
-          Target target = getMoveIntoTargetTarget(nextLine, line + 1);
-          Expression value = getMoveIntoTargetValue(nextLine, line + 1); //updated?
+          Target target = getMoveIntoTargetTarget(r, nextLine, line + 1);
+          Expression value = getMoveIntoTargetValue(r, nextLine, line + 1); //updated?
           assign.addFirst(target, value, nextLine);
           skip[nextLine] = true;
           nextLine++;
@@ -473,7 +477,8 @@ public class Decompiler {
     return assign;
   }
   
-  private void processSequence() {
+  private void processSequence(State state) {
+    Registers r = state.r;
     int blockContainerIndex = 0;
     int blockStatementIndex = 0;
     List<Block> blockContainers = new ArrayList<Block>(blocks.size());
@@ -488,7 +493,9 @@ public class Decompiler {
     Stack<Block> blockStack = new Stack<Block>();
     blockStack.push(blockContainers.get(blockContainerIndex++));
     
-    skip = new boolean[code.length + 1];
+    state.skip = new boolean[code.length + 1];
+    boolean[] skip = state.skip;
+    
     int line = 1;
     while(true) {
       int nextline = line;
@@ -527,7 +534,7 @@ public class Decompiler {
           // After all blocks are handled for a line, we will reach here
           nextline = line + 1;
           if(!skip[line]) {
-            operations = processLine(line);
+            operations = processLine(state, line);
           } else {
             operations = Collections.emptyList();
           }
@@ -539,7 +546,7 @@ public class Decompiler {
       Assignment assignment = null;
       
       for(Operation operation : operations) {
-        Assignment operationAssignment = processOperation(operation, line, nextline, block);
+        Assignment operationAssignment = processOperation(state, operation, line, nextline, block);
         if(operationAssignment != null) {
           assignment = operationAssignment;
         }
@@ -567,7 +574,7 @@ public class Decompiler {
     }
   }
   
-  private boolean isMoveIntoTarget(int line) {
+  private boolean isMoveIntoTarget(Registers r, int line) {
     switch(code.op(line)) {
       case MOVE:
         return r.isAssignable(code.A(line), line) && !r.isLocal(code.B(line), line);
@@ -588,7 +595,7 @@ public class Decompiler {
     }
   }
   
-  private Target getMoveIntoTargetTarget(int line, int previous) {
+  private Target getMoveIntoTargetTarget(Registers r, int line, int previous) {
     switch(code.op(line)) {
       case MOVE:
         return r.getTarget(code.A(line), line);
@@ -608,7 +615,7 @@ public class Decompiler {
     }
   }
   
-  private Expression getMoveIntoTargetValue(int line, int previous) {
+  private Expression getMoveIntoTargetValue(Registers r, int line, int previous) {
     int A = code.A(line);
     int B = code.B(line);
     int C = code.C(line);
