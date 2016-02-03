@@ -31,6 +31,11 @@ public class Break extends Block {
   }
   
   @Override
+  public boolean isEmpty() {
+    return true;
+  }
+  
+  @Override
   public boolean breakable() {
     return false;
   }

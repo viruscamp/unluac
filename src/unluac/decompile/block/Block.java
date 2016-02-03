@@ -67,6 +67,8 @@ abstract public class Block extends Statement implements Comparable<Block> {
   
   abstract public boolean isContainer();
   
+  abstract public boolean isEmpty();
+  
   @Override
   public int compareTo(Block block) {
     if(this.begin < block.begin) {

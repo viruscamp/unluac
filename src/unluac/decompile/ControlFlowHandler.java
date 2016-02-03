@@ -74,6 +74,7 @@ public class ControlFlowHandler {
   }
   
   private static class State {
+    public Decompiler d;
     public LFunction function;
     public Registers r;
     public Code code;
@@ -89,6 +90,7 @@ public class ControlFlowHandler {
   
   public static List<Block> process(Decompiler d, Registers r) {
     State state = new State();
+    state.d = d;
     state.function = d.function;
     state.r = r;
     state.code = d.code;
@@ -795,13 +797,14 @@ public class ControlFlowHandler {
     } else {
       boolean adjacent = branch0.targetFirst <= branch1.line;
       if(adjacent) {
-        for(int line = branch0.targetFirst; line < branch1.line; line++) {
+        /*for(int line = branch0.targetFirst; line < branch1.line; line++) {
           if(is_statement(state, line)) {
             if(verbose) System.out.println("Found statement at " + line + " between " + branch0.line + " and " + branch1.line);
             adjacent = false;
             break;
           }
-        }
+        }*/
+        adjacent = !has_statement(state, branch0.targetFirst, branch1.line - 1);
         adjacent = adjacent && !state.reverse_targets[branch1.line];
       }
       return adjacent;
@@ -1077,6 +1080,15 @@ public class ControlFlowHandler {
     } else {
       return false;
     }
+  }
+  
+  private static boolean has_statement(State state, int begin, int end) {
+    for(int line = begin; line <= end; line++) {
+      if(is_statement(state, line)) {
+        return true;
+      }
+    }
+    return state.d.hasStatement(begin, end);
   }
   
   private static boolean is_statement(State state, int line) {

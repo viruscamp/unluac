@@ -30,6 +30,11 @@ abstract public class ContainerBlock extends Block {
   }
   
   @Override
+  public boolean isEmpty() {
+    return statements.isEmpty();
+  }
+  
+  @Override
   public void addStatement(Statement statement) {
     statements.add(statement);
   }

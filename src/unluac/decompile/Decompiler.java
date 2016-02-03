@@ -11,6 +11,7 @@ import java.util.Set;
 import unluac.Configuration;
 import unluac.Version;
 import unluac.decompile.block.Block;
+import unluac.decompile.block.DoEndBlock;
 import unluac.decompile.expression.ClosureExpression;
 import unluac.decompile.expression.ConstantExpression;
 import unluac.decompile.expression.Expression;
@@ -475,6 +476,37 @@ public class Decompiler {
     return assign;
   }
   
+  public boolean hasStatement(int begin, int end) {
+    State state = new State();
+    state.r = new Registers(registers, length, declList, f);
+    state.outer = new DoEndBlock(function, begin, end + 1);
+    List<Block> blocks = Arrays.asList(state.outer);
+    processSequence(state, blocks, begin, end);
+    if(!state.outer.isEmpty()) {
+      System.err.println("found statement " + begin + " " + end + ":");
+      state.outer.print(this, new Output(new OutputProvider() {
+
+        @Override
+        public void print(String s) {
+          System.err.print(s);
+        }
+
+        @Override
+        public void print(byte b) {
+          System.err.write(b);
+        }
+        
+        @Override
+        public void println() {
+          System.err.println();
+        }
+        
+      }));
+      System.err.println();
+    }
+    return !state.outer.isEmpty();
+  }
+  
   private void processSequence(State state, List<Block> blocks, int begin, int end) {
     Registers r = state.r;
     int blockContainerIndex = 0;
@@ -536,7 +568,9 @@ public class Decompiler {
           } else {
             operations = Collections.emptyList();
           }
-          newLocals = r.getNewLocals(line);
+          if(line >= begin && line <= end) {
+            newLocals = r.getNewLocals(line);
+          }
         }
       }
       

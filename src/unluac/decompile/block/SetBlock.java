@@ -75,6 +75,11 @@ public class SetBlock extends Block {
     return true;
   }
   
+  @Override
+  public boolean isEmpty() {
+    return true;
+  }
+  
   public void useAssignment(Assignment assign) {
     this.assign = assign;
     // branch.useExpression(assign.getFirstValue());
