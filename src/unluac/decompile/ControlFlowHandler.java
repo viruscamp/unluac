@@ -516,6 +516,14 @@ public class ControlFlowHandler {
           loop = new WhileBlock(state.function, b.cond, b.targetFirst, b.targetSecond);
           unredirect(state, loopback, end, j.line, loopback);
         } else {
+          if(state.function.header.version == Version.LUA50) {
+            if(loopback - 1 >= 1 && state.branches[loopback - 1] != null) {
+              Branch head = state.branches[loopback - 1];
+              if(head.type == Branch.Type.jump && head.targetFirst == j.line) {
+                remove_branch(state, head);
+              }
+            }
+          }
           loop = new AlwaysLoop(state.function, loopback, end);
           unredirect(state, loopback, end, j.line, loopback);
         }
