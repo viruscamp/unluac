@@ -161,9 +161,16 @@ public class ControlFlowHandler {
   private static void handle_loadboolblock(State state, boolean[] skip, int loadboolblock, Condition c, int line, int target) {
     int loadboolvalue = state.code.B(target);
     int final_line = -1;
-    if(loadboolblock - 1 >= 1 && is_jmp(state, loadboolblock - 1) && state.code.target(loadboolblock - 1) == loadboolblock + 2) {
-      skip[loadboolblock - 1] = true;
-      final_line = loadboolblock - 2;
+    if(loadboolblock - 1 >= 1 && is_jmp(state, loadboolblock - 1)) {
+      int boolskip_target = state.code.target(loadboolblock - 1);
+      int boolskip_target_redirected = -1;
+      if(is_jmp_raw(state, loadboolblock + 2)) {
+        boolskip_target_redirected = state.code.target(loadboolblock + 2);
+      }
+      if(boolskip_target == loadboolblock + 2 || boolskip_target == boolskip_target_redirected) {
+        skip[loadboolblock - 1] = true;
+        final_line = loadboolblock - 2;
+      }
     }
     boolean inverse = false;
     if(loadboolvalue == 1) {
@@ -1063,6 +1070,11 @@ public class ControlFlowHandler {
       }
     }
     return target;
+  }
+  
+  private static boolean is_jmp_raw(State state, int line) {
+    Op op = state.code.op(line);
+    return op == Op.JMP || op == Op.JMP52;
   }
   
   private static boolean is_jmp(State state, int line) {
