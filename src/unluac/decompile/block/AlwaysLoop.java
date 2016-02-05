@@ -9,10 +9,13 @@ import unluac.parse.LFunction;
 
 public class AlwaysLoop extends ContainerBlock {
   
+  private final boolean repeat;
+  
   private ConstantExpression condition;
   
-  public AlwaysLoop(LFunction function, int begin, int end) {
+  public AlwaysLoop(LFunction function, int begin, int end, boolean repeat) {
     super(function, begin, end, 0);
+    this.repeat = repeat;
     condition = null;
   }
   
@@ -48,22 +51,30 @@ public class AlwaysLoop extends ContainerBlock {
   
   @Override
   public void print(Decompiler d, Output out) {
-    out.print("while ");
-    if(condition == null) {
-      out.print("true");
+    if(repeat) {
+      out.println("repeat");
     } else {
-      condition.print(d, out);
+      out.print("while ");
+      if(condition == null) {
+        out.print("true");
+      } else {
+        condition.print(d, out);
+      }
+      out.println(" do");
     }
-    out.println(" do");
     out.indent();
     Statement.printSequence(d, out, statements);
     out.dedent();
-    out.print("end");
+    if(repeat) {
+      out.print("until false");
+    } else {
+      out.print("end");
+    }
   }
 
   @Override
   public boolean useConstant(Function f, int index) {
-    if(condition == null) {
+    if(!repeat && condition == null) {
       condition = f.getConstantExpression(index);
       return true;
     } else {
