@@ -26,7 +26,7 @@ abstract public class ContainerBlock extends Block {
   
   @Override
   public boolean isContainer() {
-    return true;
+    return begin < end;
   }
   
   @Override

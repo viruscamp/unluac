@@ -477,12 +477,16 @@ public class Decompiler {
   }
   
   public boolean hasStatement(int begin, int end) {
-    State state = new State();
-    state.r = new Registers(registers, length, declList, f);
-    state.outer = new DoEndBlock(function, begin, end + 1);
-    List<Block> blocks = Arrays.asList(state.outer);
-    processSequence(state, blocks, begin, end);
-    return !state.outer.isEmpty();
+    if(begin <= end) {
+      State state = new State();
+      state.r = new Registers(registers, length, declList, f);
+      state.outer = new DoEndBlock(function, begin, end + 1);
+      List<Block> blocks = Arrays.asList(state.outer);
+      processSequence(state, blocks, begin, end);
+      return !state.outer.isEmpty();
+    } else {
+      return false;
+    }
   }
   
   private void processSequence(State state, List<Block> blocks, int begin, int end) {
@@ -531,10 +535,7 @@ public class Decompiler {
       
       // Handle other sources of operations (after pushing any new container block)
       if(operations == null) {
-        if(blockStack.peek().end <= line) {
-          // If the newly pushed block has already ended, don't put anything in it
-          operations = Collections.emptyList();
-        } else if(blockStatementIndex < blockStatements.size() && blockStatements.get(blockStatementIndex).begin <= line) {
+        if(blockStatementIndex < blockStatements.size() && blockStatements.get(blockStatementIndex).begin <= line) {
           Block blockStatement = blockStatements.get(blockStatementIndex++);
           Operation operation = blockStatement.process(this);
           operations = Arrays.asList(operation);
