@@ -524,8 +524,21 @@ public class Decompiler {
         operations = Arrays.asList(operation);
         prevLocals = r.getNewLocals(line - 1);
       } else {
+        List<Declaration> locals = r.getNewLocals(line);
         while(blockContainerIndex < blockContainers.size() && blockContainers.get(blockContainerIndex).begin <= line) {
-          blockStack.push(blockContainers.get(blockContainerIndex++));
+          Block next = blockContainers.get(blockContainerIndex++);
+          if(!locals.isEmpty() && next.allowsPreDeclare() && locals.get(0).end > next.scopeEnd()) {
+            Assignment declaration = new Assignment();
+            int declareEnd = locals.get(0).end;
+            declaration.declare(locals.get(0).begin);
+            while(!locals.isEmpty() && locals.get(0).end == declareEnd) {
+              Declaration decl = locals.get(0);
+              declaration.addLast(new VariableTarget(decl), ConstantExpression.createNil(line), line);
+              locals.remove(0);
+            }
+            blockStack.peek().addStatement(declaration);
+          }
+          blockStack.push(next);
         }
       }
       
@@ -570,14 +583,25 @@ public class Decompiler {
         locals = prevLocals;
       }
       if(locals != null && !locals.isEmpty()) {
+        int scopeEnd = -1;
         if(assignment == null) {
           // Create a new Assignment to hold the declarations
           assignment = new Assignment();
           block.addStatement(assignment);
+        } else {
+          for(Declaration decl : locals) {
+            if(assignment.assigns(decl)) {
+              scopeEnd = decl.end;
+              break;
+            }
+          }
         }
+          
         assignment.declare(locals.get(0).begin);
         for(Declaration decl : locals) {
-          assignment.addLast(new VariableTarget(decl), r.getValue(decl.register, line + 1), r.getUpdated(decl.register, line - 1));
+          if(scopeEnd == -1 || decl.end == scopeEnd) {
+            assignment.addLast(new VariableTarget(decl), r.getValue(decl.register, line + 1), r.getUpdated(decl.register, line - 1));
+          }
         }
       }
       

@@ -110,6 +110,8 @@ public class TestFiles {
     "doend04",
     "doend05",
     "doend06",
+    "doend07",
+    "doend08",
     "control01",
     "control02",
     "control03",

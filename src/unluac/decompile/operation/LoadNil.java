@@ -23,9 +23,15 @@ public class LoadNil extends Operation {
     int count = 0;
     Assignment assignment = new Assignment();
     Expression nil = ConstantExpression.createNil(line);
+    int scopeEnd = -1;
+    for(int register = registerFirst; register <= registerLast; register++) {
+      if(r.isAssignable(register, line)) {
+        scopeEnd = r.getDeclaration(register, line).end;
+      }
+    }
     for(int register = registerFirst; register <= registerLast; register++) {
       r.setValue(register, line, nil);
-      if(r.isAssignable(register, line)) {
+      if(r.isAssignable(register, line) && r.getDeclaration(register, line).end == scopeEnd) {
         assignment.addLast(r.getTarget(register, line), nil, line);
         count++;
       }

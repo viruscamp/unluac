@@ -21,6 +21,10 @@ public class DoEndBlock extends ContainerBlock {
     return false;
   }
   
+  public boolean allowsPreDeclare() {
+    return true;
+  }
+  
   @Override
   public int getLoopback() {
     throw new IllegalStateException();

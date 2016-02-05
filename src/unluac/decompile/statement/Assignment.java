@@ -138,6 +138,13 @@ public class Assignment extends Statement {
     return declare;
   }
   
+  public boolean assigns(Declaration decl) {
+    for(Target target : targets) {
+      if(target.isDeclaration(decl)) return true;
+    }
+    return false;
+  }
+  
   public boolean canDeclare(List<Declaration> locals) {
     for(Target target : targets) {
       boolean isNewLocal = false;
