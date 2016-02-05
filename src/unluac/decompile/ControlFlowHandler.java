@@ -758,6 +758,7 @@ public class ControlFlowHandler {
   
   private static void find_do_blocks(State state, Declaration[] declList) {
     for(Declaration decl : declList) {
+      int begin = decl.begin;
       if(!decl.forLoop && !decl.forLoopExplicit) {
         boolean needsDoEnd = true;
         for(Block block : state.blocks) {
@@ -766,6 +767,8 @@ public class ControlFlowHandler {
               block.useScope();
               needsDoEnd = false;
               break;
+            } else if(block.scopeEnd() < decl.end) {
+              begin = Math.min(begin, block.begin);
             }
           }
         }
@@ -773,7 +776,7 @@ public class ControlFlowHandler {
           // Without accounting for the order of declarations, we might
           // create another do..end block later that would eliminate the
           // need for this one. But order of decls should fix this.
-          state.blocks.add(new DoEndBlock(state.function, decl.begin, decl.end + 1));
+          state.blocks.add(new DoEndBlock(state.function, begin, decl.end + 1));
         }
       }
     }
