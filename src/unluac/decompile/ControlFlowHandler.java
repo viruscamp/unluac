@@ -16,6 +16,7 @@ import unluac.decompile.block.ForBlock50;
 import unluac.decompile.block.ForBlock51;
 import unluac.decompile.block.IfThenElseBlock;
 import unluac.decompile.block.IfThenEndBlock;
+import unluac.decompile.block.OnceLoop;
 import unluac.decompile.block.RepeatBlock;
 import unluac.decompile.block.SetBlock;
 import unluac.decompile.block.TForBlock50;
@@ -105,6 +106,7 @@ public class ControlFlowHandler {
     find_break_statements(state);
     find_if_blocks(state);
     find_set_blocks(state);
+    find_pseudo_goto_statements(state, d.declList);
     find_do_blocks(state, d.declList);
     Collections.sort(state.blocks);
     // DEBUG: print branches stuff
@@ -764,6 +766,55 @@ public class ControlFlowHandler {
     
     for(Branch br : breaks) {
       remove_branch(state, br);
+    }
+  }
+  
+  private static void find_pseudo_goto_statements(State state, Declaration[] declList) {
+    Branch b = state.begin_branch;
+    while(b != null) {
+      if(b.type == Branch.Type.jump && b.targetFirst > b.line) {
+        int end = b.targetFirst;
+        Block smallestEnclosing = null;
+        for(Block block : state.blocks) {
+          if(block.contains(b.line) && block.contains(end - 1)) {
+            if(smallestEnclosing == null || smallestEnclosing.contains(block)) {
+              smallestEnclosing = block;
+            }
+          }
+        }
+        if(smallestEnclosing != null) {
+          // Should always find the outer block at least...
+          Block wrapping = null;
+          for(Block block : state.blocks) {
+            if(block != smallestEnclosing && smallestEnclosing.contains(block) && block.contains(b.line)) {
+              if(wrapping == null || block.contains(wrapping)) {
+                wrapping = block;
+              }
+            }
+          }
+          int begin = smallestEnclosing.begin;
+          //int beginMin = begin;
+          //int beginMax = b.line;
+          if(wrapping != null) {
+            begin = Math.max(wrapping.begin - 1, smallestEnclosing.begin);
+            //beginMax = begin;
+          }
+          for(Declaration decl : declList) {
+            if(decl.begin >= begin && decl.begin < end) {
+              
+            }
+            if(decl.end >= begin && decl.end < end) {
+              if(decl.begin < begin) {
+                begin = decl.begin;
+              }
+            }
+          }
+          state.blocks.add(new OnceLoop(state.function, begin, end));
+          state.blocks.add(new Break(state.function, b.line, b.targetFirst));
+          remove_branch(state, b);
+        }
+      }
+      b = b.next;
     }
   }
   
