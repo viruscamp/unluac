@@ -1269,7 +1269,7 @@ public class ControlFlowHandler {
       case CLOSE:
         return true;
       case TEST50:
-        return code.A(line) != code.B(line);
+        return code.A(line) != code.B(line) && (r.isLocal(code.A(line), line) || code.A(line) == testRegister);
       case SELF:
         return r.isLocal(code.A(line), line) || r.isLocal(code.A(line) + 1, line);
       case EQ:
