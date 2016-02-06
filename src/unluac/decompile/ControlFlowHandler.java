@@ -1107,34 +1107,42 @@ public class ControlFlowHandler {
   
   private static int get_target(State state, int line) {
     Code code = state.code;
-    Op op = code.op(line);
-    int codepoint = code.codepoint(line);
-    int target = op.target(codepoint, code.getExtractor());
-    if(target == -1) {
-      // Special handling for table literals
-      switch(op) {
-      case SETLIST:
-      case SETLISTO:
-      case SETLIST50:
-      case SETLIST52:
-      case SETTABLE:
-        target = code.A(line);
-        break;
-      case EXTRABYTE:
-        if(line >= 2 && code.op(line - 1) == Op.SETLIST) {
-          target = code.A(line - 1);
+    if(code.isUpvalueDeclaration(line)) {
+      line--;
+      while(code.op(line) != Op.CLOSURE) line--;
+      int codepoint = code.codepoint(line);
+      int target = Op.CLOSURE.target(codepoint, code.getExtractor());
+      return target;
+    } else {
+      Op op = code.op(line);
+      int codepoint = code.codepoint(line);
+      int target = op.target(codepoint, code.getExtractor());
+      if(target == -1) {
+        // Special handling for table literals
+        switch(op) {
+        case SETLIST:
+        case SETLISTO:
+        case SETLIST50:
+        case SETLIST52:
+        case SETTABLE:
+          target = code.A(line);
+          break;
+        case EXTRABYTE:
+          if(line >= 2 && code.op(line - 1) == Op.SETLIST) {
+            target = code.A(line - 1);
+          }
+          break;
+        case EXTRAARG:
+          if(line >= 2 && code.op(line - 1) == Op.SETLIST52) {
+            target = code.A(line - 1);
+          }
+          break;
+        default:
+          break;
         }
-        break;
-      case EXTRAARG:
-        if(line >= 2 && code.op(line - 1) == Op.SETLIST52) {
-          target = code.A(line - 1);
-        }
-        break;
-      default:
-        break;
       }
+      return target;
     }
-    return target;
   }
   
   private static boolean is_jmp_raw(State state, int line) {
@@ -1190,6 +1198,7 @@ public class ControlFlowHandler {
     if(!r.getNewLocals(line).isEmpty()) return true;
     int testRegister = -1;
     Code code = state.code;
+    if(code.isUpvalueDeclaration(line)) return false;
     switch(code.op(line)) {
       case MOVE:
       case LOADK:

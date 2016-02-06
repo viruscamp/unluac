@@ -65,6 +65,7 @@ public class Code {
   private final OpcodeMap map;
   private final int[] code;
   private final boolean[] extraByte;
+  private final boolean[] upvalue;
   public final int length;
   
   public Code(LFunction function) {
@@ -76,6 +77,18 @@ public class Code {
     for(int i = 0; i < length; i++) {
       int line = i + 1;
       extraByte[i] = op(line).hasExtraByte(codepoint(line), extractor);
+    }
+    upvalue = new boolean[length];
+    if(function.header.version.usesInlineUpvalueDeclarations()) {
+      for(int i = 0; i < length; i++) {
+        int line = i + 1;
+        if(op(line) == Op.CLOSURE) {
+          int nups = function.functions[Bx(line)].numUpvalues;
+          for(int j = 1; j <= nups; j++) {
+            upvalue[i + j] = true;
+          }
+        }
+      }
     }
   }
   
@@ -159,6 +172,10 @@ public class Code {
    */
   public int codepoint(int line) {
     return code[line - 1];
+  }
+  
+  public boolean isUpvalueDeclaration(int line) {
+    return upvalue[line - 1];
   }
   
   public int length() {
