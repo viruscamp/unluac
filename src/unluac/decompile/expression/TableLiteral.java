@@ -15,6 +15,7 @@ public class TableLiteral extends Expression {
     public final Expression value;
     public final boolean isList;
     public final int timestamp;
+    private boolean hash;
     
     public Entry(Expression key, Expression value, boolean isList, int timestamp) {
       this.key = key;
@@ -35,9 +36,14 @@ public class TableLiteral extends Expression {
   private boolean isList = true;
   private int listLength = 1;
   
+  private final int hashSize;
+  private int hashCount;
+  
   public TableLiteral(int arraySize, int hashSize) {
     super(PRECEDENCE_ATOMIC);
     entries = new ArrayList<Entry>(arraySize + hashSize);
+    this.hashSize = hashSize;
+    hashCount = 0;
   }
 
   @Override
@@ -120,7 +126,7 @@ public class TableLiteral extends Expression {
         value.print(d, out);
       }
       listLength++;
-    } else if(isObject && key.isIdentifier()) {
+    } else if(entry.hash/*isObject && key.isIdentifier()*/) {
       out.print(key.asName());
       out.print(" = ");
       value.print(d, out);
@@ -149,6 +155,10 @@ public class TableLiteral extends Expression {
   
   @Override
   public void addEntry(Entry entry) {
+    if(hashCount < hashSize && entry.key.isIdentifier()) {
+      entry.hash = true;
+      hashCount++;
+    }
     entries.add(entry);
     isObject = isObject && (entry.isList || entry.key.isIdentifier());
     isList = isList && entry.isList;

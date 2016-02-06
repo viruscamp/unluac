@@ -258,7 +258,7 @@ public class Decompiler {
         operations.add(new RegisterSet(line, A, new TableLiteral(fb2int(B), fb2int(C))));
         break;
       case NEWTABLE50:
-        operations.add(new RegisterSet(line, A, new TableLiteral(fb2int50(B), 1 << C)));
+        operations.add(new RegisterSet(line, A, new TableLiteral(fb2int50(B), C == 0 ? 0 : 1 << C)));
         break;
       case SELF: {
         // We can later determine if : syntax was used by comparing subexpressions with ==
