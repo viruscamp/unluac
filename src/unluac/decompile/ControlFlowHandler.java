@@ -1208,7 +1208,6 @@ public class ControlFlowHandler {
     if(state.reverse_targets[line]) return true;
     Registers r = state.r;
     if(!r.getNewLocals(line).isEmpty()) return true;
-    int testRegister = -1;
     Code code = state.code;
     if(code.isUpvalueDeclaration(line)) return false;
     switch(code.op(line)) {
@@ -1241,7 +1240,7 @@ public class ControlFlowHandler {
       case CONCAT:
       case CLOSURE:
       case TESTSET:
-        return r.isLocal(code.A(line), line) || code.A(line) == testRegister;
+        return r.isLocal(code.A(line), line);
       case LOADNIL:
         for(int register = code.A(line); register <= code.B(line); register++) {
           if(r.isLocal(register, line)) {
@@ -1269,7 +1268,7 @@ public class ControlFlowHandler {
       case CLOSE:
         return true;
       case TEST50:
-        return code.A(line) != code.B(line) && (r.isLocal(code.A(line), line) || code.A(line) == testRegister);
+        return code.A(line) != code.B(line) && r.isLocal(code.A(line), line);
       case SELF:
         return r.isLocal(code.A(line), line) || r.isLocal(code.A(line) + 1, line);
       case EQ:
@@ -1311,7 +1310,7 @@ public class ControlFlowHandler {
             return true;
           }
         }
-        return (c == 2 && a == testRegister);
+        return false;
       }
       case VARARG: {
         int a = code.A(line);
