@@ -668,25 +668,31 @@ public class ControlFlowHandler {
     return enclosing;
   }
   
-  private static Block enclosing_block(State state, Block inner) {
-    Block enclosing = null;
-    for(Block block : state.blocks) {
-      if(block != inner && block.contains(inner) && block.breakable()) {
-        if(enclosing == null || enclosing.contains(block)) {
-          enclosing = block;
-        }
-      }
-    }
-    return enclosing;
-  }
-  
   private static void unredirect_break(State state, int line, Block enclosing) {
     Branch b = state.begin_branch;
     while(b != null) {
       Block breakable = enclosing_breakable_block(state, b.line);
-      if(breakable != null && b.type == Branch.Type.jump && enclosing_block(state, breakable) == enclosing && b.targetFirst == enclosing.end) {
-        b.targetFirst = line;
-        b.targetSecond = line;
+      if(b.line != line && breakable != null && b.type == Branch.Type.jump && breakable == enclosing && b.targetFirst == enclosing.end) {
+        //System.err.println("redirect break " + b.line + " from " + b.targetFirst + " to " + line);
+        boolean condsplit = false;
+        Branch c = state.begin_branch;
+        while(c != null) {
+          if(is_conditional(c) && c.targetSecond < breakable.end) {
+            if(c.targetFirst <= line && line < c.targetSecond) {
+              if(c.targetFirst <= b.line && b.line < c.targetSecond) {
+                
+              } else {
+                condsplit = true;
+                break;
+              }
+            }
+          }
+          c = c.next;
+        }
+        if(!condsplit) {
+          b.targetFirst = line;
+          b.targetSecond = line;
+        }
       }
       b = b.next;
     }
@@ -723,10 +729,12 @@ public class ControlFlowHandler {
         }
       }
       if(is_conditional(b)) {
+        //System.err.println("conditional " + b.line + " " + b.targetSecond);
         if(enclosing != null && b.targetSecond >= enclosing.end) {
           ifStack.add(b);
         }
       } else if(b.type == Branch.Type.jump) {
+        //System.err.println("lingering jump " + b.line);
         if(enclosing != null && b.targetFirst < enclosing.end && !ifStack.isEmpty()) {
           if(b.line <= state.code.length - 1 && state.branches[b.line + 1] != null) {
             Branch prev = state.branches[b.line + 1];
