@@ -95,6 +95,7 @@ public class TestFiles {
     "table01",
     "table02",
     "table03",
+    "table06",
     "localfunction01",
     "localfunction02",
     "localfunction03",
