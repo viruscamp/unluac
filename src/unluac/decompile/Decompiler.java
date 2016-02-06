@@ -252,6 +252,9 @@ public class Decompiler {
         operations.add(new GlobalSet(line, f.getGlobalName(Bx), r.getExpression(A, line)));
         break;
       case SETTABLE:
+        if(line == 36) {
+          int breakhere = 0;
+        }
         operations.add(new TableSet(line, r.getExpression(A, line), r.getKExpression(B, line), r.getKExpression(C, line), true, line));
         break;
       case NEWTABLE:

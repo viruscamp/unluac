@@ -38,7 +38,7 @@ public class Assignment extends Statement {
   
   @Override
   public boolean beginsWithParen() {
-    return targets.get(0).beginsWithParen();
+    return !declare && targets.get(0).beginsWithParen();
   }
   
   public Target getFirstTarget() {
