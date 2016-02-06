@@ -1,6 +1,7 @@
 package unluac.decompile;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -136,12 +137,22 @@ public class ControlFlowHandler {
   
   private static void resolve_lines(State state) {
     int[] resolved = new int[state.code.length + 1];
+    Arrays.fill(resolved, -1);
     for(int line = 1; line <= state.code.length; line++) {
       int r = line;
       Branch b = state.branches[line];
       while(b != null && b.type == Branch.Type.jump) {
-        r = b.targetSecond;
-        b = state.branches[r];
+        if(resolved[r] >= 1) {
+          r = resolved[r];
+          break;
+        } else if(resolved[r] == -2) {
+          r = b.targetSecond;
+          break;
+        } else {
+          resolved[r] = -2;
+          r = b.targetSecond;
+          b = state.branches[r];
+        }
       }
       resolved[line] = r;
     }
@@ -488,7 +499,7 @@ public class ControlFlowHandler {
     List<Block> blocks = state.blocks;
     Branch j = state.end_branch;
     while(j != null) {
-      if(j.type == Branch.Type.jump && j.targetFirst < j.line) {
+      if(j.type == Branch.Type.jump && j.targetFirst <= j.line) {
         int line = j.targetFirst;
         int loopback = line;
         int end = j.line + 1;
