@@ -1240,6 +1240,7 @@ public class ControlFlowHandler {
       case BNOT:
       case CONCAT:
       case CLOSURE:
+      case TESTSET:
         return r.isLocal(code.A(line), line) || code.A(line) == testRegister;
       case LOADNIL:
         for(int register = code.A(line); register <= code.B(line); register++) {
@@ -1266,7 +1267,6 @@ public class ControlFlowHandler {
       case TFORLOOP:
       case TFORPREP:
       case CLOSE:
-      case TESTSET:
         return true;
       case TEST50:
         return code.A(line) != code.B(line);
