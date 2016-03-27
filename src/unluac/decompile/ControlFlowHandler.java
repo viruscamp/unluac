@@ -803,7 +803,7 @@ public class ControlFlowHandler {
           if(wrapping != null) {
             begin = wrapping.begin - 1;
           } else {
-            begin = b.line - 1;
+            begin = b.line;
           }
           
           for(Declaration decl : declList) {
