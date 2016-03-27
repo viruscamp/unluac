@@ -104,10 +104,11 @@ public class ControlFlowHandler {
     find_fixed_blocks(state);
     find_while_loops(state);
     find_repeat_loops(state);
-    find_break_statements(state);
-    find_if_blocks(state);
+    //find_break_statements(state);
+    //find_if_blocks(state);
+    find_other_statements(state);
     find_set_blocks(state);
-    find_pseudo_goto_statements(state, d.declList);
+    //find_pseudo_goto_statements(state, d.declList);
     find_do_blocks(state, d.declList);
     Collections.sort(state.blocks);
     // DEBUG: print branches stuff
@@ -695,6 +696,254 @@ public class ControlFlowHandler {
         }
       }
       b = b.next;
+    }
+  }
+  
+  private static class BranchResolution {
+    
+    enum Type {
+      IF_END,
+      IF_ELSE,
+      IF_BREAK,
+      ELSE,
+      BREAK,
+    };
+    
+    Type type;
+    int line;
+    boolean matched;
+    
+  }
+  
+  private static class ResolutionBlock {
+    
+    ResolutionBlock(int begin, int end) {
+      this.begin = begin;
+      this.end = end;
+    }
+    
+    int begin;
+    int end;
+  }
+  
+  private static class ResolutionResult {
+    
+    List<Block> blocks = new ArrayList<Block>();
+    
+  }
+  
+  private static ResolutionResult finishResolution(State state, BranchResolution[] resolution) {
+    ResolutionResult result = new ResolutionResult();
+    for(int i = 0; i < resolution.length; i++) {
+      BranchResolution r = resolution[i];
+      if(r != null) {
+        Branch b = state.branches[i];
+        if(b == null) throw new IllegalStateException();
+        switch(r.type) {
+        case ELSE:
+          break;
+        case BREAK:
+          result.blocks.add(new Break(state.function, b.line, r.line));
+          break;
+        case IF_END:
+          int literalEnd = state.code.target(b.targetFirst - 1);
+          result.blocks.add(new IfThenEndBlock(state.function, state.r, b.cond, b.targetFirst, r.line, literalEnd != r.line));
+          break;
+        case IF_ELSE:
+          BranchResolution r_else = resolution[r.line - 1];
+          if(r_else == null) throw new IllegalStateException();
+          result.blocks.add(new IfThenElseBlock(state.function, b.cond, b.targetFirst, r.line, r_else.line));
+          if(r.line != r_else.line) {
+            result.blocks.add(new ElseEndBlock(state.function, r.line, r_else.line));
+          } // else "empty else" case
+          break;
+        case IF_BREAK:
+          Block block = new IfThenEndBlock(state.function, state.r, b.cond.inverse(), b.targetFirst - 1, b.targetFirst - 1, false);
+          block.addStatement(new Break(state.function, b.targetFirst - 1, r.line));
+          state.blocks.add(block);
+          break;
+        default:
+          throw new IllegalStateException();
+        }
+      }
+    }
+    return result;
+  }
+  
+  private static boolean checkResolution(State state, Block container, BranchResolution[] resolution) {
+    List<ResolutionBlock> blocks = new ArrayList<ResolutionBlock>();
+    for(int i = 0; i < resolution.length; i++) {
+      BranchResolution r = resolution[i];
+      if(r != null) {
+        Branch b = state.branches[i];
+        if(b == null) throw new IllegalStateException();
+        switch(r.type) {
+        case ELSE:
+          if(!r.matched) return false;
+          if(container != null && r.line >= container.end) return false;
+          break;
+        case BREAK:
+          if(container == null || r.line < container.end) return false;
+          break;
+        case IF_END:
+          if(container != null && r.line >= container.end) return false;
+          blocks.add(new ResolutionBlock(b.targetFirst, r.line));
+          break;
+        case IF_ELSE:
+          if(container != null && r.line >= container.end) return false;
+          BranchResolution r_else = resolution[r.line - 1];
+          if(r_else == null) throw new IllegalStateException();
+          blocks.add(new ResolutionBlock(b.targetFirst, r.line - 1));
+          blocks.add(new ResolutionBlock(r.line, r_else.line));
+          blocks.add(new ResolutionBlock(b.targetFirst, r_else.line));
+          break;
+        case IF_BREAK:
+          if(container == null || r.line < container.end) return false;
+          break;
+        default:
+          throw new IllegalStateException();
+        }
+      }
+    }
+    for(int i = 0; i < blocks.size(); i++) {
+      for(int j = i + 1; j < blocks.size(); j++) {
+        ResolutionBlock block1 = blocks.get(i);
+        ResolutionBlock block2 = blocks.get(j);
+        if(block1.end <= block2.begin) {
+          // okay
+        } else if(block2.end <= block1.begin) {
+          // okay
+        } else if(block1.begin <= block2.begin && block2.end <= block1.end) {
+          // okay
+        } else if(block2.begin <= block1.begin && block1.end <= block2.end) {
+          // okay
+        } else {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+  
+  private static void printResolution(State state, Block container, BranchResolution[] resolution) {
+    List<ResolutionBlock> blocks = new ArrayList<ResolutionBlock>();
+    for(int i = 0; i < resolution.length; i++) {
+      BranchResolution r = resolution[i];
+      if(r != null) {
+        Branch b = state.branches[i];
+        if(b == null) throw new IllegalStateException();
+        System.out.println(r.type + " " + b.line + " " + r.line);
+      }
+    }
+  }
+  
+  private static void resolve(State state, Block container, BranchResolution[] resolution, Branch b, List<ResolutionResult> results) {
+    if(b == null) {
+      if(checkResolution(state, container, resolution)) {
+        results.add(finishResolution(state, resolution));
+      } else {
+        // System.out.println("failed resolution:");
+        // printResolution(state, container, resolution);
+      }
+      return;
+    }
+    Branch next = b.previous;
+    while(next != null && enclosing_breakable_block(state, next.line) != container) {
+      next = next.previous;
+    }
+    if(is_conditional(b)) {
+      BranchResolution r = new BranchResolution();
+      resolution[b.line] = r;
+      if(container != null && b.targetSecond == container.end) {
+        if(state.function.header.version.usesIfBreakRewrite()) {
+          r.type = BranchResolution.Type.IF_BREAK;
+          r.line = b.targetSecond;
+          resolve(state, container, resolution, next, results);
+        }
+      }
+      Branch p = state.end_branch;
+      while(p != b) {
+        if(p.type == Branch.Type.jump && enclosing_breakable_block(state, p.line) == container) {
+          if(p.targetFirst == b.targetSecond) {
+            r.line = p.line;
+            BranchResolution prevlineres = null;
+            if(p.line - 1 >= 1) {
+              prevlineres = resolution[p.line - 1];
+            }
+            if(prevlineres != null && prevlineres.type == BranchResolution.Type.ELSE && !prevlineres.matched) {
+              r.type = BranchResolution.Type.IF_ELSE;
+              prevlineres.matched = true;
+              resolve(state, container, resolution, next, results);
+              prevlineres.matched = false;
+            }
+            r.type = BranchResolution.Type.IF_END;
+            resolve(state, container, resolution, next, results);
+          }
+        }
+        p = p.previous;
+      }
+      BranchResolution prevlineres = null;
+      r.line = b.targetSecond;
+      if(b.targetSecond - 1 >= 1) {
+        prevlineres = resolution[b.targetSecond - 1];
+      }
+      if(prevlineres != null && prevlineres.type == BranchResolution.Type.ELSE && !prevlineres.matched) {
+        r.type = BranchResolution.Type.IF_ELSE;
+        prevlineres.matched = true;
+        resolve(state, container, resolution, next, results);
+        prevlineres.matched = false;
+      }
+      r.type = BranchResolution.Type.IF_END;
+      resolve(state, container, resolution, next, results);
+      resolution[b.line] = null;
+    } else if(b.type == Branch.Type.jump) {
+      BranchResolution r = new BranchResolution();
+      resolution[b.line] = r;
+      if(container != null && b.targetFirst == container.end) {
+        r.type = BranchResolution.Type.BREAK;
+        r.line = b.targetFirst;
+        resolve(state, container, resolution, next, results);
+      }
+      Branch p = state.end_branch;
+      while(p != b) {
+        if(p.type == Branch.Type.jump && enclosing_breakable_block(state, p.line) == container) {
+          if(p.targetFirst == b.targetFirst) {
+            r.type = BranchResolution.Type.ELSE;
+            r.line = p.line;
+            resolve(state, container, resolution, next, results);
+          }
+        }
+        p = p.previous;
+      }
+      r.type = BranchResolution.Type.ELSE;
+      r.line = b.targetFirst;
+      resolve(state, container, resolution, next, results);
+      resolution[b.line] = null;
+    } else {
+      resolve(state, container, resolution, next, results);
+    }
+  }
+  
+  private static void find_other_statements(State state) {
+    List<Block> containers = new ArrayList<Block>();
+    for(Block block : state.blocks) {
+      if(block.breakable()) {
+        containers.add(block);
+      }
+    }
+    containers.add(null);
+    
+    for(Block container : containers) {
+      List<ResolutionResult> results = new ArrayList<ResolutionResult>();
+      
+      Branch b = state.end_branch;
+      while(b != null && enclosing_breakable_block(state, b.line) != container) {
+        b = b.previous;
+      }
+      
+      resolve(state, container, new BranchResolution[state.code.length + 1], b, results);
+      if(results.isEmpty()) throw new IllegalStateException();
+      state.blocks.addAll(results.get(0).blocks);
     }
   }
   
