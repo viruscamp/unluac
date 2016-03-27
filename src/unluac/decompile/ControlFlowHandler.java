@@ -837,6 +837,12 @@ public class ControlFlowHandler {
     }
   }
   
+  private static boolean is_break(State state, Block container, int line) {
+    if(container == null || line < container.end) return false;
+    if(line == container.end) return true;
+    return state.resolved[container.end] == state.resolved[line];
+  }
+  
   private static void resolve(State state, Block container, BranchResolution[] resolution, Branch b, List<ResolutionResult> results) {
     if(b == null) {
       if(checkResolution(state, container, resolution)) {
@@ -854,10 +860,10 @@ public class ControlFlowHandler {
     if(is_conditional(b)) {
       BranchResolution r = new BranchResolution();
       resolution[b.line] = r;
-      if(container != null && b.targetSecond == container.end) {
+      if(is_break(state, container, b.targetSecond)) {
         if(state.function.header.version.usesIfBreakRewrite()) {
           r.type = BranchResolution.Type.IF_BREAK;
-          r.line = b.targetSecond;
+          r.line = container.end;
           resolve(state, container, resolution, next, results);
         }
       }
@@ -899,9 +905,9 @@ public class ControlFlowHandler {
     } else if(b.type == Branch.Type.jump) {
       BranchResolution r = new BranchResolution();
       resolution[b.line] = r;
-      if(container != null && b.targetFirst == container.end) {
+      if(is_break(state, container, b.targetFirst)) {
         r.type = BranchResolution.Type.BREAK;
-        r.line = b.targetFirst;
+        r.line = container.end;
         resolve(state, container, resolution, next, results);
       }
       Branch p = state.end_branch;
@@ -941,8 +947,9 @@ public class ControlFlowHandler {
         b = b.previous;
       }
       
+      // System.out.println("resolve " + (container == null ? 0 : container.begin));
       resolve(state, container, new BranchResolution[state.code.length + 1], b, results);
-      if(results.isEmpty()) throw new IllegalStateException();
+      if(results.isEmpty()) throw new IllegalStateException("couldn't resolve breaks for " + (container == null ? 0 : container.begin));
       state.blocks.addAll(results.get(0).blocks);
     }
   }
