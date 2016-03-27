@@ -760,7 +760,7 @@ public class ControlFlowHandler {
         case IF_BREAK:
           Block block = new IfThenEndBlock(state.function, state.r, b.cond.inverse(), b.targetFirst - 1, b.targetFirst - 1, false);
           block.addStatement(new Break(state.function, b.targetFirst - 1, r.line));
-          state.blocks.add(block);
+          result.blocks.add(block);
           break;
         default:
           throw new IllegalStateException();
@@ -832,7 +832,9 @@ public class ControlFlowHandler {
       if(r != null) {
         Branch b = state.branches[i];
         if(b == null) throw new IllegalStateException();
-        System.out.println(r.type + " " + b.line + " " + r.line);
+        System.out.print(r.type + " " + b.line + " " + r.line);
+        if(b.cond != null) System.out.print(" " + b.cond);
+        System.out.println();
       }
     }
   }
@@ -846,6 +848,8 @@ public class ControlFlowHandler {
   private static void resolve(State state, Block container, BranchResolution[] resolution, Branch b, List<ResolutionResult> results) {
     if(b == null) {
       if(checkResolution(state, container, resolution)) {
+        // printResolution(state, container, resolution);
+        // System.out.println();
         results.add(finishResolution(state, resolution));
       } else {
         // System.out.println("failed resolution:");
@@ -947,7 +951,7 @@ public class ControlFlowHandler {
         b = b.previous;
       }
       
-      // System.out.println("resolve " + (container == null ? 0 : container.begin));
+      //System.out.println("resolve " + (container == null ? 0 : container.begin));
       resolve(state, container, new BranchResolution[state.code.length + 1], b, results);
       if(results.isEmpty()) throw new IllegalStateException("couldn't resolve breaks for " + (container == null ? 0 : container.begin));
       state.blocks.addAll(results.get(0).blocks);
