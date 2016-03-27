@@ -825,6 +825,8 @@ public class ControlFlowHandler {
     return result;
   }
   
+  private static boolean debug_resolution = false;
+  
   private static boolean checkResolution(State state, Block container, BranchResolution[] resolution) {
     List<Pair> blocks = new ArrayList<Pair>();
     List<Pair> pseudoGotos = new ArrayList<Pair>();
@@ -835,22 +837,40 @@ public class ControlFlowHandler {
         if(b == null) throw new IllegalStateException();
         switch(r.type) {
         case ELSE:
-          if(!r.matched) return false;
-          if(container != null && r.line >= container.end) return false;
+          if(!r.matched) {
+            if(debug_resolution) System.err.println("unmatched else");
+            return false;
+          }
+          if(container != null && r.line >= container.end) {
+            if(debug_resolution) System.err.println("invalid else");
+            return false;
+          }
           break;
         case BREAK:
-          if(container == null || r.line < container.end) return false;
+          if(container == null || r.line < container.end) {
+            if(debug_resolution) System.err.println("invalid break");
+            return false;
+          }
           break;
         case PSEUDO_GOTO:
-          if(container != null && r.line >= container.end) return false;
+          if(container != null && r.line >= container.end) {
+            if(debug_resolution) System.err.println("invalid pseudo goto");
+            return false;
+          }
           pseudoGotos.add(new Pair(b.line, r.line));
           break;
         case IF_END:
-          if(container != null && r.line >= container.end) return false;
+          if(container != null && r.line >= container.end) {
+            if(debug_resolution) System.err.println("invalid if end");
+            return false;
+          }
           blocks.add(new Pair(b.targetFirst, r.line));
           break;
         case IF_ELSE:
-          if(container != null && r.line >= container.end) return false;
+          if(container != null && r.line >= container.end) {
+            if(debug_resolution) System.err.println("invalid if else");
+            return false;
+          }
           BranchResolution r_else = resolution[r.line - 1];
           if(r_else == null) throw new IllegalStateException();
           blocks.add(new Pair(b.targetFirst, r.line - 1));
@@ -858,7 +878,10 @@ public class ControlFlowHandler {
           blocks.add(new Pair(b.targetFirst, r_else.line));
           break;
         case IF_BREAK:
-          if(container == null || r.line < container.end) return false;
+          if(container == null || r.line < container.end) {
+            if(debug_resolution) System.err.println("invalid if break");
+            return false;
+          }
           break;
         default:
           throw new IllegalStateException();
@@ -878,6 +901,7 @@ public class ControlFlowHandler {
         } else if(block2.begin <= block1.begin && block1.end <= block2.end) {
           // okay
         } else {
+          if(debug_resolution) System.err.println("invalid block overlap");
           return false;
         }
       }
@@ -888,6 +912,7 @@ public class ControlFlowHandler {
           // block contains end
           if(block.begin > pseudoGoto.begin || block.end <= pseudoGoto.begin) {
             // doesn't contain goto
+            if(debug_resolution) System.err.println("invalid pseudo goto block overlap");
             return false;
           }
         }
@@ -898,9 +923,11 @@ public class ControlFlowHandler {
         Pair goto1 = pseudoGotos.get(i);
         Pair goto2 = pseudoGotos.get(j);
         if(goto1.begin >= goto2.begin && goto1.begin < goto2.end) {
+          if(debug_resolution) System.err.println("invalid pseudo goto overlap");
           if(goto1.end > goto2.end) return false;
         }
         if(goto2.begin >= goto1.begin && goto2.begin < goto1.end) {
+          if(debug_resolution) System.err.println("invalid pseudo goto overlap");
           if(goto2.end > goto1.end) return false;
         }
       }
@@ -929,13 +956,22 @@ public class ControlFlowHandler {
     return state.resolved[container.end] == state.resolved[line];
   }
   
+  static int count = 0;
+  
   private static void resolve(State state, Declaration[] declList, Block container, BranchResolution[] resolution, Branch b, List<ResolutionResult> results) {
     if(b == null) {
+      if(count > 10000) {
+        //System.err.println("here");
+      }
       if(checkResolution(state, container, resolution)) {
+        
         // printResolution(state, container, resolution);
         // System.out.println();
         results.add(finishResolution(state, declList, container, resolution));
       } else {
+        //System.err.println("complete resolution" + count);
+        count++;
+        
         // System.out.println("failed resolution:");
         // printResolution(state, container, resolution);
       }
