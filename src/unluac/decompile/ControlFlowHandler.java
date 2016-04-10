@@ -288,15 +288,18 @@ public class ControlFlowHandler {
               if(state.finalsetbranches[final_line] == null) {
                 int loadboolblock = find_loadboolblock(state, target - 2);
                 if(loadboolblock == -1) {
+                  c = null;
                   if(line + 2 == target) {
                     c = new RegisterSetCondition(line, get_target(state, line));
                     final_line = final_line + 1;
-                  } else {
+                  } else if(code.op(final_line) != Op.JMP && code.op(final_line) != Op.JMP52) {
                     c = new SetCondition(final_line, get_target(state, final_line));
                   }
-                  b = new Branch(final_line, Branch.Type.finalset, c, target, target);
-                  b.target = code.A(line);
-                  insert_branch(state, b);
+                  if(c != null) {
+                    b = new Branch(final_line, Branch.Type.finalset, c, target, target);
+                    b.target = code.A(line);
+                    insert_branch(state, b);
+                  }
                 }
               }
               break;
@@ -341,15 +344,18 @@ public class ControlFlowHandler {
             if(state.finalsetbranches[final_line] == null) {
               int loadboolblock = find_loadboolblock(state, target - 2);
               if(loadboolblock == -1) {
+                c = null;
                 if(line + 2 == target) {
                   c = new RegisterSetCondition(line, get_target(state, line));
                   final_line = final_line + 1;
-                } else {
+                } else if(code.op(final_line) != Op.JMP && code.op(final_line) != Op.JMP52) {
                   c = new SetCondition(final_line, get_target(state, final_line));
                 }
-                b = new Branch(final_line, Branch.Type.finalset, c, target, target);
-                b.target = code.A(line);
-                insert_branch(state, b);
+                if(c != null) {
+                  b = new Branch(final_line, Branch.Type.finalset, c, target, target);
+                  b.target = code.A(line);
+                  insert_branch(state, b);
+                }
               }
             }
             break;
@@ -1143,6 +1149,7 @@ public class ControlFlowHandler {
       int target = op.target(codepoint, code.getExtractor());
       if(target == -1) {
         // Special handling for table literals
+        //  also TESTSET (since line will be JMP)
         switch(op) {
         case SETLIST:
         case SETLISTO:
@@ -1159,6 +1166,14 @@ public class ControlFlowHandler {
         case EXTRAARG:
           if(line >= 2 && code.op(line - 1) == Op.SETLIST52) {
             target = code.A(line - 1);
+          }
+          break;
+        case JMP:
+        case JMP52:
+          if(line >= 2) {
+            if(code.op(line - 1) == Op.TESTSET || code.op(line - 1) == Op.TEST50) {
+              target = code.op(line - 1).target(code.codepoint(line - 1), code.getExtractor());
+            }
           }
           break;
         default:
