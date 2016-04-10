@@ -206,23 +206,26 @@ public class ControlFlowHandler {
     b.inverseValue = inverse;
     insert_branch(state, b);
     
-    if(constant && final_line < begin && state.finalsetbranches[final_line + 1] == null) {
-      c = new TestCondition(final_line + 1, state.code.A(target));
-      b = new Branch(final_line + 1, Branch.Type.finalset, c, final_line, loadboolblock + 2);
-      b.target = state.code.A(loadboolblock);
-      insert_branch(state, b);
-    }
-    if(final_line >= begin && state.finalsetbranches[final_line] == null) {
-      c = new SetCondition(final_line, get_target(state, final_line));
-      b = new Branch(final_line, Branch.Type.finalset, c, final_line, loadboolblock + 2);
-      b.target = state.code.A(loadboolblock);
-      insert_branch(state, b);
-    }
-    if(final_line + 1 == begin && state.finalsetbranches[final_line + 1] == null) {
-      c = new RegisterSetCondition(loadboolblock, get_target(state, loadboolblock));
-      b = new Branch(final_line + 1, Branch.Type.finalset, c, final_line, loadboolblock + 2);
-      b.target = state.code.A(loadboolblock);
-      insert_branch(state, b);
+    if(final_line != -1)
+    {
+      if(constant && final_line < begin && state.finalsetbranches[final_line + 1] == null) {
+        c = new TestCondition(final_line + 1, state.code.A(target));
+        b = new Branch(final_line + 1, Branch.Type.finalset, c, final_line, loadboolblock + 2);
+        b.target = state.code.A(loadboolblock);
+        insert_branch(state, b);
+      }
+      if(final_line >= begin && state.finalsetbranches[final_line] == null) {
+        c = new SetCondition(final_line, get_target(state, final_line));
+        b = new Branch(final_line, Branch.Type.finalset, c, final_line, loadboolblock + 2);
+        b.target = state.code.A(loadboolblock);
+        insert_branch(state, b);
+      }
+      if(final_line + 1 == begin && state.finalsetbranches[final_line + 1] == null) {
+        c = new RegisterSetCondition(loadboolblock, get_target(state, loadboolblock));
+        b = new Branch(final_line + 1, Branch.Type.finalset, c, final_line, loadboolblock + 2);
+        b.target = state.code.A(loadboolblock);
+        insert_branch(state, b);
+      }
     }
   }
   
@@ -302,14 +305,23 @@ public class ControlFlowHandler {
             break;
           }
           case TEST: {
-            Condition c = new TestCondition(line, code.A(line));
-            if(code.C(line) != 0) c = c.inverse();
+            Condition c;
+            boolean constant = false;
             int target = code.target(line + 1);
+            if(line - 1 >= 1 && code.op(line - 1) == Op.LOADBOOL && code.A(line - 1) == code.A(line) && code.C(line - 1) == 0) {
+              if(target <= code.length && target - 2 >= 1 && code.op(target - 2) == Op.LOADBOOL && code.C(target - 2) != 0) {
+                constant = true;
+              }
+            }
+            c = new TestCondition(line, code.A(line));
+            if(!constant) {
+              if(code.C(line) != 0) c = c.inverse();
+            }
             int loadboolblock = find_loadboolblock(state, target);
             if(loadboolblock >= 1) {
               handle_loadboolblock(state, skip, loadboolblock, c, line, target);
             } else {
-              Branch b = new Branch(line, Branch.Type.test, c, line + 2, target);
+              Branch b = new Branch(line, constant ? Branch.Type.testset : Branch.Type.test, c, line + 2, target);
               b.target = code.A(line);
               if(code.C(line) != 0) b.inverseValue = true;
               insert_branch(state, b);
