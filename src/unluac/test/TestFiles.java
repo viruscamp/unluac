@@ -17,6 +17,7 @@ public class TestFiles {
     "literallist",
     "multiliteraltarget",
     "closure",
+    "ellipsis03",
     "ifthen",
     "condition",
     "condition02",

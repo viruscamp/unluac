@@ -11,6 +11,12 @@ public abstract class Version {
   public static final Version LUA52 = new Version52();
   public static final Version LUA53 = new Version53();
   
+  public static enum VarArgType {
+    ARG,
+    HYBRID,
+    ELLIPSIS;
+  }
+  
   protected final int versionNumber;
   
   protected Version(int versionNumber) {
@@ -36,6 +42,8 @@ public abstract class Version {
   public abstract boolean isEnvironmentTable(String name);
   
   public abstract boolean usesIfBreakRewrite();
+  
+  public abstract VarArgType getVarArgType();
   
 }
 
@@ -83,6 +91,11 @@ class Version50 extends Version {
   @Override
   public boolean usesIfBreakRewrite() {
     return false;
+  }
+  
+  @Override
+  public VarArgType getVarArgType() {
+    return VarArgType.ARG;
   }
   
 }
@@ -133,6 +146,11 @@ class Version51 extends Version {
     return false;
   }
   
+  @Override
+  public VarArgType getVarArgType() {
+    return VarArgType.HYBRID;
+  }
+  
 }
 
 class Version52 extends Version {
@@ -181,6 +199,11 @@ class Version52 extends Version {
     return true;
   }
   
+  @Override
+  public VarArgType getVarArgType() {
+    return VarArgType.ELLIPSIS;
+  }
+  
 }
 
 class Version53 extends Version {
@@ -227,6 +250,11 @@ class Version53 extends Version {
   @Override
   public boolean usesIfBreakRewrite() {
     return true;
+  }
+  
+  @Override
+  public VarArgType getVarArgType() {
+    return VarArgType.ELLIPSIS;
   }
   
 }

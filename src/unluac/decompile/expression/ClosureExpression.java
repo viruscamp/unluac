@@ -90,7 +90,7 @@ public class ClosureExpression extends Expression {
         new VariableTarget(d.declList[i]).print(d, out);
       }
     }
-    if((function.vararg & 1) == 1) {
+    if(function.vararg != 0) {
       if(function.numParams > start) {
         out.print(", ...");
       } else {
