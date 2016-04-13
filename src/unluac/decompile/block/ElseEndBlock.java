@@ -10,7 +10,7 @@ public class ElseEndBlock extends ContainerBlock {
   public IfThenElseBlock partner;
   
   public ElseEndBlock(LFunction function, int begin, int end) {
-    super(function, begin, end, 0);
+    super(function, begin, end, -1);
   }
   
   @Override
