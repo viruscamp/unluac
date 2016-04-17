@@ -823,22 +823,31 @@ public class ControlFlowHandler {
             }
           }
           int begin = smallestEnclosing.begin;
-          //int beginMin = begin;
-          //int beginMax = b.line;
           if(wrapping != null) {
             begin = Math.max(wrapping.begin - 1, smallestEnclosing.begin);
             //beginMax = begin;
           }
+          int lowerBound = Integer.MIN_VALUE;
+          int upperBound = Integer.MAX_VALUE;
           for(Declaration decl : declList) {
             if(decl.begin >= begin && decl.begin < end) {
               
             }
             if(decl.end >= begin && decl.end < end) {
               if(decl.begin < begin) {
-                begin = decl.begin;
+                upperBound = Math.min(decl.begin, upperBound);
               }
             }
+            if(decl.begin >= begin && decl.end > end) {
+              lowerBound = Math.max(decl.begin + 1, lowerBound);
+              begin = decl.begin + 1;
+            }
           }
+          if(lowerBound > upperBound) {
+            throw new IllegalStateException();
+          }
+          begin = Math.max(lowerBound, begin);
+          begin = Math.min(upperBound, begin);
           state.blocks.add(new OnceLoop(state.function, begin, end));
           state.blocks.add(new Break(state.function, b.line, b.targetFirst));
           remove_branch(state, b);

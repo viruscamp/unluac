@@ -155,6 +155,7 @@ public class TestFiles {
     "always03",
     "always04",
     "once01",
+    "once02",
     "unused01",
     "report01a",
     "report01b",
