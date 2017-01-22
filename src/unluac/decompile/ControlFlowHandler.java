@@ -903,7 +903,7 @@ public class ControlFlowHandler {
             if(debug_resolution) System.err.println("invalid if end");
             return false;
           }
-          blocks.add(new Pair(b.targetFirst, r.line));
+          blocks.add(new Pair(b.line, r.line));
           break;
         case IF_ELSE:
           if(rstate.container != null && r.line >= rstate.container.end) {
@@ -1001,8 +1001,8 @@ public class ControlFlowHandler {
   private static void resolve(State state, Declaration[] declList, ResolutionState rstate, Branch b) {
     if(b == null) {
       if(checkResolution(state, rstate)) {
-        // printResolution(state, container, resolution);
-        // System.out.println();
+        // printResolution(state, rstate);
+        // System.err.println();
         rstate.results.add(finishResolution(state, declList, rstate));
       } else {
         // System.err.println("failed resolution:");
