@@ -912,9 +912,9 @@ public class ControlFlowHandler {
           }
           BranchResolution r_else = rstate.resolution[r.line - 1];
           if(r_else == null) throw new IllegalStateException();
-          blocks.add(new Pair(b.targetFirst, r.line - 1));
+          blocks.add(new Pair(b.line, r.line - 1));
           blocks.add(new Pair(r.line, r_else.line));
-          blocks.add(new Pair(b.targetFirst, r_else.line));
+          blocks.add(new Pair(b.line, r_else.line));
           break;
         case IF_BREAK:
           if(rstate.container == null || r.line < rstate.container.end) {
@@ -940,7 +940,11 @@ public class ControlFlowHandler {
         } else if(block2.begin <= block1.begin && block1.end <= block2.end) {
           // okay
         } else {
-          if(debug_resolution) System.err.println("invalid block overlap");
+          if(debug_resolution) {
+            System.err.println("invalid block overlap");
+            //System.err.println("  block1: " + block1.begin + " " + block1.end);
+            //System.err.println("  block2: " + block2.begin + " " + block2.end);
+          }
           return false;
         }
       }
@@ -981,9 +985,9 @@ public class ControlFlowHandler {
       if(r != null) {
         Branch b = state.branches[i];
         if(b == null) throw new IllegalStateException();
-        System.out.print(r.type + " " + b.line + " " + r.line);
-        if(b.cond != null) System.out.print(" " + b.cond);
-        System.out.println();
+        System.err.print(r.type + " " + b.line + " " + r.line);
+        if(b.cond != null) System.err.print(" " + b.cond);
+        System.err.println();
       }
     }
   }
@@ -1001,8 +1005,8 @@ public class ControlFlowHandler {
         // System.out.println();
         rstate.results.add(finishResolution(state, declList, rstate));
       } else {
-        // System.out.println("failed resolution:");
-        // printResolution(state, container, resolution);
+        // System.err.println("failed resolution:");
+        // printResolution(state, rstate);
       }
       return;
     }
