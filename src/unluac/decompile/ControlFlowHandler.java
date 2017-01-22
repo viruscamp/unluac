@@ -725,6 +725,7 @@ public class ControlFlowHandler {
     Type type;
     int line;
     boolean matched;
+    int earliestMatch;
     
   }
   
@@ -835,6 +836,32 @@ public class ControlFlowHandler {
       }
     }
     return result;
+  }
+  
+  private static int findEarliestIfElseLine(State state, ResolutionState rstate, Branch b) {
+    int earliest = Integer.MAX_VALUE;
+    Branch p = state.end_branch;
+    while(p != null) {
+      if(is_conditional(p) && enclosing_breakable_block(state, p.line) == rstate.container) {
+        if(p.targetSecond - 1 == b.line) {
+          earliest = Math.min(earliest, p.line);
+        }
+      } else if(p.type == Branch.Type.jump && enclosing_breakable_block(state, p.line) == rstate.container && p != b) {
+        if(p.line - 1 == b.line) {
+          Branch p2 = state.end_branch;
+          while(p2 != null) {
+            if(is_conditional(p2) && enclosing_breakable_block(state, p2.line) == rstate.container) {
+              if(p.targetFirst == p2.targetSecond) {
+                earliest = Math.min(earliest, p2.line);
+              }
+            }
+            p2 = p2.previous;
+          }
+        }
+      }
+      p = p.previous;
+    }
+    return earliest;
   }
   
   private static boolean debug_resolution = false;
@@ -979,6 +1006,14 @@ public class ControlFlowHandler {
       }
       return;
     }
+    // fail fast
+    for(int i = 0; i < rstate.resolution.length; i++) {
+      BranchResolution res = rstate.resolution[i];
+      if(res != null && res.type == BranchResolution.Type.ELSE && !res.matched && res.earliestMatch > b.line) {
+        return;
+      }
+    }
+    // end fail fast
     Branch next = b.previous;
     while(next != null && enclosing_breakable_block(state, next.line) != rstate.container) {
       next = next.previous;
@@ -991,6 +1026,7 @@ public class ControlFlowHandler {
           r.type = BranchResolution.Type.IF_BREAK;
           r.line = rstate.container.end;
           resolve(state, declList, rstate, next);
+          if(!rstate.results.isEmpty()) return;
         }
       }
       Branch p = state.end_branch;
@@ -1005,11 +1041,14 @@ public class ControlFlowHandler {
             if(prevlineres != null && prevlineres.type == BranchResolution.Type.ELSE && !prevlineres.matched) {
               r.type = BranchResolution.Type.IF_ELSE;
               prevlineres.matched = true;
+              if(b.line < prevlineres.earliestMatch) throw new IllegalStateException("unexpected else match: " + b.line + " (" + prevlineres.earliestMatch + "); " + p.line);
               resolve(state, declList, rstate, next);
+              if(!rstate.results.isEmpty()) return;
               prevlineres.matched = false;
             }
             r.type = BranchResolution.Type.IF_END;
             resolve(state, declList, rstate, next);
+            if(!rstate.results.isEmpty()) return;
           }
         }
         p = p.previous;
@@ -1022,11 +1061,14 @@ public class ControlFlowHandler {
       if(prevlineres != null && prevlineres.type == BranchResolution.Type.ELSE && !prevlineres.matched) {
         r.type = BranchResolution.Type.IF_ELSE;
         prevlineres.matched = true;
+        if(b.line < prevlineres.earliestMatch) throw new IllegalStateException("unexpected else match: " + b.line + " (" + prevlineres.earliestMatch + ")");
         resolve(state, declList, rstate, next);
+        if(!rstate.results.isEmpty()) return;
         prevlineres.matched = false;
       }
       r.type = BranchResolution.Type.IF_END;
       resolve(state, declList, rstate, next);
+      if(!rstate.results.isEmpty()) return;
       rstate.resolution[b.line] = null;
     } else if(b.type == Branch.Type.jump) {
       BranchResolution r = new BranchResolution();
@@ -1035,6 +1077,7 @@ public class ControlFlowHandler {
         r.type = BranchResolution.Type.BREAK;
         r.line = rstate.container.end;
         resolve(state, declList, rstate, next);
+        if(!rstate.results.isEmpty()) return;
       }
       Branch p = state.end_branch;
       while(p != b) {
@@ -1042,19 +1085,25 @@ public class ControlFlowHandler {
           if(p.targetFirst == b.targetFirst) {
             r.type = BranchResolution.Type.ELSE;
             r.line = p.line;
+            r.earliestMatch = findEarliestIfElseLine(state, rstate, b);
             resolve(state, declList, rstate, next);
+            if(!rstate.results.isEmpty()) return;
           }
         }
         p = p.previous;
       }
       r.type = BranchResolution.Type.ELSE;
       r.line = b.targetFirst;
+      r.earliestMatch = findEarliestIfElseLine(state, rstate, b);
       resolve(state, declList, rstate, next);
+      if(!rstate.results.isEmpty()) return;
       r.type = BranchResolution.Type.PSEUDO_GOTO;
       resolve(state, declList, rstate, next);
+      if(!rstate.results.isEmpty()) return;
       rstate.resolution[b.line] = null;
     } else {
       resolve(state, declList, rstate, next);
+      if(!rstate.results.isEmpty()) return;
     }
   }
   
