@@ -704,11 +704,13 @@ public class ControlFlowHandler {
       this.container = container;
       resolution = new BranchResolution[state.code.length + 1];
       results = new ArrayList<ResolutionResult>();
+      blocks = new ResolutionBlocks();
     }
     
     Block container;
     BranchResolution[] resolution;
     List<ResolutionResult> results;
+    ResolutionBlocks blocks;
   }
   
   private static class BranchResolution {
@@ -727,6 +729,43 @@ public class ControlFlowHandler {
     boolean matched;
     int earliestMatch;
     
+  }
+  
+  private static class ResolutionBlocks {
+    
+    ResolutionBlocks() {
+      blocks = new ArrayList<Pair>();
+    }
+    
+    boolean push(int begin, int end) {
+      for(Pair b : blocks) {
+        if(end <= b.begin) {
+          // okay
+        } else if(b.end <= begin) {
+          // okay
+        } else if(begin <= b.begin && b.end <= end) {
+          // okay
+        } else if(b.begin <= begin && end <= b.end) {
+          // okay
+        } else {
+          return false;
+        }
+      }
+      blocks.add(new Pair(begin, end));
+      return true;
+    }
+    
+    int save() {
+      return blocks.size();
+    }
+    
+    void restore(int size) {
+      while(blocks.size() > size) {
+        blocks.remove(blocks.size() - 1);
+      }
+    }
+    
+    List<Pair> blocks;
   }
   
   private static class Pair {
@@ -1051,7 +1090,11 @@ public class ControlFlowHandler {
               prevlineres.matched = false;
             }
             r.type = BranchResolution.Type.IF_END;
-            resolve(state, declList, rstate, next);
+            int blocksSize = rstate.blocks.save();
+            if(rstate.blocks.push(b.line, r.line)) {
+              resolve(state, declList, rstate, next);
+            }
+            rstate.blocks.restore(blocksSize);
             if(!rstate.results.isEmpty()) return;
           }
         }
@@ -1066,12 +1109,20 @@ public class ControlFlowHandler {
         r.type = BranchResolution.Type.IF_ELSE;
         prevlineres.matched = true;
         if(b.line < prevlineres.earliestMatch) throw new IllegalStateException("unexpected else match: " + b.line + " (" + prevlineres.earliestMatch + ")");
-        resolve(state, declList, rstate, next);
+        int blocksSize = rstate.blocks.save();
+        if(rstate.blocks.push(b.line, r.line - 1) && rstate.blocks.push(r.line, prevlineres.line) && rstate.blocks.push(b.line,  prevlineres.line)) {
+          resolve(state, declList, rstate, next);
+        }
+        rstate.blocks.restore(blocksSize);;
         if(!rstate.results.isEmpty()) return;
         prevlineres.matched = false;
       }
       r.type = BranchResolution.Type.IF_END;
-      resolve(state, declList, rstate, next);
+      int blocksSize = rstate.blocks.save();
+      if(rstate.blocks.push(b.line, r.line)) {
+        resolve(state, declList, rstate, next);
+      }
+      rstate.blocks.restore(blocksSize);
       if(!rstate.results.isEmpty()) return;
       rstate.resolution[b.line] = null;
     } else if(b.type == Branch.Type.jump) {
