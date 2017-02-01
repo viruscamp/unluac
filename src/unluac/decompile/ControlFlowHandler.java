@@ -763,6 +763,7 @@ public class ControlFlowHandler {
         } else if(b.begin <= begin && end <= b.end) {
           // okay
         } else {
+          if(debug_resolution) System.err.println("early invalid overlap");
           return false;
         }
       }
@@ -777,6 +778,7 @@ public class ControlFlowHandler {
           } else if(d.begin <= begin && end - 1 <= d.end) {
             // okay
           } else {
+            if(debug_resolution) System.err.println("early invalid scope overlap");
             return false;
           }
         }
@@ -791,6 +793,7 @@ public class ControlFlowHandler {
           } else if(d.begin <= begin && end - 1 <= d.end) {
             // okay
           } else {
+            if(debug_resolution) System.err.println("early invalid scope overlap");
             return false;
           }
         }
@@ -1121,34 +1124,6 @@ public class ControlFlowHandler {
           if(!rstate.results.isEmpty()) return;
         }
       }
-      Branch p = state.end_branch;
-      while(p != b) {
-        if(p.type == Branch.Type.jump && enclosing_breakable_block(state, p.line) == rstate.container) {
-          if(p.targetFirst == b.targetSecond) {
-            r.line = p.line;
-            BranchResolution prevlineres = null;
-            if(p.line - 1 >= 1) {
-              prevlineres = rstate.resolution[p.line - 1];
-            }
-            if(prevlineres != null && prevlineres.type == BranchResolution.Type.ELSE && !prevlineres.matched) {
-              r.type = BranchResolution.Type.IF_ELSE;
-              prevlineres.matched = true;
-              if(b.line < prevlineres.earliestMatch) throw new IllegalStateException("unexpected else match: " + b.line + " (" + prevlineres.earliestMatch + "); " + p.line);
-              resolve(state, declList, rstate, next);
-              if(!rstate.results.isEmpty()) return;
-              prevlineres.matched = false;
-            }
-            r.type = BranchResolution.Type.IF_END;
-            int blocksSize = rstate.blocks.save();
-            if(rstate.blocks.push(b.line, r.line, ResolutionBlocks.Type.IF_END)) {
-              resolve(state, declList, rstate, next);
-            }
-            rstate.blocks.restore(blocksSize);
-            if(!rstate.results.isEmpty()) return;
-          }
-        }
-        p = p.previous;
-      }
       BranchResolution prevlineres = null;
       r.line = b.targetSecond;
       if(b.targetSecond - 1 >= 1) {
@@ -1173,6 +1148,33 @@ public class ControlFlowHandler {
       }
       rstate.blocks.restore(blocksSize);
       if(!rstate.results.isEmpty()) return;
+      Branch p = state.end_branch;
+      while(p != b) {
+        if(p.type == Branch.Type.jump && enclosing_breakable_block(state, p.line) == rstate.container) {
+          if(p.targetFirst == b.targetSecond) {
+            r.line = p.line;
+            if(p.line - 1 >= 1) {
+              prevlineres = rstate.resolution[p.line - 1];
+            }
+            if(prevlineres != null && prevlineres.type == BranchResolution.Type.ELSE && !prevlineres.matched) {
+              r.type = BranchResolution.Type.IF_ELSE;
+              prevlineres.matched = true;
+              if(b.line < prevlineres.earliestMatch) throw new IllegalStateException("unexpected else match: " + b.line + " (" + prevlineres.earliestMatch + "); " + p.line);
+              resolve(state, declList, rstate, next);
+              if(!rstate.results.isEmpty()) return;
+              prevlineres.matched = false;
+            }
+            r.type = BranchResolution.Type.IF_END;
+            blocksSize = rstate.blocks.save();
+            if(rstate.blocks.push(b.line, r.line, ResolutionBlocks.Type.IF_END)) {
+              resolve(state, declList, rstate, next);
+            }
+            rstate.blocks.restore(blocksSize);
+            if(!rstate.results.isEmpty()) return;
+          }
+        }
+        p = p.previous;
+      }
       rstate.resolution[b.line] = null;
     } else if(b.type == Branch.Type.jump) {
       BranchResolution r = new BranchResolution();
@@ -1183,6 +1185,11 @@ public class ControlFlowHandler {
         resolve(state, declList, rstate, next);
         if(!rstate.results.isEmpty()) return;
       }
+      r.type = BranchResolution.Type.ELSE;
+      r.line = b.targetFirst;
+      r.earliestMatch = findEarliestIfElseLine(state, rstate, b);
+      resolve(state, declList, rstate, next);
+      if(!rstate.results.isEmpty()) return;
       Branch p = state.end_branch;
       while(p != b) {
         if(p.type == Branch.Type.jump && enclosing_breakable_block(state, p.line) == rstate.container) {
@@ -1196,11 +1203,6 @@ public class ControlFlowHandler {
         }
         p = p.previous;
       }
-      r.type = BranchResolution.Type.ELSE;
-      r.line = b.targetFirst;
-      r.earliestMatch = findEarliestIfElseLine(state, rstate, b);
-      resolve(state, declList, rstate, next);
-      if(!rstate.results.isEmpty()) return;
       r.type = BranchResolution.Type.PSEUDO_GOTO;
       resolve(state, declList, rstate, next);
       if(!rstate.results.isEmpty()) return;
