@@ -37,6 +37,11 @@ public class RegisterSetCondition implements Condition {
   }
   
   @Override
+  public boolean isOrCondition() {
+    return false;
+  }
+  
+  @Override
   public Expression asExpression(Registers r) {
     return r.getExpression(register, line + 1);
   }

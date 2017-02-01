@@ -33,6 +33,11 @@ public class NotCondition implements Condition {
   }
   
   @Override
+  public boolean isOrCondition() {
+    return false;
+  }
+  
+  @Override
   public Expression asExpression(Registers r) {
     return new UnaryExpression("not ", cond.asExpression(r), Expression.PRECEDENCE_UNARY);
   }

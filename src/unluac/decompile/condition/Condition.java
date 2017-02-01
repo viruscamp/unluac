@@ -13,6 +13,8 @@ public interface Condition {
   
   public boolean isRegisterTest();
   
+  public boolean isOrCondition();
+  
   public Expression asExpression(Registers r);
   
   @Override

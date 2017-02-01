@@ -77,7 +77,7 @@ public class IfThenEndBlock extends ContainerBlock {
           }
         }
       }
-      if(assign != null && (cond.isRegisterTest() || assign.isDeclaration()) && assign.getLastTarget().isLocal() && assign.getLastTarget().getIndex() == test || statements.isEmpty()) {
+      if(assign != null && (cond.isRegisterTest() || cond.isOrCondition() || assign.isDeclaration()) && assign.getLastTarget().isLocal() && assign.getLastTarget().getIndex() == test || statements.isEmpty()) {
         Condition finalset = new SetCondition(end - 1, test);
         Condition combined;
         

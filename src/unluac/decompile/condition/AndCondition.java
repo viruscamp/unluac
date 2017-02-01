@@ -39,6 +39,11 @@ public class AndCondition implements Condition {
   }
   
   @Override
+  public boolean isOrCondition() {
+    return false;
+  }
+  
+  @Override
   public Expression asExpression(Registers r) {
     return new BinaryExpression("and", left.asExpression(r), right.asExpression(r), Expression.PRECEDENCE_AND, Expression.ASSOCIATIVITY_NONE);
   }
