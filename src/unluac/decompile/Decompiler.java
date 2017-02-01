@@ -173,7 +173,16 @@ public class Decompiler {
   
   private void handleInitialDeclares(Output out) {
     List<Declaration> initdecls = new ArrayList<Declaration>(declList.length);
-    for(int i = params + (vararg & 1); i < declList.length; i++) {
+    int initdeclcount = params;
+    switch(getVersion().getVarArgType()) {
+    case ARG:
+    case HYBRID:
+      initdeclcount += vararg & 1;
+      break;
+    case ELLIPSIS:
+      break;
+    }
+    for(int i = initdeclcount; i < declList.length; i++) {
       if(declList[i].begin == 0) {
         initdecls.add(declList[i]);
       }
