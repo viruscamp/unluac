@@ -169,6 +169,8 @@ public class TestFiles {
     "report03",
     "report04",
     "report05",
+    "scope02",
+    "scope03",
     "51_expression",
     "51_string03",
     "51_ellipsis",

@@ -705,6 +705,11 @@ public class ControlFlowHandler {
       resolution = new BranchResolution[state.code.length + 1];
       results = new ArrayList<ResolutionResult>();
       blocks = new ResolutionBlocks();
+      for(Declaration decl : state.d.declList) {
+        if(container == null || (container.contains(decl.begin) && decl.end <= container.scopeEnd())) {
+          blocks.addDecl(decl);
+        }
+      }
     }
     
     Block container;
@@ -735,9 +740,19 @@ public class ControlFlowHandler {
     
     ResolutionBlocks() {
       blocks = new ArrayList<Pair>();
+      decls = new ArrayList<Pair>();
     }
     
-    boolean push(int begin, int end) {
+    enum Type
+    {
+      PSEUDO_GOTO,
+      IF_END,
+      IF_ELSE,
+      ELSE_END,
+      IF_ELSE_END;
+    }
+    
+    boolean push(int begin, int end, Type type) {
       for(Pair b : blocks) {
         if(end <= b.begin) {
           // okay
@@ -751,8 +766,41 @@ public class ControlFlowHandler {
           return false;
         }
       }
+      if(type == Type.IF_END) {
+        for(Pair d : decls) {
+          if(end - 1 <= d.begin) {
+            // okay
+          } else if(d.end <= begin) {
+            // okay
+          } else if(begin <= d.begin && d.end <= end - 1) {
+            // okay
+          } else if(d.begin <= begin && end - 1 <= d.end) {
+            // okay
+          } else {
+            return false;
+          }
+        }
+      } else if(type == Type.IF_ELSE) {
+        for(Pair d : decls) {
+          if(end - 1 <= d.begin) {
+            // okay
+          } else if(d.end <= begin) {
+            // okay
+          } else if(begin <= d.begin && d.end <= end - 1) {
+            // okay
+          } else if(d.begin <= begin && end - 1 <= d.end) {
+            // okay
+          } else {
+            return false;
+          }
+        }
+      }
       blocks.add(new Pair(begin, end));
       return true;
+    }
+    
+    void addDecl(Declaration decl) {
+      decls.add(new Pair(decl.begin, decl.end));
     }
     
     int save() {
@@ -766,6 +814,7 @@ public class ControlFlowHandler {
     }
     
     List<Pair> blocks;
+    List<Pair> decls;
   }
   
   private static class Pair {
@@ -1091,7 +1140,7 @@ public class ControlFlowHandler {
             }
             r.type = BranchResolution.Type.IF_END;
             int blocksSize = rstate.blocks.save();
-            if(rstate.blocks.push(b.line, r.line)) {
+            if(rstate.blocks.push(b.line, r.line, ResolutionBlocks.Type.IF_END)) {
               resolve(state, declList, rstate, next);
             }
             rstate.blocks.restore(blocksSize);
@@ -1110,7 +1159,7 @@ public class ControlFlowHandler {
         prevlineres.matched = true;
         if(b.line < prevlineres.earliestMatch) throw new IllegalStateException("unexpected else match: " + b.line + " (" + prevlineres.earliestMatch + ")");
         int blocksSize = rstate.blocks.save();
-        if(rstate.blocks.push(b.line, r.line - 1) && rstate.blocks.push(r.line, prevlineres.line) && rstate.blocks.push(b.line,  prevlineres.line)) {
+        if(rstate.blocks.push(b.line, r.line - 1, ResolutionBlocks.Type.IF_ELSE) && rstate.blocks.push(r.line, prevlineres.line, ResolutionBlocks.Type.ELSE_END) && rstate.blocks.push(b.line,  prevlineres.line, ResolutionBlocks.Type.IF_ELSE_END)) {
           resolve(state, declList, rstate, next);
         }
         rstate.blocks.restore(blocksSize);;
@@ -1119,7 +1168,7 @@ public class ControlFlowHandler {
       }
       r.type = BranchResolution.Type.IF_END;
       int blocksSize = rstate.blocks.save();
-      if(rstate.blocks.push(b.line, r.line)) {
+      if(rstate.blocks.push(b.line, r.line, ResolutionBlocks.Type.IF_END)) {
         resolve(state, declList, rstate, next);
       }
       rstate.blocks.restore(blocksSize);
