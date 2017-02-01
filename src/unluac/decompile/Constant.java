@@ -191,6 +191,11 @@ public class Constant {
     return number.value() == Math.round(number.value());
   }
   
+  public boolean isNegative() {
+    // Tricky to catch -0.0 here
+    return String.valueOf(number.value()).startsWith("-");
+  }
+  
   public int asInteger() {
     if(!isInteger()) {
       throw new IllegalStateException();

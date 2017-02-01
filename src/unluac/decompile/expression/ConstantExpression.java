@@ -16,12 +16,20 @@ public class ConstantExpression extends Expression {
     return new ConstantExpression(new Constant(LNil.NIL), -1, line);
   }
   
+  private static int getPrecedence(Constant constant) {
+    if(constant.isNumber() && constant.isNegative()) {
+      return PRECEDENCE_UNARY;
+    } else {
+      return PRECEDENCE_ATOMIC;
+    }
+  }
+  
   public ConstantExpression(Constant constant, int index) {
     this(constant, index, -1);
   }
   
   private ConstantExpression(Constant constant, int index, int line) {
-    super(PRECEDENCE_ATOMIC);
+    super(getPrecedence(constant));
     this.constant = constant;
     this.index = index;
     this.line = line;

@@ -172,6 +172,7 @@ public class TestFiles {
     "scope02",
     "scope03",
     "51_expression",
+    "51_expression2",
     "51_string03",
     "51_ellipsis",
     "51_ellipsis02",
