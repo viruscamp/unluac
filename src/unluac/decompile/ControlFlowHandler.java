@@ -784,13 +784,13 @@ public class ControlFlowHandler {
         }
       } else if(type == Type.IF_ELSE) {
         for(Pair d : decls) {
-          if(end - 1 <= d.begin) {
+          if(end <= d.begin) {
             // okay
           } else if(d.end <= begin) {
             // okay
-          } else if(begin <= d.begin && d.end <= end - 1) {
+          } else if(begin <= d.begin && d.end <= end) {
             // okay
-          } else if(d.begin <= begin && end - 1 <= d.end) {
+          } else if(d.begin <= begin && end <= d.end) {
             // okay
           } else {
             if(debug_resolution) System.err.println("early invalid scope overlap");
