@@ -164,6 +164,7 @@ public class TestFiles {
     "once01",
     "once02",
     "once03",
+    "once04",
     "unused01",
     "report01a",
     "report01b",

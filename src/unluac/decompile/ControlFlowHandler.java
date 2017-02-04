@@ -993,7 +993,7 @@ public class ControlFlowHandler {
             if(debug_resolution) System.err.println("invalid if end");
             return false;
           }
-          blocks.add(new Pair(b.line, r.line));
+          blocks.add(new Pair(b.line + 1, r.line));
           break;
         case IF_ELSE:
           if(rstate.container != null && r.line >= rstate.container.end) {
@@ -1002,9 +1002,9 @@ public class ControlFlowHandler {
           }
           BranchResolution r_else = rstate.resolution[r.line - 1];
           if(r_else == null) throw new IllegalStateException();
-          blocks.add(new Pair(b.line, r.line - 1));
+          blocks.add(new Pair(b.line + 1, r.line - 1));
           blocks.add(new Pair(r.line, r_else.line));
-          blocks.add(new Pair(b.line, r_else.line));
+          blocks.add(new Pair(b.line + 1, r_else.line));
           break;
         case IF_BREAK:
           if(rstate.container == null || r.line < rstate.container.end) {
@@ -1133,7 +1133,7 @@ public class ControlFlowHandler {
         prevlineres.matched = true;
         if(b.line < prevlineres.earliestMatch) throw new IllegalStateException("unexpected else match: " + b.line + " (" + prevlineres.earliestMatch + ")");
         int blocksSize = rstate.blocks.save();
-        if(rstate.blocks.push(b.line, r.line - 1, ResolutionBlocks.Type.IF_ELSE) && rstate.blocks.push(r.line, prevlineres.line, ResolutionBlocks.Type.ELSE_END) && rstate.blocks.push(b.line,  prevlineres.line, ResolutionBlocks.Type.IF_ELSE_END)) {
+        if(rstate.blocks.push(b.line + 1, r.line - 1, ResolutionBlocks.Type.IF_ELSE) && rstate.blocks.push(r.line, prevlineres.line, ResolutionBlocks.Type.ELSE_END) && rstate.blocks.push(b.line + 1,  prevlineres.line, ResolutionBlocks.Type.IF_ELSE_END)) {
           resolve(state, declList, rstate, next);
         }
         rstate.blocks.restore(blocksSize);;
@@ -1142,7 +1142,7 @@ public class ControlFlowHandler {
       }
       r.type = BranchResolution.Type.IF_END;
       int blocksSize = rstate.blocks.save();
-      if(rstate.blocks.push(b.line, r.line, ResolutionBlocks.Type.IF_END)) {
+      if(rstate.blocks.push(b.line + 1, r.line, ResolutionBlocks.Type.IF_END)) {
         resolve(state, declList, rstate, next);
       }
       rstate.blocks.restore(blocksSize);
@@ -1165,7 +1165,7 @@ public class ControlFlowHandler {
             }
             r.type = BranchResolution.Type.IF_END;
             blocksSize = rstate.blocks.save();
-            if(rstate.blocks.push(b.line, r.line, ResolutionBlocks.Type.IF_END)) {
+            if(rstate.blocks.push(b.line + 1, r.line, ResolutionBlocks.Type.IF_END)) {
               resolve(state, declList, rstate, next);
             }
             rstate.blocks.restore(blocksSize);
