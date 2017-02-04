@@ -238,7 +238,7 @@ public class ControlFlowHandler {
       handle_loadboolblock(state, skip, loadboolblock, c, line, target);
     } else {
       int ploadboolblock = !constant && target - 2 >= 1 ? find_loadboolblock(state, target - 2) : -1;
-      if(ploadboolblock != -1 && ploadboolblock == target - 2 && code.A(target - 2) == c.register()) {
+      if(ploadboolblock != -1 && ploadboolblock == target - 2 && code.A(target - 2) == c.register() && !has_statement(state, line + 2, target - 3)) {
         handle_testset(state, skip, line, c, target, c.register());
       } else {
         if(!constant && code.C(line) != 0) c = c.inverse();
