@@ -232,15 +232,21 @@ public class ControlFlowHandler {
   
   private static void handle_test(State state, boolean[] skip, int line, Condition c, int target, boolean constant) {
     Code code = state.code;
-    if(!constant && code.C(line) != 0) c = c.inverse();
     int loadboolblock = find_loadboolblock(state, target);
     if(loadboolblock >= 1) {
+      if(!constant && code.C(line) != 0) c = c.inverse();
       handle_loadboolblock(state, skip, loadboolblock, c, line, target);
     } else {
-      Branch b = new Branch(line, constant ? Branch.Type.testset : Branch.Type.test, c, line + 2, target);
-      b.target = code.A(line);
-      if(code.C(line) != 0) b.inverseValue = true;
-      insert_branch(state, b);
+      int ploadboolblock = !constant && target - 2 >= 1 ? find_loadboolblock(state, target - 2) : -1;
+      if(ploadboolblock >= 1 && code.A(target - 2) == c.register()) {
+        handle_testset(state, skip, line, c, target, c.register());
+      } else {
+        if(!constant && code.C(line) != 0) c = c.inverse();
+        Branch b = new Branch(line, constant ? Branch.Type.testset : Branch.Type.test, c, line + 2, target);
+        b.target = code.A(line);
+        if(code.C(line) != 0) b.inverseValue = true;
+        insert_branch(state, b);
+      }
     }
     skip[line + 1] = true;
   }
