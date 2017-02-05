@@ -1140,6 +1140,17 @@ public class ControlFlowHandler {
         if(!rstate.results.isEmpty()) return;
         prevlineres.matched = false;
       }
+      if(b.targetSecond - 1 >= 1 && state.code.op(b.targetSecond - 1) == Op.JMP52 && is_close(state, b.targetSecond - 1)) {
+        r.line--;
+        r.type = BranchResolution.Type.IF_END;
+        int blocksSize = rstate.blocks.save();
+        if(rstate.blocks.push(b.line + 1, r.line, ResolutionBlocks.Type.IF_END)) {
+          resolve(state, declList, rstate, next);
+        }
+        rstate.blocks.restore(blocksSize);
+        if(!rstate.results.isEmpty()) return;
+        r.line++;
+      }
       r.type = BranchResolution.Type.IF_END;
       int blocksSize = rstate.blocks.save();
       if(rstate.blocks.push(b.line + 1, r.line, ResolutionBlocks.Type.IF_END)) {
