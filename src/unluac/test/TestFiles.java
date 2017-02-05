@@ -116,6 +116,7 @@ public class TestFiles {
     "declare02",
     "declare03",
     "declare04",
+    "declare05",
     "adjust01",
     "adjust04",
     "adjust05",

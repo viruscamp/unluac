@@ -1,8 +1,5 @@
 package unluac.decompile;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import unluac.Version;
 import unluac.parse.LBoolean;
 import unluac.parse.LNil;
@@ -12,43 +9,19 @@ import unluac.parse.LString;
 
 public class Constant {
 
-  private static final Set<String> reservedWords = new HashSet<String>();
-  
-  static {
-    reservedWords.add("and");
-    reservedWords.add("break");
-    reservedWords.add("do");
-    reservedWords.add("else");
-    reservedWords.add("elseif");
-    reservedWords.add("end");
-    reservedWords.add("false");
-    reservedWords.add("for");
-    reservedWords.add("function");
-    reservedWords.add("if");
-    reservedWords.add("in");
-    reservedWords.add("local");
-    reservedWords.add("nil");
-    reservedWords.add("not");
-    reservedWords.add("or");
-    reservedWords.add("repeat");
-    reservedWords.add("return");
-    reservedWords.add("then");
-    reservedWords.add("true");
-    reservedWords.add("until");
-    reservedWords.add("while");
-  }
-  
   private final int type;
   
   private final boolean bool;
   private final LNumber number;
   private final String string;
+  private final boolean reserved;
   
   public Constant(int constant) {
     type = 2;
     bool = false;
     number = LNumber.makeInteger(constant);
     string = null;
+    reserved = false;
   }
   
   public Constant(LObject constant) {
@@ -57,21 +30,25 @@ public class Constant {
       bool = false;
       number = null;
       string = null;
+      reserved = false;
     } else if(constant instanceof LBoolean) {
       type = 1;
       bool = constant == LBoolean.LTRUE;
       number = null;
       string = null;
+      reserved = false;
     } else if(constant instanceof LNumber) {
       type = 2;
       bool = false;
       number = (LNumber) constant;
       string = null;
+      reserved = false;
     } else if(constant instanceof LString) {
       type = 3;
       bool = false;
       number = null;
       string = ((LString) constant).deref();
+      reserved = ((LString) constant).reserved();
     } else {
       throw new IllegalArgumentException("Illegal constant type: " + constant.toString());
     }
@@ -208,10 +185,7 @@ public class Constant {
   }
   
   public boolean isIdentifier() {
-    if(!isString()) {
-      return false;
-    }
-    if(reservedWords.contains(string)) {
+    if(!isString() || reserved) {
       return false;
     }
     if(string.length() == 0) {

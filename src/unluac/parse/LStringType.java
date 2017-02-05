@@ -2,15 +2,21 @@ package unluac.parse;
 
 import java.nio.ByteBuffer;
 
+import unluac.Version;
+
 
 public abstract class LStringType extends BObjectType<LString> {
 
-  public static LStringType50 getType50() {
-    return new LStringType50();
+  public static LStringType50 getType50(Version version) {
+    return new LStringType50(version);
   }
   
-  public static LStringType53 getType53() {
-    return new LStringType53();
+  public static LStringType53 getType53(Version version) {
+    return new LStringType53(version);
+  }
+  
+  protected LStringType(Version version) {
+    this.version = version;
   }
   
   protected ThreadLocal<StringBuilder> b = new ThreadLocal<StringBuilder>() {
@@ -22,9 +28,14 @@ public abstract class LStringType extends BObjectType<LString> {
 
   };
   
+  protected final Version version;
+  
 }
 
 class LStringType50 extends LStringType {
+  
+  LStringType50(Version version) { super(version); }
+  
   @Override
   public LString parse(final ByteBuffer buffer, BHeader header) {
     BSizeT sizeT = header.sizeT.parse(buffer, header);
@@ -42,11 +53,14 @@ class LStringType50 extends LStringType {
     if(header.debug) {
       System.out.println("-- parsed <string> \"" + s + "\"");
     }
-    return new LString(sizeT, s);
+    return new LString(version, sizeT, s);
   }
 }
 
 class LStringType53 extends LStringType {
+  
+  LStringType53(Version version) { super(version); }
+  
   @Override
   public LString parse(final ByteBuffer buffer, BHeader header) {
     BSizeT sizeT;
@@ -77,6 +91,6 @@ class LStringType53 extends LStringType {
     if(header.debug) {
       System.out.println("-- parsed <string> \"" + s + "\"");
     }
-    return new LString(sizeT, s);
+    return new LString(version, sizeT, s);
   }
 }

@@ -1,5 +1,8 @@
 package unluac;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import unluac.decompile.Op;
 import unluac.decompile.OpcodeMap;
 import unluac.parse.LHeaderType;
@@ -10,6 +13,32 @@ public abstract class Version {
   public static final Version LUA51 = new Version51();
   public static final Version LUA52 = new Version52();
   public static final Version LUA53 = new Version53();
+  
+  protected static final Set<String> reservedWords = new HashSet<String>();
+  
+  static {
+    reservedWords.add("and");
+    reservedWords.add("break");
+    reservedWords.add("do");
+    reservedWords.add("else");
+    reservedWords.add("elseif");
+    reservedWords.add("end");
+    reservedWords.add("false");
+    reservedWords.add("for");
+    reservedWords.add("function");
+    reservedWords.add("if");
+    reservedWords.add("in");
+    reservedWords.add("local");
+    reservedWords.add("nil");
+    reservedWords.add("not");
+    reservedWords.add("or");
+    reservedWords.add("repeat");
+    reservedWords.add("return");
+    reservedWords.add("then");
+    reservedWords.add("true");
+    reservedWords.add("until");
+    reservedWords.add("while");
+  }
   
   public static enum VarArgType {
     ARG,
@@ -44,6 +73,8 @@ public abstract class Version {
   public abstract boolean usesIfBreakRewrite();
   
   public abstract VarArgType getVarArgType();
+  
+  public abstract boolean isReserved(String word);
   
 }
 
@@ -96,6 +127,11 @@ class Version50 extends Version {
   @Override
   public VarArgType getVarArgType() {
     return VarArgType.ARG;
+  }
+  
+  @Override
+  public boolean isReserved(String word) {
+    return reservedWords.contains(word);
   }
   
 }
@@ -151,6 +187,11 @@ class Version51 extends Version {
     return VarArgType.HYBRID;
   }
   
+  @Override
+  public boolean isReserved(String word) {
+    return reservedWords.contains(word);
+  }
+  
 }
 
 class Version52 extends Version {
@@ -204,6 +245,11 @@ class Version52 extends Version {
     return VarArgType.ELLIPSIS;
   }
   
+  @Override
+  public boolean isReserved(String word) {
+    return reservedWords.contains(word) || word.equals("goto");
+  }
+  
 }
 
 class Version53 extends Version {
@@ -255,6 +301,11 @@ class Version53 extends Version {
   @Override
   public VarArgType getVarArgType() {
     return VarArgType.ELLIPSIS;
+  }
+  
+  @Override
+  public boolean isReserved(String word) {
+    return reservedWords.contains(word) || word.equals("goto");
   }
   
 }

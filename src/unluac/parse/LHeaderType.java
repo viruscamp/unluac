@@ -177,7 +177,7 @@ class LHeaderType50 extends LHeaderType {
       throw new IllegalStateException("The input chunk is using an unrecognized number format: " + intcheck);
     }
     s.function = LFunctionType.TYPE50;
-    s.string = LStringType.getType50();
+    s.string = LStringType.getType50(header.version);
     s.constant = LConstantType.getType50();
   }
   
@@ -196,7 +196,7 @@ class LHeaderType51 extends LHeaderType {
     parse_number_integrality(buffer, header, s);
     s.number = new LNumberType(s.lNumberSize, s.lNumberIntegrality, LNumberType.NumberMode.MODE_NUMBER);
     s.function = LFunctionType.TYPE51;
-    s.string = LStringType.getType50();
+    s.string = LStringType.getType50(header.version);
     s.constant = LConstantType.getType50();
     s.extractor = Code.Code51;
   }
@@ -217,7 +217,7 @@ class LHeaderType52 extends LHeaderType {
     parse_tail(buffer, header, s);
     s.number = new LNumberType(s.lNumberSize, s.lNumberIntegrality, LNumberType.NumberMode.MODE_NUMBER);
     s.function = LFunctionType.TYPE52;
-    s.string = LStringType.getType50();
+    s.string = LStringType.getType50(header.version);
     s.constant = LConstantType.getType50();
     s.extractor = Code.Code51;
   }
@@ -266,7 +266,7 @@ class LHeaderType53 extends LHeaderType {
     s.linteger = new LNumberType(s.lIntegerSize, true, LNumberType.NumberMode.MODE_INTEGER);
     s.lfloat = new LNumberType(s.lFloatSize, false, LNumberType.NumberMode.MODE_FLOAT);
     s.function = LFunctionType.TYPE53;
-    s.string = LStringType.getType53();
+    s.string = LStringType.getType53(header.version);
     s.constant = LConstantType.getType53();
     s.extractor = Code.Code51;
     double floatcheck = s.lfloat.parse(buffer, header).value();
