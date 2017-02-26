@@ -193,7 +193,7 @@ public class VariableFinder {
       boolean local = false;
       boolean temporary = false;
       int read = 0;
-      //int written = 0;
+      int written = 0;
       if(register < args) {
         local = true;
         id = "A";
@@ -204,11 +204,11 @@ public class VariableFinder {
           if(state.local) local = true;
           if(state.temporary) temporary = true;
           if(state.read) read++;
-          //if(state.written) written++;
+          if(state.written) written++;
         }
       }
       if(!local && !temporary) {
-        if(read >= 2 || read == 0) {
+        if(read >= 2 || read == 0 && written != 0) {
           local = true;
         }
       }
