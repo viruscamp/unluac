@@ -150,6 +150,7 @@ public class VariableFinder {
               states.setLocal(upvalue.idx, line);
             }
           }
+          states.get(code.A(line), line).written = true;
           break;
         }
         case CALL:
