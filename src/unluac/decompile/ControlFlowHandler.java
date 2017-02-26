@@ -155,6 +155,9 @@ public class ControlFlowHandler {
           b = state.branches[r];
         }
       }
+      if(r == line && state.code.op(line) == Op.JMP52 && is_close(state, line)) {
+        r = line + 1;
+      }
       resolved[line] = r;
     }
     state.resolved = resolved;

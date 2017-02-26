@@ -160,6 +160,7 @@ public class TestFiles {
     "break05",
     "close01",
     "close02",
+    "close03",
     "always01",
     "always02",
     "always03",
