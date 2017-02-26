@@ -203,8 +203,8 @@ public class VariableFinder {
           RegisterState state = states.get(register, line);
           if(state.local) local = true;
           if(state.temporary) temporary = true;
-          if(state.read) read++;
-          if(state.written) written++;
+          if(state.read) { written = 0; read++; }
+          if(state.written) { read = 0; written++; }
         }
       }
       if(!local && !temporary) {
