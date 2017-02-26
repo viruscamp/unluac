@@ -159,6 +159,7 @@ public class TestFiles {
     "break04",
     "break05",
     "close01",
+    "close02",
     "always01",
     "always02",
     "always03",
