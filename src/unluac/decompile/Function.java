@@ -1,6 +1,5 @@
 package unluac.decompile;
 
-import unluac.Version;
 import unluac.decompile.expression.ConstantExpression;
 import unluac.decompile.expression.GlobalExpression;
 import unluac.parse.LFunction;
@@ -15,11 +14,7 @@ public class Function {
     for(int i = 0; i < constants.length; i++) {
       constants[i] = new Constant(function.constants[i]);
     }
-    if(function.header.version == Version.LUA50) {
-      constantsOffset = 250;
-    } else {
-      constantsOffset = 256;
-    }
+    constantsOffset = function.header.version.getConstantsOffset();
   }
   
   public boolean isConstant(int register) {

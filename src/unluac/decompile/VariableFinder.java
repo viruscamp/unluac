@@ -56,8 +56,8 @@ public class VariableFinder {
     
   }
   
-  private static boolean isConstantReference(int value) {
-    return (value & 0x100) != 0;
+  private static boolean isConstantReference(Decompiler d, int value) {
+    return value >= d.getVersion().getConstantsOffset();
   }
   
   public static Declaration[] process(Decompiler d, int args, int registers) {
@@ -87,8 +87,8 @@ public class VariableFinder {
           break;
         case GETTABLE:
           states.get(code.A(line), line).written = true;
-          if(!isConstantReference(code.B(line))) states.get(code.B(line), line).read = true;
-          if(!isConstantReference(code.C(line))) states.get(code.C(line), line).read = true;
+          if(!isConstantReference(d, code.B(line))) states.get(code.B(line), line).read = true;
+          if(!isConstantReference(d, code.C(line))) states.get(code.C(line), line).read = true;
           break;
         case SETGLOBAL:
         case SETUPVAL:
@@ -102,14 +102,14 @@ public class VariableFinder {
         case MOD:
         case POW:
           states.get(code.A(line), line).read = true;
-          if(!isConstantReference(code.B(line))) states.get(code.B(line), line).read = true;
-          if(!isConstantReference(code.C(line))) states.get(code.C(line), line).read = true;
+          if(!isConstantReference(d, code.B(line))) states.get(code.B(line), line).read = true;
+          if(!isConstantReference(d, code.C(line))) states.get(code.C(line), line).read = true;
           break;
         case SELF:
           states.get(code.A(line), line).written = true;
           states.get(code.A(line) + 1, line).written = true;
           states.get(code.B(line), line).read = true;
-          if(!isConstantReference(code.C(line))) states.get(code.C(line), line).read = true;
+          if(!isConstantReference(d, code.C(line))) states.get(code.C(line), line).read = true;
           break;
         case UNM:
         case NOT:
@@ -133,8 +133,8 @@ public class VariableFinder {
         case EQ:
         case LT:
         case LE:
-          if(!isConstantReference(code.B(line))) states.get(code.B(line), line).read = true;
-          if(!isConstantReference(code.C(line))) states.get(code.C(line), line).read = true;
+          if(!isConstantReference(d, code.B(line))) states.get(code.B(line), line).read = true;
+          if(!isConstantReference(d, code.C(line))) states.get(code.C(line), line).read = true;
           break;
         case TEST:
           states.get(code.A(line), line).read = true;

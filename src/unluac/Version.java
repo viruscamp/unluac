@@ -76,6 +76,10 @@ public abstract class Version {
   
   public abstract boolean isReserved(String word);
   
+  public int getConstantsOffset() {
+    return 256;
+  }
+  
 }
 
 class Version50 extends Version {
@@ -132,6 +136,11 @@ class Version50 extends Version {
   @Override
   public boolean isReserved(String word) {
     return reservedWords.contains(word);
+  }
+  
+  @Override
+  public int getConstantsOffset() {
+    return 250;
   }
   
 }
