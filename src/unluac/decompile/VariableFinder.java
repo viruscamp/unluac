@@ -165,7 +165,7 @@ public class VariableFinder {
             }
           }
           for(int register = code.A(line); register <= code.A(line) + B - 1; register++) {
-            states.get(code.A(line), line).read = true;
+            states.get(register, line).read = true;
             states.setTemporary(code.A(line), line);
           }
           if(C >= 2) {
