@@ -204,6 +204,7 @@ public class VariableFinder {
       boolean temporary = false;
       int read = 0;
       int written = 0;
+      int start = 0;
       if(register < args) {
         local = true;
         id = "A";
@@ -211,10 +212,20 @@ public class VariableFinder {
       if(!local && !temporary) {
         for(int line = 1; line <= code.length(); line++) {
           RegisterState state = states.get(register, line);
-          if(state.local) local = true;
-          if(state.temporary) temporary = true;
-          if(state.read) { written = 0; read++; }
-          if(state.written) { read = 0; written++; }
+          if(state.local) {
+            temporary = false;
+            local = true;
+          }
+          if(state.temporary) {
+            start = line + 1;
+            temporary = true;
+          }
+          if(state.read) {
+            written = 0; read++;
+          }
+          if(state.written) {
+            read = 0; written++;
+          }
         }
       }
       if(!local && !temporary) {
@@ -223,7 +234,7 @@ public class VariableFinder {
         }
       }
       if(local) {
-        Declaration decl = new Declaration(id + register + "_" + lc, 0, code.length() + d.getVersion().getOuterBlockScopeAdjustment());
+        Declaration decl = new Declaration(id + register + "_" + lc, start, code.length() + d.getVersion().getOuterBlockScopeAdjustment());
         decl.register = register;
         lc++;
         declList.add(decl);
