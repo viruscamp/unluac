@@ -224,6 +224,10 @@ public class VariableFinder {
             written = 0; read++;
           }
           if(state.written) {
+            if(written > 0 && read == 0) {
+              temporary = false;
+              local = true;
+            }
             read = 0; written++;
           }
         }
