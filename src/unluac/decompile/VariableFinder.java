@@ -184,6 +184,15 @@ public class VariableFinder {
           }
           break;
         }
+        case RETURN: {
+          int A = code.A(line); 
+          int B = code.B(line);
+          if(B == 0) B = registers - code.A(line) + 1;
+          for(int register = A; register <= A + B - 2; register++) {
+            states.get(register, line).read = true;
+          }
+          break;
+        }
         default:
           break;
       }
