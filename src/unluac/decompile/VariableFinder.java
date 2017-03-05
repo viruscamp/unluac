@@ -98,6 +98,7 @@ public class VariableFinder {
     }
     
     private int registers;
+    private int lines;
     private RegisterState[][] states;
     
   }
@@ -135,12 +136,16 @@ public class VariableFinder {
           states.setWritten(A, line);
           break;
         case LOADNIL: {
-          int maximum;
-          if(d.getVersion().usesOldLoadNilEncoding()) {
-            maximum = B;
-          } else {
-            maximum = A + B;
+          int maximum = B;
+          int register = code.A(line); 
+          while(register <= maximum) {
+            states.setWritten(register, line);
+            register++;
           }
+          break;
+        }
+        case LOADNIL52: {
+          int maximum = A + B;
           int register = code.A(line); 
           while(register <= maximum) {
             states.setWritten(register, line);
@@ -150,8 +155,8 @@ public class VariableFinder {
         }
         case GETTABLE:
           states.setWritten(A, line);
-          if(!isConstantReference(code.B(line))) states.setRead(B, line);
-          if(!isConstantReference(code.C(line))) states.setRead(C, line);
+          if(!isConstantReference(d, code.B(line))) states.setRead(B, line);
+          if(!isConstantReference(d, code.C(line))) states.setRead(C, line);
           break;
         case SETGLOBAL:
         case SETUPVAL:
@@ -165,14 +170,14 @@ public class VariableFinder {
         case MOD:
         case POW:
           states.setWritten(A, line);
-          if(!isConstantReference(code.B(line))) states.setRead(B, line);
-          if(!isConstantReference(code.C(line))) states.setRead(C, line);
+          if(!isConstantReference(d, code.B(line))) states.setRead(B, line);
+          if(!isConstantReference(d, code.C(line))) states.setRead(C, line);
           break;
         case SELF:
           states.setWritten(A, line);
           states.setWritten(A + 1, line);
           states.setRead(B, line);
-          if(!isConstantReference(code.C(line))) states.setRead(C, line);
+          if(!isConstantReference(d, code.C(line))) states.setRead(C, line);
           break;
         case UNM:
         case NOT:
@@ -196,8 +201,8 @@ public class VariableFinder {
         case EQ:
         case LT:
         case LE:
-          if(!isConstantReference(code.B(line))) states.setRead(B, line);
-          if(!isConstantReference(code.C(line))) states.setRead(C, line);
+          if(!isConstantReference(d, code.B(line))) states.setRead(B, line);
+          if(!isConstantReference(d, code.C(line))) states.setRead(C, line);
           break;
         case TEST:
           states.setRead(A, line);
@@ -219,8 +224,6 @@ public class VariableFinder {
         }
         case CALL:
         case TAILCALL: {
-          int B = code.B(line);
-          int C = code.C(line);
           if(code.op(line) != Op.TAILCALL) {
             if(C >= 2) {
               for(int register = A; register <= A + C - 2; register++) {
@@ -249,8 +252,6 @@ public class VariableFinder {
           break;
         }
         case RETURN: {
-          int A = code.A(line); 
-          int B = code.B(line);
           if(B == 0) B = registers - code.A(line) + 1;
           for(int register = A; register <= A + B - 2; register++) {
             states.get(register, line).read = true;
@@ -276,9 +277,6 @@ for(int register = 0; register < registers; register++) {
     }
     for(int line = 1; line <= code.length(); line++) {
       for(int register = 0; register < registers; register++) {
-        if(line == 10 && register == 4) {
-          System.out.println("here");
-        }
         RegisterState s = states.get(register, line);
         if(s.written && s.temporary) {
           List<Integer> ancestors = new ArrayList<Integer>();
@@ -315,6 +313,7 @@ for(int register = 0; register < registers; register++) {
         }
       }
     }
+    /*
     for(int register = 0; register < registers; register++) {
       for(int line = 1; line <= code.length(); line++) {
         RegisterState s = states.get(register, line);
@@ -326,6 +325,7 @@ for(int register = 0; register < registers; register++) {
         }
       }
     }
+    //*/
     List<Declaration> declList = new ArrayList<Declaration>(registers); 
     for(int register = 0; register < registers; register++) {
       String id = "L";
@@ -381,7 +381,7 @@ for(int register = 0; register < registers; register++) {
         }
       }
       if(local && temporary) {
-        throw new IllegalStateException();
+        //throw new IllegalStateException();
       }
       if(local) {
         String name;
