@@ -209,6 +209,20 @@ public class VariableFinder {
         local = true;
         id = "A";
       }
+      boolean is_arg = false;
+      if(register == args) {
+        switch(d.getVersion().getVarArgType()) {
+        case ARG:
+        case HYBRID:
+          if((d.function.vararg & 1) != 0) {
+            local = true;
+            is_arg = true;
+          }
+          break;
+        case ELLIPSIS:
+          break;
+        }
+      }
       if(!local && !temporary) {
         for(int line = 1; line <= code.length(); line++) {
           RegisterState state = states.get(register, line);
@@ -238,9 +252,14 @@ public class VariableFinder {
         }
       }
       if(local) {
-        Declaration decl = new Declaration(id + register + "_" + lc, start, code.length() + d.getVersion().getOuterBlockScopeAdjustment());
+        String name;
+        if(is_arg) {
+          name = "arg";
+        } else {
+          name = id + register + "_" + lc++;
+        }
+        Declaration decl = new Declaration(name, start, code.length() + d.getVersion().getOuterBlockScopeAdjustment());
         decl.register = register;
-        lc++;
         declList.add(decl);
       }
     }
