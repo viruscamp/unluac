@@ -25,9 +25,9 @@ public class TestSuite {
   
   public String testName(LuaSpec spec, String file) {
     if(name == null) {
-      return spec.id() + ":" + file;
+      return spec.id() + ": " + file;
     } else {
-      return spec.id() + ":" + name + "/" + file.replace('\\', '/');
+      return spec.id() + ": " + name + "/" + file.replace('\\', '/');
     }
   }
   
