@@ -104,11 +104,11 @@ public class ControlFlowHandler {
     find_fixed_blocks(state);
     find_while_loops(state);
     find_repeat_loops(state);
-    //find_break_statements(state);
-    //find_if_blocks(state);
-    find_other_statements(state, d.declList);
+    find_break_statements(state);
+    find_if_blocks(state);
+    //find_other_statements(state, d.declList);
     find_set_blocks(state);
-    //find_pseudo_goto_statements(state, d.declList);
+    find_pseudo_goto_statements(state, d.declList);
     find_do_blocks(state, d.declList);
     Collections.sort(state.blocks);
     // DEBUG: print branches stuff
