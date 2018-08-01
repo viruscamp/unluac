@@ -1409,7 +1409,7 @@ public class ControlFlowHandler {
                 upperBound = Math.min(decl.begin, upperBound);
               }
             }
-            if(decl.begin >= begin && decl.end > end) {
+            if(decl.begin >= begin && decl.begin < end && decl.end > end) {
               lowerBound = Math.max(decl.begin + 1, lowerBound);
               begin = decl.begin + 1;
             }

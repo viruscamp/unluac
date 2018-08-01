@@ -12,3 +12,5 @@ repeat -- once
   print("4")
 until true
 print("5")
+local following = 0
+print(following)
