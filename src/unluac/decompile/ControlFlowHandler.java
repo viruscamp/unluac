@@ -711,6 +711,14 @@ public class ControlFlowHandler {
                 break;
               }
             }
+            if(c.targetFirst <= b.line && b.line < c.targetSecond - 1) {
+              if(c.targetFirst <= line && line < c.targetSecond) {
+                
+              } else {
+                condsplit = true;
+                break;
+              }
+            }
           }
           c = c.next;
         }
