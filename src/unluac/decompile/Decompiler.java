@@ -99,7 +99,7 @@ public class Decompiler {
   
   public State decompile() {
     State state = new State();
-    state.r = new Registers(registers, length, declList, f);
+    state.r = new Registers(registers, length, declList, f, function.stripped);
     List<Block> blocks = ControlFlowHandler.process(this, state.r);
     state.outer = blocks.get(0);
     processSequence(state, blocks, 1, code.length);
@@ -488,7 +488,7 @@ public class Decompiler {
   public boolean hasStatement(int begin, int end) {
     if(begin <= end) {
       State state = new State();
-      state.r = new Registers(registers, length, declList, f);
+      state.r = new Registers(registers, length, declList, f, function.stripped);
       state.outer = new DoEndBlock(function, begin, end + 1);
       List<Block> blocks = Arrays.asList(state.outer);
       processSequence(state, blocks, begin, end);

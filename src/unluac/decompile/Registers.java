@@ -17,10 +17,11 @@ public class Registers {
   
   private final Declaration[][] decls;
   private final Function f;
+  private final boolean isStripped;
   private final Expression[][] values;
   private final int[][] updated;
   
-  public Registers(int registers, int length, Declaration[] declList, Function f) {
+  public Registers(int registers, int length, Declaration[] declList, Function f, boolean isStripped) {
     this.registers = registers;
     this.length = length;
     decls = new Declaration[registers][length + 1];
@@ -44,6 +45,7 @@ public class Registers {
     startedLines = new boolean[length + 1];
     Arrays.fill(startedLines, false);
     this.f = f;
+    this.isStripped = isStripped;
   }
   
   public boolean isAssignable(int register, int line) {
@@ -131,8 +133,11 @@ public class Registers {
       decl = new Declaration("_FOR_", begin, end);
       decl.register = register;
       newDeclaration(decl, register, begin, end);
-      throw new IllegalStateException("TEMP");
-      
+      if(!isStripped) {
+        throw new IllegalStateException("TEMP");
+      }
+    } else if(isStripped) {
+      //
     } else {
       if(decl.begin != begin || decl.end != end) {
         System.err.println("given: " + begin + " " + end);
@@ -149,7 +154,10 @@ public class Registers {
       decl = new Declaration("_FORV_" + register + "_", begin, end);
       decl.register = register;
       newDeclaration(decl, register, begin, end);
-      throw new IllegalStateException("TEMP");
+      if(!isStripped) {
+        throw new IllegalStateException("TEMP");
+      }
+    } else if(isStripped) {
       
     } else {
       if(decl.begin != begin || decl.end != end) {
