@@ -105,7 +105,7 @@ public class ControlFlowHandler {
     find_while_loops(state);
     find_repeat_loops(state);
     find_break_statements(state);
-    find_if_blocks(state);
+    find_if_blocks(state, d.declList);
     //find_other_statements(state, d.declList);
     find_set_blocks(state);
     find_pseudo_goto_statements(state, d.declList);
@@ -587,7 +587,16 @@ public class ControlFlowHandler {
     }
   }
   
-  private static void find_if_blocks(State state) {
+  private static boolean splits_decl(int begin, int end, Declaration[] declList) {
+    for(Declaration decl : declList) {
+      if(decl.isSplitBy(begin, end)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  private static void find_if_blocks(State state, Declaration[] declList) {
     Branch b = state.begin_branch;
     while(b != null) {
       if(is_conditional(b)) {
@@ -598,22 +607,35 @@ public class ControlFlowHandler {
             b.targetSecond = enclosing.getUnprotectedLine();
           }
         }
+        boolean isElse = false;
         Branch tail = b.targetSecond >= 1 ? state.branches[b.targetSecond - 1] : null;
-        if(tail != null && !is_conditional(tail)) {
+        if(tail != null && !is_conditional(tail) && !splits_decl(b.targetFirst, b.targetSecond, declList)) {
+          int tailTargetSecond = tail.targetSecond;
           enclosing = enclosing_unprotected_block(state, tail.line);
           if(enclosing != null && !enclosing.contains(tail.targetSecond)) {
-            if(tail.targetSecond == state.resolved[enclosing.getUnprotectedTarget()]) {
-              tail.targetSecond = enclosing.getUnprotectedLine();
+            if(tailTargetSecond == state.resolved[enclosing.getUnprotectedTarget()]) {
+              tailTargetSecond = enclosing.getUnprotectedLine();
             }             
           }
           //System.err.println("else end " + b.targetFirst + " " + b.targetSecond + " " + tail.targetSecond + " enclosing " + (enclosing != null ? enclosing.begin : -1) + " " + + (enclosing != null ? enclosing.end : -1));
-          state.blocks.add(new IfThenElseBlock(state.function, b.cond, b.targetFirst, b.targetSecond, tail.targetSecond));
+          
           if(b.targetSecond != tail.targetSecond) {
+            tail.targetSecond = tailTargetSecond;
+            state.blocks.add(new IfThenElseBlock(state.function, b.cond, b.targetFirst, b.targetSecond, tail.targetSecond));
             state.blocks.add(new ElseEndBlock(state.function, b.targetSecond, tail.targetSecond));
-          } // else "empty else" case
-          remove_branch(state, tail);
-          unredirect(state, b.targetFirst, b.targetSecond, b.targetSecond - 1, tail.targetSecond);
-        } else {
+            remove_branch(state, tail);
+            unredirect(state, b.targetFirst, b.targetSecond, b.targetSecond - 1, tail.targetSecond);
+            isElse = true;
+          } else if(!splits_decl(b.targetFirst, b.targetSecond - 1, declList)){
+            // "empty else" case
+            tail.targetSecond = tailTargetSecond;
+            state.blocks.add(new IfThenElseBlock(state.function, b.cond, b.targetFirst, b.targetSecond, tail.targetSecond));
+            remove_branch(state, tail);
+            unredirect(state, b.targetFirst, b.targetSecond, b.targetSecond - 1, tail.targetSecond);
+            isElse = true;
+          }
+        }
+        if(!isElse) {
           //System.err.println("if end " + b.targetFirst + " " + b.targetSecond);
           
           Block breakable = enclosing_breakable_block(state, b.line);
