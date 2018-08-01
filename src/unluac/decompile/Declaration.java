@@ -33,7 +33,7 @@ public class Declaration {
   
   public boolean isSplitBy(int begin, int end) {
     return (begin <= this.begin && this.begin < end && end <= this.end)
-        || (begin <= this.end && this.end < end && this.begin < begin);
+        || (begin <= this.end && this.end < end - 1 && this.begin < begin);
   }
   
 }
