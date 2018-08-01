@@ -529,7 +529,7 @@ public class ControlFlowHandler {
           b.targetSecond = end;
           remove_branch(state, b);
           //System.err.println("while " + b.targetFirst + " " + b.targetSecond);
-          loop = new WhileBlock(state.function, b.cond, b.targetFirst, b.targetSecond);
+          loop = new WhileBlock(state.function, b.cond, b.targetFirst, b.targetSecond, loopback);
           unredirect(state, loopback, end, j.line, loopback);
         } else {
           boolean repeat = false;
@@ -569,7 +569,7 @@ public class ControlFlowHandler {
                   headb = null;
                 }
                 if(headb != null) {
-                  block = new WhileBlock(state.function, b.cond.inverse(), head + 1, b.targetFirst);
+                  block = new WhileBlock(state.function, b.cond.inverse(), head + 1, b.targetFirst, -1);
                   remove_branch(state, headb);
                   unredirect(state, 1, headb.line, headb.line, headb.targetSecond);
                 }
