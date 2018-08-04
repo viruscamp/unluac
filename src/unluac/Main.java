@@ -8,6 +8,7 @@ import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 
 import unluac.decompile.Decompiler;
+import unluac.decompile.Disassembler;
 import unluac.decompile.Output;
 import unluac.decompile.OutputProvider;
 import unluac.parse.BHeader;
@@ -25,6 +26,8 @@ public class Main {
         // option
         if(arg.equals("--rawstring")) {
           config.rawstring = true;
+        } else if(arg.equals("--disassemble")) {
+          config.disassemble = true;
         } else {
           error("unrecognized option: " + arg, true);
         }
@@ -43,9 +46,14 @@ public class Main {
       } catch(IOException e) {
         error(e.getMessage(), false);
       }
-      Decompiler d = new Decompiler(lmain);
-      Decompiler.State result = d.decompile();
-      d.print(result);
+      if(!config.disassemble) {
+        Decompiler d = new Decompiler(lmain);
+        Decompiler.State result = d.decompile();
+        d.print(result);
+      } else {
+        Disassembler d = new Disassembler(lmain);
+        d.disassemble(new Output());
+      }
       System.exit(0);
     }
   }

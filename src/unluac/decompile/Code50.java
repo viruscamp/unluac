@@ -60,4 +60,14 @@ public class Code50 implements CodeExtract {
   public int extract_op(int codepoint) {
     return codepoint & maskOp;
   }
+  
+  @Override
+  public boolean is_k(int field) {
+    return field >= 250;
+  }
+  
+  @Override
+  public int get_k(int field) {
+    return field - 250;
+  }
 }

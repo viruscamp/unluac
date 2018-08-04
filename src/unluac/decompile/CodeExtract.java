@@ -15,4 +15,8 @@ public interface CodeExtract {
   int extract_sBx(int codepoint);
 
   int extract_op(int codepoint);
+  
+  boolean is_k(int field);
+  
+  int get_k(int field);
 }

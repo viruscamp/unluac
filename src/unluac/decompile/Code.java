@@ -58,6 +58,16 @@ public class Code {
     public int extract_op(int codepoint) {
       return codepoint & 0x0000003F;
     }
+    
+    @Override
+    public boolean is_k(int field) {
+      return field >= 256;
+    }
+    
+    @Override
+    public int get_k(int field) {
+      return field - 256;
+    }
 
   };
   
