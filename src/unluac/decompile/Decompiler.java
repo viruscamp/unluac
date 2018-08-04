@@ -395,9 +395,15 @@ public class Decompiler {
       case SETLIST50:
       case SETLISTO: {
         Expression table = r.getValue(A, line);
-        int n = Bx % 32;
-        for(int i = 1; i <= n + 1; i++) {
-          operations.add(new TableSet(line, table, new ConstantExpression(new Constant(Bx - n + i), -1), r.getExpression(A + i, line), false, r.getUpdated(A + i, line)));
+        int n;
+        if(code.op(line) == Op.SETLISTO) {
+          n = registers - A - 1;
+        } else {
+          n = 1 + Bx % 32;
+        }
+        int constant = Bx - Bx % 32;
+        for(int i = 1; i <= n; i++) {
+          operations.add(new TableSet(line, table, new ConstantExpression(new Constant(constant + i), -1), r.getExpression(A + i, line), false, r.getUpdated(A + i, line)));
         }
         break;
       }
