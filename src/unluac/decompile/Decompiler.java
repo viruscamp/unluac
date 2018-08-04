@@ -227,7 +227,7 @@ public class Decompiler {
         operations.add(new RegisterSet(line, A, f.getConstantExpression(Bx)));
         break;
       case LOADKX:
-        if(line + 1 >= code.length || code.op(line + 1) != Op.EXTRAARG) throw new IllegalStateException();
+        if(line + 1 > code.length || code.op(line + 1) != Op.EXTRAARG) throw new IllegalStateException();
         operations.add(new RegisterSet(line, A, f.getConstantExpression(code.Ax(line + 1))));
         break;
       case LOADBOOL:
@@ -413,7 +413,7 @@ public class Decompiler {
           if(code.op(line) == Op.SETLIST) {
             C = code.codepoint(line + 1);
           } else {
-            if(line + 1 >= code.length || code.op(line + 1) != Op.EXTRAARG) throw new IllegalStateException();
+            if(line + 1 > code.length || code.op(line + 1) != Op.EXTRAARG) throw new IllegalStateException();
             C = code.Ax(line + 1);
           }
           skip[line + 1] = true;
