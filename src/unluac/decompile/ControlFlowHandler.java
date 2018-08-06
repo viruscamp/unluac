@@ -720,6 +720,13 @@ public class ControlFlowHandler {
               }
             }
           }
+          if(b != c && c.line != line && c.type == Branch.Type.jump && c.targetSecond < breakable.end) {
+            if(b.line < c.line && c.targetFirst > line)
+            {
+              condsplit = true;
+              break;
+            }
+          }
           c = c.next;
         }
         if(!condsplit) {
