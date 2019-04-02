@@ -20,6 +20,8 @@ public interface CodeExtract {
 
   int extract_op(int codepoint);
   
+  boolean check_op(int op);
+  
   int encode_op(int op);
   
   boolean is_k(int field);
