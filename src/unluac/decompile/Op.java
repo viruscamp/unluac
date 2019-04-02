@@ -66,7 +66,7 @@ public enum Op {
   // Special
   EXTRABYTE(OperandFormat.x);
   
-  private final OperandFormat[] operands;
+  public final OperandFormat[] operands;
   
   private Op(OperandFormat f1) {
     this.operands = new OperandFormat[] {f1};
@@ -217,8 +217,21 @@ public enum Op {
       return registerOperand(field);
     }
   }
+    
+  public boolean hasJump() {
+    for(int i = 0; i < operands.length; ++i) {
+      if(operands[i] == OperandFormat.sBxJ) {
+        return true;
+      }
+    }
+    return false;
+  }
   
-  public String codePointToString(int codepoint, CodeExtract ex) {
+  public int getJumpOffset(int codepoint, CodeExtract ex) {
+    return ex.extract_sBx(codepoint);
+  }
+  
+  public String codePointToString(int codepoint, CodeExtract ex, String label) {
     int width = 10;
     StringBuilder b = new StringBuilder();
     b.append(this.name().toLowerCase());
@@ -271,7 +284,11 @@ public enum Op {
         parameters[i] = functionOperand(ex.extract_Bx(codepoint));
         break;
       case sBxJ:
-        parameters[i] = fixedOperand(ex.extract_sBx(codepoint));
+        if(label != null) {
+          parameters[i] = label;
+        } else {
+          parameters[i] = fixedOperand(ex.extract_sBx(codepoint));
+        }
         break;
       case x:
         parameters[i] = fixedOperand(codepoint);

@@ -13,6 +13,16 @@ public class Code {
     public int extract_A(int codepoint) {
       return (codepoint >> 6) & 0x0000000FF;
     }
+    
+    @Override
+    public boolean check_A(int A) {
+      return (A & ~0x000000FF) == 0;
+    }
+    
+    @Override
+    public int encode_A(int A) {
+      return A << 6;
+    }
 
     /**
      * Returns the C field of the given codepoint.
@@ -21,6 +31,14 @@ public class Code {
     public int extract_C(int codepoint) {
       return (codepoint >> 14) & 0x000001FF;
     }
+    
+    public boolean check_C(int C) {
+      return (C & ~0x000001FF) == 0;
+    }
+    
+    public int encode_C(int C) {
+      return C << 14;
+    }
 
     /**
      * Returns the B field of the given codepoint.
@@ -28,6 +46,14 @@ public class Code {
     @Override
     public int extract_B(int codepoint) {
       return codepoint >>> 23;
+    }
+    
+    public boolean check_B(int B) {
+      return (B & ~0x000001FF) == 0;
+    }
+    
+    public int encode_B(int B) {
+      return B << 23;
     }
 
     /**
@@ -38,12 +64,28 @@ public class Code {
       return codepoint >>> 6;
     }
     
+    public boolean check_Ax(int Ax) {
+      return (Ax & ~0x03FFFFFF) == 0;
+    }
+    
+    public int encode_Ax(int Ax) {
+      return Ax << 6;
+    }
+    
     /**
      * Returns the Bx (B extended) field of the given codepoint.
      */
     @Override
     public int extract_Bx(int codepoint) {
       return codepoint >>> 14;
+    }
+    
+    public boolean check_Bx(int Bx) {
+      return (Bx & ~0x0003FFFF) == 0;
+    }
+    
+    public int encode_Bx(int Bx) {
+      return Bx << 14;
     }
 
     /**
@@ -53,10 +95,26 @@ public class Code {
     public int extract_sBx(int codepoint) {
       return (codepoint >>> 14) - 131071;
     }
+    
+    public boolean check_sBx(int sBx) {
+      return ((sBx + 131071) & ~0x0003FFFF) == 0;
+    }
+    
+    public int encode_sBx(int sBx) {
+      return (sBx + 131071) << 14;
+    }
 
     @Override
     public int extract_op(int codepoint) {
       return codepoint & 0x0000003F;
+    }
+    
+    public boolean check_op(int opcode) {
+      return (opcode & ~0x0000003F) == 0;
+    }
+    
+    public int encode_op(int opcode) {
+      return opcode;
     }
     
     @Override
@@ -193,7 +251,7 @@ public class Code {
   }
   
   public String toString(int line) {
-    return op(line).codePointToString(codepoint(line), extractor);
+    return op(line).codePointToString(codepoint(line), extractor, null);
   }
   
 }

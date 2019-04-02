@@ -4,7 +4,13 @@ import unluac.decompile.CodeExtract;
 
 public class LHeader extends BObject {
 
+  public static enum LEndianness {
+    BIG,
+    LITTLE;
+  }
+  
   public final int format;
+  public final LEndianness endianness;
   public final BIntegerType integer;
   public final BSizeTType sizeT;
   public final LBooleanType bool;
@@ -18,8 +24,9 @@ public class LHeader extends BObject {
   public final LFunctionType function;
   public final CodeExtract extractor;
   
-  public LHeader(int format, BIntegerType integer, BSizeTType sizeT, LBooleanType bool, LNumberType number, LNumberType linteger, LNumberType lfloat, LStringType string, LConstantType constant, LLocalType local, LUpvalueType upvalue, LFunctionType function, CodeExtract extractor) {
+  public LHeader(int format, LEndianness endianness, BIntegerType integer, BSizeTType sizeT, LBooleanType bool, LNumberType number, LNumberType linteger, LNumberType lfloat, LStringType string, LConstantType constant, LLocalType local, LUpvalueType upvalue, LFunctionType function, CodeExtract extractor) {
     this.format = format;
+    this.endianness = endianness;
     this.integer = integer;
     this.sizeT = sizeT;
     this.bool = bool;

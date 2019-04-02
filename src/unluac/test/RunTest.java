@@ -5,7 +5,7 @@ import java.io.IOException;
 public class RunTest {
 
   public static void main(String[] args) throws IOException {
-    LuaSpec spec = new LuaSpec();
+    LuaSpec spec = new LuaSpec(0x53);
     if(TestFiles.suite.run(spec, args[0])) {
       System.exit(0);
     } else {

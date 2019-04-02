@@ -4,6 +4,10 @@ public interface CodeExtract {
 
   int extract_A(int codepoint);
 
+  boolean check_A(int A);
+  
+  int encode_A(int A);
+  
   int extract_C(int codepoint);
 
   int extract_B(int codepoint);
@@ -15,6 +19,8 @@ public interface CodeExtract {
   int extract_sBx(int codepoint);
 
   int extract_op(int codepoint);
+  
+  int encode_op(int op);
   
   boolean is_k(int field);
   

@@ -31,6 +31,7 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
     CodeExtract extractor;
     
     int format;
+    LHeader.LEndianness endianness;
     
     int lNumberSize;
     boolean lNumberIntegrality;
@@ -46,7 +47,7 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
     LBooleanType bool = new LBooleanType();
     LLocalType local = new LLocalType();
     LUpvalueType upvalue = new LUpvalueType();
-    return new LHeader(s.format, s.integer, s.sizeT, bool, s.number, s.linteger, s.lfloat, s.string, s.constant, local, upvalue, s.function, s.extractor);
+    return new LHeader(s.format, s.endianness, s.integer, s.sizeT, bool, s.number, s.linteger, s.lfloat, s.string, s.constant, local, upvalue, s.function, s.extractor);
   }
   
   abstract protected void parse_main(ByteBuffer buffer, BHeader header, LHeaderParseState s);
@@ -68,9 +69,11 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
     int endianness = 0xFF & buffer.get();
     switch(endianness) {
       case 0:
+        s.endianness = LHeader.LEndianness.BIG;
         buffer.order(ByteOrder.BIG_ENDIAN);
         break;
       case 1:
+        s.endianness = LHeader.LEndianness.LITTLE;
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         break;
       default:

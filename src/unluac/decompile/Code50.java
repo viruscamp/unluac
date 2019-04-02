@@ -31,6 +31,14 @@ public class Code50 implements CodeExtract {
     return (codepoint >> shiftA) & maskA;
   }
 
+  public boolean check_A(int A) {
+    return false; // TODO
+  }
+  
+  public int encode_A(int A) {
+    return 0; // TODO
+  }
+  
   @Override
   public int extract_C(int codepoint) {
     return (codepoint >> shiftC) & maskC;
@@ -59,6 +67,14 @@ public class Code50 implements CodeExtract {
   @Override
   public int extract_op(int codepoint) {
     return codepoint & maskOp;
+  }
+  
+  public boolean check_op(int op) {
+    return false; // TODO
+  }
+  
+  public int encode_op(int op) {
+    return 0; // TODO
   }
   
   @Override

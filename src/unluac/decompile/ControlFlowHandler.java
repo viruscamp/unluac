@@ -694,10 +694,10 @@ public class ControlFlowHandler {
   }
   
   private static void unredirect_break(State state, int line, Block enclosing) {
-    Branch b = state.begin_branch;
+    Branch b = state.end_branch;
     while(b != null) {
       Block breakable = enclosing_breakable_block(state, b.line);
-      if(b.line != line && breakable != null && b.type == Branch.Type.jump && breakable == enclosing && b.targetFirst == enclosing.end) {
+      if(b.line != line && breakable != null && (b.type == Branch.Type.jump || is_conditional(b) && state.function.header.version.usesIfBreakRewrite()) && breakable == enclosing && b.targetSecond == enclosing.end) {
         //System.err.println("redirect break " + b.line + " from " + b.targetFirst + " to " + line);
         boolean condsplit = false;
         Branch c = state.begin_branch;
@@ -720,7 +720,7 @@ public class ControlFlowHandler {
               }
             }
           }
-          if(b != c && c.line != line && c.type == Branch.Type.jump && c.targetSecond < breakable.end) {
+          if(b != c && c.line != line && b.type == Branch.Type.jump && c.type == Branch.Type.jump && c.targetSecond < breakable.end) {
             if(b.line < c.line && c.targetFirst > line)
             {
               condsplit = true;
@@ -730,11 +730,15 @@ public class ControlFlowHandler {
           c = c.next;
         }
         if(!condsplit) {
-          b.targetFirst = line;
-          b.targetSecond = line;
+          if(b.targetFirst == enclosing.end) {
+            b.targetFirst = line;
+          }
+          if(b.targetSecond == enclosing.end) {
+            b.targetSecond = line;
+          }
         }
       }
-      b = b.next;
+      b = b.previous;
     }
   }
   

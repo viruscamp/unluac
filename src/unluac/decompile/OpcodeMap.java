@@ -184,5 +184,9 @@ public class OpcodeMap {
     }
   }
   
+  public int size() {
+    return map.length;
+  }
+  
 }
 

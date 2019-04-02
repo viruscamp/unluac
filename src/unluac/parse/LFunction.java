@@ -3,8 +3,12 @@ package unluac.parse;
 public class LFunction extends BObject {
   
   public BHeader header;
+  public String name;
+  public int linedefined;
+  public int lastlinedefined;
   public LFunction parent;
   public int[] code;
+  public BList<BInteger> lines;
   public LLocal[] locals;
   public LObject[] constants;
   public LUpvalue[] upvalues;
@@ -15,9 +19,13 @@ public class LFunction extends BObject {
   public int vararg;
   public boolean stripped;
   
-  public LFunction(BHeader header, int[] code, LLocal[] locals, LObject[] constants, LUpvalue[] upvalues, LFunction[] functions, int maximumStackSize, int numUpValues, int numParams, int vararg) {
+  public LFunction(BHeader header, String name, int linedefined, int lastlinedefined, int[] code, BList<BInteger> lines, LLocal[] locals, LObject[] constants, LUpvalue[] upvalues, LFunction[] functions, int maximumStackSize, int numUpValues, int numParams, int vararg) {
     this.header = header;
+    this.name = name;
+    this.linedefined = linedefined;
+    this.lastlinedefined = lastlinedefined;
     this.code = code;
+    this.lines = lines;
     this.locals = locals;
     this.constants = constants;
     this.upvalues = upvalues;
