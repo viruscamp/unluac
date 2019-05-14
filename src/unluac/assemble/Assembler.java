@@ -7,21 +7,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import unluac.decompile.Code;
 import unluac.decompile.CodeExtract;
 import unluac.decompile.Op;
 import unluac.decompile.OpcodeMap;
 import unluac.decompile.OperandFormat;
 import unluac.parse.LHeader;
 import unluac.util.StringUtils;
-
-@SuppressWarnings("serial")
-class AssemblerException extends Exception {
-  
-  AssemblerException(String msg) {
-    super(msg);
-  }
-  
-}
 
 class AssemblerConstant {
   
@@ -100,13 +92,19 @@ class AssemblerFunction {
       hasMaxStackSize = true;
       maxStackSize = a.getInteger();
       break;
+    case NUMPARAMS:
+      a.getInteger();
+      break;
+    case IS_VARARG:
+      a.getInteger();
+      break;
     case CONSTANT: {
       String name = a.getName();
       String value = a.getAny();
-      
+      break;
     }
     default:
-      throw new IllegalStateException();  
+      throw new IllegalStateException("Unhandled directive: " + d);  
     }
   }
   
@@ -125,10 +123,19 @@ class AssemblerFunction {
       case AR: {
         int r = a.getRegister();
         //TODO: stack warning
-        
+        if(!extract.check_A(r)) throw new AssemblerException("Operand A out of range");
+        codepoint |= extract.encode_A(r);
+        break;
       }
+      case B: {
+        int B = a.getInteger();
+        if(!extract.check_B(B)) throw new AssemblerException("Operand B out of range"); 
+        codepoint |= extract.encode_B(B);
+        break;
+      }
+      
       default:
-        throw new IllegalStateException();
+        throw new IllegalStateException("Unhandled operand format: " + operand);
       }
     }
   }
@@ -152,6 +159,8 @@ class AssemblerChunk {
   public boolean hasInstructionSize;
   public int instruction_size;
   
+  public boolean hasNumberFormat;
+  
   public AssemblerFunction main;
   public AssemblerFunction current;
   
@@ -161,6 +170,7 @@ class AssemblerChunk {
     hasIntSize = false;
     hasSizeTSize = false;
     hasInstructionSize = false;
+    hasNumberFormat = false;
     
     main = null;
     current = null;
@@ -203,8 +213,14 @@ class AssemblerChunk {
       hasInstructionSize = true;
       instruction_size = a.getInteger();
       break;
+    case NUMBER_FORMAT:
+      if(hasNumberFormat) throw new AssemblerException("Duplicate .number_format directive");
+      hasNumberFormat = true;
+      a.getName();
+      a.getInteger();
+      break;
     default:
-      throw new IllegalStateException();
+      throw new IllegalStateException("Unhandled directive: " + d);
     }
   }
   
@@ -228,6 +244,13 @@ class AssemblerChunk {
     }
     current.processFunctionDirective(a, d);
   }
+  
+  public void processOp(Assembler a, CodeExtract ex, Op op, int opcode) throws AssemblerException, IOException {
+    if(current == null) {
+      throw new AssemblerException("Misplaced code before declaration of any function");
+    }
+    current.processOp(a, ex, op, opcode);
+  }
 }
 
 enum DirectiveType {
@@ -248,8 +271,11 @@ enum Directive {
   SOURCE(".source", DirectiveType.FUNCTION, 1),
   LINEDEFINED(".linedefined", DirectiveType.FUNCTION, 1),
   LASTLINEDEFINED(".lastlinedefined", DirectiveType.FUNCTION, 1),
+  NUMPARAMS(".numparams", DirectiveType.FUNCTION, 1),
+  IS_VARARG(".is_vararg", DirectiveType.FUNCTION, 1),
   MAXSTACKSIZE(".maxstacksize", DirectiveType.FUNCTION, 1),
   CONSTANT(".constant", DirectiveType.FUNCTION, 2),
+  UPVALUE(".upvalue", DirectiveType.FUNCTION, 2),
   ;
   Directive(String token, DirectiveType type, int argcount) {
     this.token = token;
@@ -280,15 +306,17 @@ public class Assembler {
   public void assemble() throws AssemblerException, IOException {
     
     String tok = t.next();
-    if(tok != ".version") throw new AssemblerException("First directive must be .version");
+    if(!tok.equals(".version")) throw new AssemblerException("First directive must be .version, instead was \"" + tok + "\"");
     tok = t.next();
-    if(tok != "5.1") throw new AssemblerException("Only version 5.1 is supported for assembly");
+    if(!tok.equals("5.1")) throw new AssemblerException("Only version 5.1 is supported for assembly");
     
     OpcodeMap opmap = new OpcodeMap(0x51);
     Map<String, Op> oplookup = new HashMap<String, Op>();
+    Map<Op, Integer> opcodelookup = new HashMap<Op, Integer>();
     for(int i = 0; i < opmap.size(); i++) {
       Op op = opmap.get(i);
       oplookup.put(op.name().toLowerCase(), op);
+      opcodelookup.put(op, i);
     }
     
     AssemblerChunk chunk = new AssemblerChunk();
@@ -314,8 +342,9 @@ public class Assembler {
         Op op = oplookup.get(tok);
         if(op != null) {
           // TODO:
+          chunk.processOp(this, Code.Code51, op, opcodelookup.get(op));
         } else {
-          throw new AssemblerException("Unexpected token \"" + "\"");
+          throw new AssemblerException("Unexpected token \"" + tok + "\"");
         }
       }
       

@@ -1,5 +1,8 @@
 package unluac;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.RandomAccessFile;
@@ -7,6 +10,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 
+import unluac.Configuration.Mode;
+import unluac.assemble.Assembler;
+import unluac.assemble.AssemblerException;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Disassembler;
 import unluac.decompile.Output;
@@ -27,7 +33,9 @@ public class Main {
         if(arg.equals("--rawstring")) {
           config.rawstring = true;
         } else if(arg.equals("--disassemble")) {
-          config.disassemble = true;
+          config.mode = Mode.DISASSEMBLE;
+        } else if(arg.equals("--assemble")) {
+          config.mode = Mode.ASSEMBLE;
         } else {
           error("unrecognized option: " + arg, true);
         }
@@ -40,19 +48,43 @@ public class Main {
     if(fn == null) {
       error("no input file provided", true);
     } else {
-      LFunction lmain = null;
-      try {
-        lmain = file_to_function(fn, config);
-      } catch(IOException e) {
-        error(e.getMessage(), false);
-      }
-      if(!config.disassemble) {
+      switch(config.mode) {
+      case DECOMPILE: {
+        LFunction lmain = null;
+        try {
+          lmain = file_to_function(fn, config);
+        } catch(IOException e) {
+          error(e.getMessage(), false);
+        }
         Decompiler d = new Decompiler(lmain);
         Decompiler.State result = d.decompile();
         d.print(result);
-      } else {
+        break;
+      }
+      case DISASSEMBLE: {
+        LFunction lmain = null;
+        try {
+          lmain = file_to_function(fn, config);
+        } catch(IOException e) {
+          error(e.getMessage(), false);
+        }
         Disassembler d = new Disassembler(lmain);
         d.disassemble(new Output());
+        break;
+      }
+      case ASSEMBLE: {
+        try {
+          Assembler a = new Assembler(new BufferedReader(new FileReader(new File(fn))));
+          a.assemble();
+        } catch(IOException e) {
+          error(e.getMessage(), false);
+        } catch(AssemblerException e) {
+          error(e.getMessage(), false);
+        }
+        break;
+      }
+      default:
+        throw new IllegalStateException();
       }
       System.exit(0);
     }

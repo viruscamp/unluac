@@ -5,6 +5,7 @@ public class StringUtils {
   public static String toPrintString(String s) {
     if(s == null) return "\"\"";
     StringBuilder b = new StringBuilder();
+    b.append('"');
     for(int i = 0; i < s.length(); i++) {
       char c = s.charAt(i);
       int ci = (int)c;
@@ -32,12 +33,13 @@ public class StringUtils {
         b.append(String.format("\\x%02x", ci));
       }
     }
+    b.append('"');
     return b.toString();
   }
   
   public static String fromPrintString(String s) {
-    if(s.charAt(0) != '"') throw new IllegalStateException();
-    if(s.charAt(s.length() - 1) != '"') throw new IllegalStateException();
+    if(s.charAt(0) != '"') throw new IllegalStateException("Bad string " + s);
+    if(s.charAt(s.length() - 1) != '"') throw new IllegalStateException("Bad string " + s);
     StringBuilder b = new StringBuilder();
     for(int i = 1; i < s.length() - 1; /* nothing */) {
       char c = s.charAt(i++);

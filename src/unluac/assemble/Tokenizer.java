@@ -23,12 +23,16 @@ public class Tokenizer {
       int code = r.read();
       if(code == -1) break;
       char c = (char)code;
+      //if(c == '\n') System.out.println("line"); 
       if(Character.isWhitespace(c)) {
         if(inToken && !inString) {
           break;
         } else if(inString) {
           b.append(c);
         }
+      } else if(inString && c == '"') {
+        b.append(c);
+        break;
       } else {
         if(!inToken && c == '"') {
           inString = true;
@@ -37,6 +41,8 @@ public class Tokenizer {
         b.append(c);
       }
     }
+    
+    //System.out.println("token: <" + b.toString() + ">");
     
     if(b.length() == 0) {
       return null;
