@@ -9,8 +9,9 @@ public class RunTests {
     TestReport report = new TestReport();
     for(int version = 0x50; version <= 0x53; version++) {
       LuaSpec spec = new LuaSpec(version);
+      UnluacSpec uspec = new UnluacSpec();
       System.out.print("lua" + Integer.toHexString(version));
-      result = result & TestFiles.suite.run(spec, report);
+      result = result & TestFiles.suite.run(spec, uspec, report);
       System.out.println();
     }
     report.report(System.out);

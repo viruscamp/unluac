@@ -108,7 +108,7 @@ public class Disassembler {
         out.println(".label\t" + "l" + line);
       }
       if(line <= function.lines.length.asInt()) {
-        out.println(".line\t" + function.lines.get(line - 1));
+        out.println(".line\t" + function.lines.get(line - 1).asInt());
       }
       Op op = code.op(line);
       String cpLabel = null;
@@ -122,7 +122,7 @@ public class Disassembler {
       //out.println("\t" + code.opcode(line) + " " + code.A(line) + " " + code.B(line) + " " + code.C(line) + " " + code.Bx(line) + " " + code.sBx(line) + " " + code.codepoint(line));
     }
     for(int line = function.code.length + 1; line <= function.lines.length.asInt(); line++) {
-      out.println(".line\t" + function.lines.get(line - 1));
+      out.println(".line\t" + function.lines.get(line - 1).asInt());
     }
     out.println();
     

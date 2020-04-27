@@ -1,9 +1,12 @@
 package unluac;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -74,7 +77,7 @@ public class Main {
       }
       case ASSEMBLE: {
         try {
-          Assembler a = new Assembler(new BufferedReader(new FileReader(new File(fn))));
+          Assembler a = new Assembler(new BufferedReader(new FileReader(new File(fn))), null);
           a.assemble();
         } catch(IOException e) {
           error(e.getMessage(), false);
@@ -125,6 +128,40 @@ public class Main {
     Decompiler.State result = d.decompile();
     final PrintStream pout = new PrintStream(out);
     d.print(result, new Output(new OutputProvider() {
+
+      @Override
+      public void print(String s) {
+        pout.print(s);
+      }
+      
+      @Override
+      public void print(byte b) {
+        pout.print(b);
+      }
+
+      @Override
+      public void println() {
+        pout.println();
+      }
+      
+    }));
+    pout.flush();
+    pout.close();
+  }
+  
+  public static void assemble(String in, String out) throws IOException, AssemblerException {
+    OutputStream outstream = new BufferedOutputStream(new FileOutputStream(new File(out)));
+    Assembler a = new Assembler(new BufferedReader(new FileReader(new File(in))), outstream);
+    a.assemble();
+    outstream.flush();
+    outstream.close();
+  }
+  
+  public static void disassemble(String in, String out) throws IOException {
+    LFunction lmain = file_to_function(in, new Configuration());
+    Disassembler d = new Disassembler(lmain);
+    final PrintStream pout = new PrintStream(out);
+    d.disassemble(new Output(new OutputProvider() {
 
       @Override
       public void print(String s) {

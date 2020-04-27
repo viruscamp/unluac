@@ -29,6 +29,7 @@ public class RunExtendedTests {
     TestReport report = new TestReport();
     for(int version = 0x50; version <= 0x53; version++) {
       LuaSpec spec = new LuaSpec(version);
+      UnluacSpec uspec = new UnluacSpec();
       System.out.println(spec.id());
       for(Path subfolder : Files.newDirectoryStream(luatest)) {
         if(Files.isDirectory(subfolder) && spec.compatible(subfolder.getFileName().toString())) {
@@ -36,7 +37,7 @@ public class RunExtendedTests {
           gatherTests(subfolder, subfolder, files);
           TestSuite suite = new TestSuite(subfolder.getFileName().toString(), subfolder.toString() + File.separator, files.toArray(new String[files.size()]));
           System.out.print("\t" + subfolder.getFileName().toString());
-          suite.run(spec, report);
+          suite.run(spec, uspec, report);
           System.out.println();
         }
       }

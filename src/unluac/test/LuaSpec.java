@@ -38,7 +38,7 @@ public class LuaSpec {
   }
   
   public String getLuaCName() {
-    return "luac" + getVersionString() + getNumberFormatString();
+    return "lua" + getVersionString() + "c" + getNumberFormatString();
   }
   
   public String[] getArgs() {

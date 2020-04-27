@@ -23,6 +23,10 @@ public interface CodeExtract {
   public int extract_Ax(int codepoint);
   
   public int extract_Bx(int codepoint);
+  
+  public boolean check_Bx(int Bx);
+  
+  public int encode_Bx(int Bx);
 
   public int extract_sBx(int codepoint);
 
