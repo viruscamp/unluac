@@ -86,7 +86,7 @@ public enum Op {
    */
   public boolean hasExtraByte(int codepoint, CodeExtract ex) {
     if(this == Op.SETLIST) {
-      return ex.extract_C(codepoint) == 0;
+      return ex.C.extract(codepoint) == 0;
     } else {
       return false;
     }
@@ -128,16 +128,16 @@ public enum Op {
       case CLOSURE:
       case TESTSET:
       case TEST50:
-        return ex.extract_A(codepoint);
+        return ex.A.extract(codepoint);
       case LOADNIL:
-        if(ex.extract_A(codepoint) == ex.extract_B(codepoint)) {
-          return ex.extract_A(codepoint);
+        if(ex.A.extract(codepoint) == ex.B.extract(codepoint)) {
+          return ex.A.extract(codepoint);
         } else {
           return -1;
         }
       case LOADNIL52:
-        if(ex.extract_B(codepoint) == 0) {
-          return ex.extract_A(codepoint);
+        if(ex.B.extract(codepoint) == 0) {
+          return ex.A.extract(codepoint);
         } else {
           return -1;
         }
@@ -167,8 +167,8 @@ public enum Op {
       case SETLISTO:
         return -1;
       case CALL: {
-        int a = ex.extract_A(codepoint);
-        int c = ex.extract_C(codepoint);
+        int a = ex.A.extract(codepoint);
+        int c = ex.C.extract(codepoint);
         if(c == 2) {
           return a;
         } else {
@@ -176,8 +176,8 @@ public enum Op {
         }
       }
       case VARARG: {
-        int a = ex.extract_A(codepoint);
-        int b = ex.extract_B(codepoint);
+        int a = ex.A.extract(codepoint);
+        int b = ex.B.extract(codepoint);
         if(b == 2) {
           return a;
         } else {
@@ -228,7 +228,7 @@ public enum Op {
   }
   
   public int getJumpOffset(int codepoint, CodeExtract ex) {
-    return ex.extract_sBx(codepoint);
+    return ex.sBx.extract(codepoint);
   }
   
   public String codePointToString(int codepoint, CodeExtract ex, String label) {
@@ -242,52 +242,52 @@ public enum Op {
     for(int i = 0; i < operands.length; ++i) {
       switch(operands[i]) {
       case A:
-        parameters[i] = fixedOperand(ex.extract_A(codepoint));
+        parameters[i] = fixedOperand(ex.A.extract(codepoint));
         break;
       case AR:
-        parameters[i] = registerOperand(ex.extract_A(codepoint));
+        parameters[i] = registerOperand(ex.A.extract(codepoint));
         break;
       case AU:
-        parameters[i] = upvalueOperand(ex.extract_A(codepoint));
+        parameters[i] = upvalueOperand(ex.A.extract(codepoint));
         break;
       case B:
-        parameters[i] = fixedOperand(ex.extract_B(codepoint));
+        parameters[i] = fixedOperand(ex.B.extract(codepoint));
         break;
       case BR:
-        parameters[i] = registerOperand(ex.extract_B(codepoint));
+        parameters[i] = registerOperand(ex.B.extract(codepoint));
         break;
       case BRK:
-        parameters[i] = rkOperand(ex.extract_B(codepoint), ex);
+        parameters[i] = rkOperand(ex.B.extract(codepoint), ex);
         break;
       case BU:
-        parameters[i] = upvalueOperand(ex.extract_B(codepoint));
+        parameters[i] = upvalueOperand(ex.B.extract(codepoint));
         break;
       case C:
-        parameters[i] = fixedOperand(ex.extract_C(codepoint));
+        parameters[i] = fixedOperand(ex.C.extract(codepoint));
         break;
       case CR:
-        parameters[i] = registerOperand(ex.extract_C(codepoint));
+        parameters[i] = registerOperand(ex.C.extract(codepoint));
         break;
       case CRK:
-        parameters[i] = rkOperand(ex.extract_C(codepoint), ex);
+        parameters[i] = rkOperand(ex.C.extract(codepoint), ex);
         break;
       case Ax:
-        parameters[i] = fixedOperand(ex.extract_Ax(codepoint));
+        parameters[i] = fixedOperand(ex.Ax.extract(codepoint));
         break;
       case Bx:
-        parameters[i] = fixedOperand(ex.extract_Bx(codepoint));
+        parameters[i] = fixedOperand(ex.Bx.extract(codepoint));
         break;
       case BxK:
-        parameters[i] = constantOperand(ex.extract_Bx(codepoint));
+        parameters[i] = constantOperand(ex.Bx.extract(codepoint));
         break;
       case BxF:
-        parameters[i] = functionOperand(ex.extract_Bx(codepoint));
+        parameters[i] = functionOperand(ex.Bx.extract(codepoint));
         break;
       case sBxJ:
         if(label != null) {
           parameters[i] = label;
         } else {
-          parameters[i] = fixedOperand(ex.extract_sBx(codepoint));
+          parameters[i] = fixedOperand(ex.sBx.extract(codepoint));
         }
         break;
       case x:

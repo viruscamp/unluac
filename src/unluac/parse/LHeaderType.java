@@ -4,8 +4,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
-import unluac.decompile.Code;
-import unluac.decompile.Code50;
 import unluac.decompile.CodeExtract;
 
 abstract public class LHeaderType extends BObjectType<LHeader> {
@@ -140,7 +138,7 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
     if(header.debug) {
       System.out.println("-- Lua opcode extractor sizeOp: " + sizeOp + ", sizeA: " + sizeA + ", sizeB: " + sizeB + ", sizeC: " + sizeC);
     }
-    s.extractor = new Code50(sizeOp, sizeA, sizeB, sizeC);
+    s.extractor = new CodeExtract(header.version, sizeOp, sizeA, sizeB, sizeC);
   }
   
   protected void parse_tail(ByteBuffer buffer, BHeader header, LHeaderParseState s) {
@@ -201,7 +199,7 @@ class LHeaderType51 extends LHeaderType {
     s.function = LFunctionType.TYPE51;
     s.string = LStringType.getType50(header.version);
     s.constant = LConstantType.getType50();
-    s.extractor = Code.Code51;
+    s.extractor = new CodeExtract(header.version);
   }
   
 }
@@ -222,7 +220,7 @@ class LHeaderType52 extends LHeaderType {
     s.function = LFunctionType.TYPE52;
     s.string = LStringType.getType50(header.version);
     s.constant = LConstantType.getType50();
-    s.extractor = Code.Code51;
+    s.extractor = new CodeExtract(header.version);
   }
   
 }
@@ -271,7 +269,7 @@ class LHeaderType53 extends LHeaderType {
     s.function = LFunctionType.TYPE53;
     s.string = LStringType.getType53(header.version);
     s.constant = LConstantType.getType53();
-    s.extractor = Code.Code51;
+    s.extractor = new CodeExtract(header.version);
     double floatcheck = s.lfloat.parse(buffer, header).value();
     if(floatcheck != s.lfloat.convert(370.5)) {
       throw new IllegalStateException("The input chunk is using an unrecognized floating point format: " + floatcheck);

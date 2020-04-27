@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import unluac.Version;
 import unluac.decompile.Code;
 import unluac.decompile.CodeExtract;
 import unluac.decompile.Op;
@@ -197,33 +198,33 @@ class AssemblerFunction {
   
   public void processOp(Assembler a, CodeExtract extract, Op op, int opcode) throws AssemblerException, IOException {
     if(!hasMaxStackSize) throw new AssemblerException("Expected .maxstacksize before code");
-    if(!extract.check_op(opcode)) throw new IllegalStateException();
-    int codepoint = extract.encode_op(opcode);
+    if(!extract.op.check(opcode)) throw new IllegalStateException();
+    int codepoint = extract.op.encode(opcode);
     for(OperandFormat operand : op.operands) {
       switch(operand) {
       case A: {
         int A = a.getInteger();
-        if(!extract.check_A(A)) throw new AssemblerException("Operand A out of range"); 
-        codepoint |= extract.encode_A(A);
+        if(!extract.A.check(A)) throw new AssemblerException("Operand A out of range"); 
+        codepoint |= extract.A.encode(A);
         break;
       }
       case AR: {
         int r = a.getRegister();
         //TODO: stack warning
-        if(!extract.check_A(r)) throw new AssemblerException("Operand A out of range");
-        codepoint |= extract.encode_A(r);
+        if(!extract.A.check(r)) throw new AssemblerException("Operand A out of range");
+        codepoint |= extract.A.encode(r);
         break;
       }
       case B: {
         int B = a.getInteger();
-        if(!extract.check_B(B)) throw new AssemblerException("Operand B out of range"); 
-        codepoint |= extract.encode_B(B);
+        if(!extract.B.check(B)) throw new AssemblerException("Operand B out of range"); 
+        codepoint |= extract.B.encode(B);
         break;
       }
       case BxK: {
         int Bx = a.getConstant();
-        if(!extract.check_Bx(Bx)) throw new AssemblerException("Operand Bx out of range");
-        codepoint |= extract.encode_Bx(Bx);
+        if(!extract.Bx.check(Bx)) throw new AssemblerException("Operand Bx out of range");
+        codepoint |= extract.Bx.encode(Bx);
         break;
       }
       
@@ -549,7 +550,7 @@ public class Assembler {
         Op op = oplookup.get(tok);
         if(op != null) {
           // TODO:
-          chunk.processOp(this, Code.Code51, op, opcodelookup.get(op));
+          chunk.processOp(this, new CodeExtract(Version.LUA51), op, opcodelookup.get(op));
         } else {
           throw new AssemblerException("Unexpected token \"" + tok + "\"");
         }

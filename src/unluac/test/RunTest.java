@@ -5,9 +5,9 @@ import java.io.IOException;
 public class RunTest {
 
   public static void main(String[] args) throws IOException {
-    LuaSpec spec = new LuaSpec(0x51);
+    LuaSpec spec = new LuaSpec(0x53);
     UnluacSpec uspec = new UnluacSpec();
-    uspec.disassemble = true;
+    //uspec.disassemble = true;
     if(TestFiles.suite.run(spec, uspec, args[0])) {
       System.exit(0);
     } else {
