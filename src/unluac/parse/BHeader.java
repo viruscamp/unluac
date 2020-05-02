@@ -20,6 +20,7 @@ public class BHeader {
   public final Configuration config;
   public final Version version;
   public final LHeader lheader;
+  public final LHeaderType lheader_type;
   public final BIntegerType integer;
   public final BSizeTType sizeT;
   public final LBooleanType bool;
@@ -43,6 +44,7 @@ public class BHeader {
     this.config = null;
     this.version = version;
     this.lheader = lheader;
+    lheader_type = version.getLHeaderType();
     integer = lheader.integer;
     sizeT = lheader.sizeT;
     bool = lheader.bool;
@@ -68,27 +70,16 @@ public class BHeader {
     }
     // 1 byte Lua version
     int versionNumber = 0xFF & buffer.get();
-    switch(versionNumber)
-    {
-      case 0x50:
-        version = Version.LUA50;
-        break;
-      case 0x51:
-        version = Version.LUA51;
-        break;
-      case 0x52:
-        version = Version.LUA52;
-        break;
-      case 0x53:
-        version = Version.LUA53;
-        break;
-      default: {
-        int major = versionNumber >> 4;
-        int minor = versionNumber & 0x0F;
-        throw new IllegalStateException("The input chunk's Lua version is " + major + "." + minor + "; unluac can only handle Lua 5.0 - Lua 5.3.");
-      }
+    
+    version = Version.getVersion(versionNumber);
+    if(version == null) {
+      int major = versionNumber >> 4;
+      int minor = versionNumber & 0x0F;
+      throw new IllegalStateException("The input chunk's Lua version is " + major + "." + minor + "; unluac can only handle Lua 5.0 - Lua 5.3.");
     }
-    lheader = version.getLHeaderType().parse(buffer, this);
+    
+    lheader_type = version.getLHeaderType();
+    lheader = lheader_type.parse(buffer, this);
     integer = lheader.integer;
     sizeT = lheader.sizeT;
     bool = lheader.bool;
@@ -125,7 +116,9 @@ public class BHeader {
     out.write(signature);
     out.write(version.getVersionNumber());
     version.getLHeaderType().write(out, this, lheader);
-    // TODO: 5.3
+    if(version.getVersionNumber() >= 0x53) {
+      out.write(main.numUpvalues);
+    }
     function.write(out, this, main);
   }
   

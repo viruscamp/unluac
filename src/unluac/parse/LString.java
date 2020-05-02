@@ -5,13 +5,11 @@ import unluac.Version;
 
 public class LString extends LObject {
 
-  public final BSizeT size;
   public final String value;
   public final boolean reserved;
   
-  public LString(Version version, BSizeT size, String value) {    
-    this.size = size;
-    this.value = value.length() == 0 ? "" : value.substring(0, value.length() - 1);
+  public LString(Version version, String value) {    
+    this.value = value;
     this.reserved = version.isReserved(this.value);
   }
   

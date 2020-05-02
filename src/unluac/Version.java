@@ -46,6 +46,16 @@ public abstract class Version {
     ELLIPSIS;
   }
   
+  public static Version getVersion(int versionNumber) {
+    switch(versionNumber) {
+    case 0x50: return LUA50;
+    case 0x51: return LUA51;
+    case 0x52: return LUA52;
+    case 0x53: return LUA53;
+    default: return null;
+    }
+  }
+  
   protected final int versionNumber;
   
   protected Version(int versionNumber) {

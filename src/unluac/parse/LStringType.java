@@ -9,6 +9,14 @@ import unluac.Version;
 
 public abstract class LStringType extends BObjectType<LString> {
 
+  public static LStringType get(Version version) {
+    if(version.getVersionNumber() >= 0x53) {
+      return getType53(version);
+    } else {
+      return getType50(version);
+    }
+  }
+  
   public static LStringType50 getType50(Version version) {
     return new LStringType50(version);
   }
@@ -51,20 +59,29 @@ class LStringType50 extends LStringType {
       }
       
     });
+    if(b.length() > 0) {
+      char last = b.charAt(b.length() - 1);
+      if(last != '\0') {
+        throw new IllegalStateException("String value does not have a null terminator");
+      }
+      b.delete(b.length() - 1, b.length());
+    }
     String s = b.toString();
     if(header.debug) {
       System.out.println("-- parsed <string> \"" + s + "\"");
     }
-    return new LString(version, sizeT, s);
+    return new LString(version, s);
   }
   
   @Override
   public void write(OutputStream out, BHeader header, LString string) throws IOException {
-    header.sizeT.write(out, header, string.size);
+    header.sizeT.write(out, header, header.sizeT.create(string.value.length() + 1));
     for(int i = 0; i < string.value.length(); i++) {
       out.write(string.value.charAt(i));
     }
-    out.write(0);
+    if(string.value.length() > 0) {
+      out.write(0);
+    }
   }
 }
 
@@ -97,23 +114,23 @@ class LStringType53 extends LStringType {
       }
       
     });
-    b.append('\0');
     String s = b.toString();
     if(header.debug) {
       System.out.println("-- parsed <string> \"" + s + "\"");
     }
-    return new LString(version, sizeT, s);
+    return new LString(version, s);
   }
   
   @Override
   public void write(OutputStream out, BHeader header, LString string) throws IOException {
-    if(string.size.lessThan(0xFF)) {
-      out.write((byte)string.size.asInt());
+    int len = string.value.length() + 1;
+    if(len < 0xFF) {
+      out.write((byte)len);
     } else {
       out.write(0xFF);
-      header.sizeT.write(out, header, string.size);
+      header.sizeT.write(out, header, header.sizeT.create(len));
     }
-    for(int i = 0; i < string.value.length() - 1; i++) {
+    for(int i = 0; i < string.value.length(); i++) {
       out.write(string.value.charAt(i));
     }
   }

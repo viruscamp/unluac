@@ -3,6 +3,11 @@ package unluac.parse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.List;
+
+import unluac.Version;
+import unluac.assemble.Directive;
 
 
 abstract public class LFunctionType extends BObjectType<LFunction> {
@@ -11,6 +16,16 @@ abstract public class LFunctionType extends BObjectType<LFunction> {
   public static final LFunctionType TYPE51 = new LFunctionType51();
   public static final LFunctionType TYPE52 = new LFunctionType52();
   public static final LFunctionType TYPE53 = new LFunctionType53();
+  
+  public static LFunctionType get(Version version) {
+    switch(version.getVersionNumber()) {
+    case 0x50: return TYPE50;
+    case 0x51: return TYPE51;
+    case 0x52: return TYPE52;
+    case 0x53: return TYPE53;
+    default: throw new IllegalStateException();
+    }
+  }
   
   protected static class LFunctionParseState {
     
@@ -49,6 +64,8 @@ abstract public class LFunctionType extends BObjectType<LFunction> {
     }
     return lfunc;
   }
+  
+  abstract public List<Directive> get_directives();
   
   abstract protected void parse_main(ByteBuffer buffer, BHeader header, LFunctionParseState s);
   
@@ -173,6 +190,17 @@ class LFunctionType50 extends LFunctionType {
   }
   
   @Override
+  public List<Directive> get_directives() {
+    return Arrays.asList(new Directive[] {
+      Directive.SOURCE,
+      Directive.LINEDEFINED,
+      Directive.NUMPARAMS,
+      Directive.IS_VARARG,
+      Directive.MAXSTACKSIZE,
+    });
+  }
+  
+  @Override
   public void write(OutputStream out, BHeader header, LFunction object) throws IOException {
     header.string.write(out, header, object.name);
     header.integer.raw_write(out, header, new BInteger(object.linedefined));
@@ -201,6 +229,18 @@ class LFunctionType51 extends LFunctionType {
     parse_code(buffer, header, s);
     parse_constants(buffer, header, s);
     parse_debug(buffer, header, s);
+  }
+  
+  @Override
+  public List<Directive> get_directives() {
+    return Arrays.asList(new Directive[] {
+      Directive.SOURCE,
+      Directive.LINEDEFINED,
+      Directive.LASTLINEDEFINED,
+      Directive.NUMPARAMS,
+      Directive.IS_VARARG,
+      Directive.MAXSTACKSIZE,
+    });
   }
   
   @Override
@@ -235,6 +275,18 @@ class LFunctionType52 extends LFunctionType {
   }
   
   @Override
+  public List<Directive> get_directives() {
+    return Arrays.asList(new Directive[] {
+      Directive.LINEDEFINED,
+      Directive.LASTLINEDEFINED,
+      Directive.NUMPARAMS,
+      Directive.IS_VARARG,
+      Directive.MAXSTACKSIZE,
+      Directive.SOURCE,
+    });
+  }
+  
+  @Override
   public void write(OutputStream out, BHeader header, LFunction object) throws IOException {
     header.integer.raw_write(out, header, new BInteger(object.linedefined));
     header.integer.raw_write(out, header, new BInteger(object.lastlinedefined));
@@ -264,6 +316,18 @@ class LFunctionType53 extends LFunctionType {
     parse_upvalues(buffer, header, s);
     s.functions = header.function.parseList(buffer, header);
     parse_debug(buffer, header, s);
+  }
+  
+  @Override
+  public List<Directive> get_directives() {
+    return Arrays.asList(new Directive[] {
+      Directive.SOURCE,
+      Directive.LINEDEFINED,
+      Directive.LASTLINEDEFINED,
+      Directive.NUMPARAMS,
+      Directive.IS_VARARG,
+      Directive.MAXSTACKSIZE,
+    });
   }
   
   @Override

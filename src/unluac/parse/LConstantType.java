@@ -4,8 +4,18 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
+import unluac.Version;
+
 
 public abstract class LConstantType extends BObjectType<LObject> {
+  
+  public static LConstantType get(Version version) {
+    if(version.getVersionNumber() >= 0x53) {
+      return getType53();
+    } else {
+      return getType50();
+    }
+  }
   
   public static LConstantType50 getType50() {
     return new LConstantType50();

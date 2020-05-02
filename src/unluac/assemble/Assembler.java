@@ -3,10 +3,13 @@ package unluac.assemble;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.io.Reader;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import unluac.Version;
 import unluac.decompile.CodeExtract;
@@ -17,7 +20,6 @@ import unluac.parse.BHeader;
 import unluac.parse.BInteger;
 import unluac.parse.BIntegerType;
 import unluac.parse.BList;
-import unluac.parse.BSizeT;
 import unluac.parse.BSizeTType;
 import unluac.parse.LBooleanType;
 import unluac.parse.LConstantType;
@@ -38,14 +40,10 @@ import unluac.util.StringUtils;
 class AssemblerConstant {
   
   enum Type {
-    NUMBER(3),
-    STRING(4);
-    
-    Type(int code) {
-      this.code = code;
-    }
-    
-    int code;
+    NUMBER,
+    INTEGER,
+    FLOAT,
+    STRING,
   }
   
   public String name;
@@ -53,6 +51,7 @@ class AssemblerConstant {
   
   public double numberValue;
   public String stringValue;
+  public BigInteger integerValue;
 }
 
 class AssemblerLocal {
@@ -73,6 +72,7 @@ class AssemblerUpvalue {
 
 class AssemblerFunction {
   
+  public AssemblerChunk chunk;
   public AssemblerFunction parent;
   public String name;
   public List<AssemblerFunction> children;
@@ -101,7 +101,8 @@ class AssemblerFunction {
   public List<Integer> lines;
   public List<AssemblerLocal> locals;
   
-  public AssemblerFunction(AssemblerFunction parent, String name) {
+  public AssemblerFunction(AssemblerChunk chunk, AssemblerFunction parent, String name) {
+    this.chunk = chunk;
     this.parent = parent;
     this.name = name;
     children = new ArrayList<AssemblerFunction>();
@@ -121,7 +122,7 @@ class AssemblerFunction {
   }
   
   public AssemblerFunction addChild(String name) {
-    AssemblerFunction child = new AssemblerFunction(this, name);
+    AssemblerFunction child = new AssemblerFunction(chunk, this, name);
     children.add(child);
     return child;
   }
@@ -178,8 +179,19 @@ class AssemblerFunction {
         constant.stringValue = StringUtils.fromPrintString(value);
       } else {
         try {
-          constant.numberValue = Double.parseDouble(value);
-          constant.type = AssemblerConstant.Type.NUMBER;
+          // TODO: better check
+          if(chunk.number != null) {
+            constant.numberValue = Double.parseDouble(value);
+            constant.type = AssemblerConstant.Type.NUMBER;
+          } else {
+            if(value.contains(".") || value.contains("E") || value.contains("e")) {
+              constant.numberValue = Double.parseDouble(value);
+              constant.type = AssemblerConstant.Type.FLOAT;
+            } else {
+              constant.integerValue = new BigInteger(value);
+              constant.type = AssemblerConstant.Type.INTEGER;
+            }
+          }
         } catch(NumberFormatException e) {
           throw new IllegalStateException("Unrecognized constant value: " + value);
         }
@@ -201,7 +213,7 @@ class AssemblerFunction {
     }
     case UPVALUE: {
       AssemblerUpvalue upvalue = new AssemblerUpvalue();
-      upvalue.name = a.getName();
+      upvalue.name = a.getString();
       upvalue.index = a.getInteger();
       upvalue.instack = a.getBoolean();
       upvalues.add(upvalue);
@@ -255,52 +267,57 @@ class AssemblerFunction {
 
 class AssemblerChunk {
   
-  public boolean hasFormat;
+  public Version version;
+  
   public int format;
   
-  public boolean hasEndianness;
   public LHeader.LEndianness endianness;
   
-  public boolean hasIntSize;
   public int int_size;
   public BIntegerType integer;
   
-  public boolean hasSizeTSize;
   public int size_t_size;
   public BSizeTType sizeT;
   
-  public boolean hasInstructionSize;
   public int instruction_size;
+  public int op_size;
+  public int a_size;
+  public int b_size;
+  public int c_size;
   
-  public boolean hasNumberFormat;
   public boolean number_integral;
   public int number_size;
   public LNumberType number;
   
+  public LNumberType linteger;
+  
+  public LNumberType lfloat;
+  
   public AssemblerFunction main;
   public AssemblerFunction current;
+  public CodeExtract extract;
   
-  public AssemblerChunk() {
-    hasFormat = false;
-    hasEndianness = false;
-    hasIntSize = false;
-    hasSizeTSize = false;
-    hasInstructionSize = false;
-    hasNumberFormat = false;
+  public final Set<Directive> processed_directives;
+  
+  public AssemblerChunk(Version version) {
+    this.version = version;
+    processed_directives = new HashSet<Directive>();
     
     main = null;
     current = null;
+    extract = null;
   }
   
   public void processHeaderDirective(Assembler a, Directive d) throws AssemblerException, IOException {
+    if(processed_directives.contains(d)) {
+      throw new AssemblerException("Duplicate " + d.name() + " directive");
+    }
+    processed_directives.add(d);
     switch(d) {
     case FORMAT:
-      if(hasFormat) throw new AssemblerException("Duplicate .format directive");
-      hasFormat = true;
       format = a.getInteger();
       break;
     case ENDIANNESS: {
-      if(hasEndianness) throw new AssemblerException("Duplicate .endianness directive");
       String endiannessName = a.getName();
       switch(endiannessName) {
       case "LITTLE":
@@ -315,25 +332,29 @@ class AssemblerChunk {
       break;
     }
     case INT_SIZE:
-      if(hasIntSize) throw new AssemblerException("Duplicate .int_size directive");
-      hasIntSize = true;
       int_size = a.getInteger();
       integer = new BIntegerType(int_size);
       break;
     case SIZE_T_SIZE:
-      if(hasSizeTSize) throw new AssemblerException("Duplicate .size_t_size directive");
-      hasSizeTSize = true;
       size_t_size = a.getInteger();
       sizeT = new BSizeTType(size_t_size);
       break;
     case INSTRUCTION_SIZE:
-      if(hasInstructionSize) throw new AssemblerException("Duplicate .instruction_size directive");
-      hasInstructionSize = true;
       instruction_size = a.getInteger();
       break;
+    case SIZE_OP:
+      op_size = a.getInteger();
+      break;
+    case SIZE_A:
+      a_size = a.getInteger();
+      break;
+    case SIZE_B:
+      b_size = a.getInteger();
+      break;
+    case SIZE_C:
+      c_size = a.getInteger();
+      break;
     case NUMBER_FORMAT: {
-      if(hasNumberFormat) throw new AssemblerException("Duplicate .number_format directive");
-      hasNumberFormat = true;
       String numberTypeName = a.getName();
       switch(numberTypeName) {
       case "integer": number_integral = true; break;
@@ -344,9 +365,27 @@ class AssemblerChunk {
       number = new LNumberType(number_size, number_integral, NumberMode.MODE_NUMBER);
       break;
     }
+    case INTEGER_FORMAT:
+      linteger = new LNumberType(a.getInteger(), true, NumberMode.MODE_INTEGER);
+      break;
+    case FLOAT_FORMAT:
+      lfloat = new LNumberType(a.getInteger(), false, NumberMode.MODE_FLOAT);
+      break;
     default:
       throw new IllegalStateException("Unhandled directive: " + d);
     }
+  }
+  
+  public CodeExtract getCodeExtract() throws AssemblerException {
+    if(extract == null) {
+      // TODO: better checking
+      if(processed_directives.contains(Directive.SIZE_OP)) {
+        extract = new CodeExtract(version, op_size, a_size, b_size, c_size);
+      } else {
+        extract = new CodeExtract(version);
+      }
+    }
+    return extract;
   }
   
   public void processNewFunction(Assembler a) throws AssemblerException, IOException {
@@ -354,7 +393,7 @@ class AssemblerChunk {
     String[] parts = name.split("/");
     if(main == null) {
       if(parts.length != 1) throw new AssemblerException("First (main) function declaration must not have a \"/\" in the name");
-      main = new AssemblerFunction(null, name);
+      main = new AssemblerFunction(this, null, name);
       current = main;
     } else {
       if(parts.length == 1 || !parts[0].equals(main.name)) throw new AssemblerException("Function \"" + name + "\" isn't contained in the main function");
@@ -370,24 +409,23 @@ class AssemblerChunk {
     current.processFunctionDirective(a, d);
   }
   
-  public void processOp(Assembler a, CodeExtract ex, Op op, int opcode) throws AssemblerException, IOException {
+  public void processOp(Assembler a, Op op, int opcode) throws AssemblerException, IOException {
     if(current == null) {
       throw new AssemblerException("Misplaced code before declaration of any function");
     }
-    current.processOp(a, ex, op, opcode);
+    current.processOp(a, getCodeExtract(), op, opcode);
   }
   
-  public void write(OutputStream out) throws IOException {
-    Version version = Version.LUA51;
+  public void write(OutputStream out) throws AssemblerException, IOException {
     LBooleanType bool = new LBooleanType();
-    LStringType string = LStringType.getType50(version);
-    LConstantType constant = LConstantType.getType50();
+    LStringType string = LStringType.get(version);
+    LConstantType constant = LConstantType.get(version);
     LLocalType local = new LLocalType();
     LUpvalueType upvalue = new LUpvalueType();
-    LFunctionType function = LFunctionType.TYPE51;
-    CodeExtract extract = new CodeExtract(version); // TODO: 
+    LFunctionType function = LFunctionType.get(version);
+    CodeExtract extract = getCodeExtract();
     
-    LHeader lheader = new LHeader(format, endianness, integer, sizeT, bool, number, null, null, string, constant, local, upvalue, function, extract);
+    LHeader lheader = new LHeader(format, endianness, integer, sizeT, bool, number, linteger, lfloat, string, constant, local, upvalue, function, extract);
     BHeader header = new BHeader(version, lheader);
     LFunction main = convert_function(header, this.main);
     header = new BHeader(version, lheader, main);
@@ -418,6 +456,12 @@ class AssemblerChunk {
       switch(constant.type) {
       case NUMBER:
         object = header.number.create(constant.numberValue);
+        break;
+      case INTEGER:
+        object = header.linteger.create(constant.integerValue);
+        break;
+      case FLOAT:
+        object = header.lfloat.create(constant.numberValue);
         break;
       case STRING:
         object = convert_string(header, constant.stringValue);
@@ -460,60 +504,16 @@ class AssemblerChunk {
   }
   
   private LString convert_string(BHeader header, String string) {
-    // TODO:
-    return new LString(header.version, new BSizeT(string.length() + 1), string.concat("\0"));
+    return new LString(header.version, string);
   }
 
-}
-
-enum DirectiveType {
-  HEADER,
-  NEWFUNCTION,
-  FUNCTION,
-  INSTRUCTION;
-}
-
-enum Directive {
-  FORMAT(".format", DirectiveType.HEADER, 1),
-  ENDIANNESS(".endianness", DirectiveType.HEADER, 1),
-  INT_SIZE(".int_size", DirectiveType.HEADER, 1),
-  SIZE_T_SIZE(".size_t_size", DirectiveType.HEADER, 1),
-  INSTRUCTION_SIZE(".instruction_size", DirectiveType.HEADER, 1),
-  NUMBER_FORMAT(".number_format", DirectiveType.HEADER, 2),
-  FUNCTION(".function", DirectiveType.NEWFUNCTION, 1),
-  SOURCE(".source", DirectiveType.FUNCTION, 1),
-  LINEDEFINED(".linedefined", DirectiveType.FUNCTION, 1),
-  LASTLINEDEFINED(".lastlinedefined", DirectiveType.FUNCTION, 1),
-  NUMPARAMS(".numparams", DirectiveType.FUNCTION, 1),
-  IS_VARARG(".is_vararg", DirectiveType.FUNCTION, 1),
-  MAXSTACKSIZE(".maxstacksize", DirectiveType.FUNCTION, 1),
-  CONSTANT(".constant", DirectiveType.FUNCTION, 2),
-  LINE(".line", DirectiveType.FUNCTION, 1),
-  LOCAL(".local", DirectiveType.FUNCTION, 3),
-  UPVALUE(".upvalue", DirectiveType.FUNCTION, 2),
-  ;
-  Directive(String token, DirectiveType type, int argcount) {
-    this.token = token;
-    this.type = type;
-  }
-  
-  public final String token;
-  public final DirectiveType type;
-  
-  static Map<String, Directive> lookup;
-  
-  static {
-    lookup = new HashMap<String, Directive>();
-    for(Directive d : Directive.values()) {
-      lookup.put(d.token, d);
-    }
-  }
 }
 
 public class Assembler {
 
   private Tokenizer t;
   private OutputStream out;
+  private Version version;
   
   public Assembler(Reader r, OutputStream out) {
     t = new Tokenizer(r);
@@ -525,9 +525,32 @@ public class Assembler {
     String tok = t.next();
     if(!tok.equals(".version")) throw new AssemblerException("First directive must be .version, instead was \"" + tok + "\"");
     tok = t.next();
-    if(!tok.equals("5.1")) throw new AssemblerException("Only version 5.1 is supported for assembly");
     
-    OpcodeMap opmap = new OpcodeMap(0x51);
+    int major;
+    int minor;
+    String[] parts = tok.split("\\.");
+    if(parts.length == 2) {
+      try {
+        major = Integer.valueOf(parts[0]);
+        minor = Integer.valueOf(parts[1]);
+      } catch(NumberFormatException e) {
+        throw new AssemblerException("Unsupported version " + tok);
+      }
+    } else {
+      throw new AssemblerException("Unsupported version " + tok);
+    }
+    if(major < 0 || major > 0xF || minor < 0 || minor > 0xF) {
+      throw new AssemblerException("Unsupported version " + tok);
+    }
+    
+    int version_number = (major << 4) | minor;
+    version = Version.getVersion(version_number);
+    
+    if(version == null) {
+      throw new AssemblerException("Unsupported version " + tok);
+    }
+    
+    OpcodeMap opmap = new OpcodeMap(version_number);
     Map<String, Op> oplookup = new HashMap<String, Op>();
     Map<Op, Integer> opcodelookup = new HashMap<Op, Integer>();
     for(int i = 0; i < opmap.size(); i++) {
@@ -536,7 +559,7 @@ public class Assembler {
       opcodelookup.put(op, i);
     }
     
-    AssemblerChunk chunk = new AssemblerChunk();
+    AssemblerChunk chunk = new AssemblerChunk(version);
     
     while((tok = t.next()) != null) {
       Directive d = Directive.lookup.get(tok);
@@ -559,7 +582,7 @@ public class Assembler {
         Op op = oplookup.get(tok);
         if(op != null) {
           // TODO:
-          chunk.processOp(this, new CodeExtract(Version.LUA51), op, opcodelookup.get(op));
+          chunk.processOp(this, op, opcodelookup.get(op));
         } else {
           throw new AssemblerException("Unexpected token \"" + tok + "\"");
         }

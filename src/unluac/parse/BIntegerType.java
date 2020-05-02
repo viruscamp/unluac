@@ -74,4 +74,8 @@ public class BIntegerType extends BObjectType<BInteger> {
     raw_write(out, header, object);
   }
   
+  public BInteger create(int n) {
+    return new BInteger(n);
+  }
+  
 }

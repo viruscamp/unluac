@@ -40,14 +40,6 @@ public class BInteger extends BObject {
     }
   }
   
-  public boolean lessThan(int x) {
-    if(big == null) {
-      return n < x;
-    } else {
-      return big.compareTo(BigInteger.valueOf(x)) < 0;
-    }
-  }
-  
   public byte[] littleEndianBytes(int size) {
     ArrayList<Byte> bytes = new ArrayList<Byte>();
     if(big == null) {

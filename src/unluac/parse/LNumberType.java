@@ -2,6 +2,7 @@ package unluac.parse;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
 
@@ -107,6 +108,28 @@ public class LNumberType extends BObjectType<LNumber> {
           return new LFloatNumber((float) x, mode);
         case 8:
           return new LDoubleNumber(x, mode);
+        default:
+          throw new IllegalStateException();
+      }
+    }
+  }
+  
+  public LNumber create(BigInteger x) {
+    if(integral) {
+      switch(size) {
+        case 4:
+          return new LIntNumber(x.intValueExact());
+        case 8:
+          return new LLongNumber(x.longValueExact());
+        default:
+          throw new IllegalStateException();
+      }
+    } else {
+      switch(size) {
+        case 4:
+          return new LFloatNumber(x.floatValue(), mode);
+        case 8:
+          return new LDoubleNumber(x.doubleValue(), mode);
         default:
           throw new IllegalStateException();
       }

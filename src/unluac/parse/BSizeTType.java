@@ -29,4 +29,8 @@ public class BSizeTType extends BObjectType<BSizeT> {
     integerType.raw_write(out, header, object);
   }
   
+  public BSizeT create(int n) {
+    return new BSizeT(integerType.create(n));
+  }
+  
 }

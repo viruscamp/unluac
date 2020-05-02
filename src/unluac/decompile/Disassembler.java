@@ -1,6 +1,7 @@
 package unluac.decompile;
 
 import unluac.Version;
+import unluac.assemble.Directive;
 import unluac.parse.LFunction;
 import unluac.parse.LLocal;
 import unluac.parse.LUpvalue;
@@ -31,18 +32,12 @@ public class Disassembler {
   private void disassemble(Output out, int level, int index) {
     if(parent == null) {
       out.println(".version\t" + function.header.version.getName());
-      
       out.println();
       
-      if(function.header.version == Version.LUA51) {
-        out.println(".format\t" + function.header.lheader.format);
-        out.println(".endianness\t" + function.header.lheader.endianness);
-        out.println(".int_size\t" + function.header.integer.intSize);
-        out.println(".size_t_size\t" + function.header.sizeT.sizeTSize);
-        out.println(".instruction_size\t4");
-        out.println(".number_format\t" + (function.header.number.integral ? "integer" : "float") + "\t" + function.header.number.size);
-        out.println();
+      for(Directive directive : function.header.lheader_type.get_directives()) {
+        directive.disassemble(out, function.header, function.header.lheader);
       }
+      out.println();
     }
     
     String fullname;
@@ -54,16 +49,10 @@ public class Disassembler {
     out.println(".function\t" + fullname);
     out.println();
     
-    if(function.header.version == Version.LUA51) {
-      out.println(".source\t" + StringUtils.toPrintString(function.name.deref()) + "");
-      out.println(".linedefined\t" + function.linedefined);
-      out.println(".lastlinedefined\t" + function.lastlinedefined);
-      out.println();
-      out.println(".numparams\t" + function.numParams);
-      out.println(".is_vararg\t" + function.vararg);
-      out.println(".maxstacksize\t" + function.maximumStackSize);
-      out.println();
+    for(Directive directive : function.header.function.get_directives()) {
+      directive.disassemble(out, function.header, function);
     }
+    out.println();
     
     if(function.locals.length > 0) {
       for(int local = 1; local <= function.locals.length; local++) {
