@@ -1642,16 +1642,17 @@ public class ControlFlowHandler {
           }
           int lowerBound = Integer.MIN_VALUE;
           int upperBound = Integer.MAX_VALUE;
+          final int scopeAdjust = -1;
           for(Declaration decl : declList) {
-            if(decl.begin >= begin && decl.begin < end) {
+            //if(decl.begin >= begin && decl.begin < end) {
               
-            }
-            if(decl.end >= begin && decl.end < end) {
+            //}
+            if(decl.end >= begin && decl.end <= end + scopeAdjust) {
               if(decl.begin < begin) {
                 upperBound = Math.min(decl.begin, upperBound);
               }
             }
-            if(decl.begin >= begin && decl.begin < end && decl.end > end) {
+            if(decl.begin >= begin && decl.begin <= end + scopeAdjust && decl.end > end + scopeAdjust) {
               lowerBound = Math.max(decl.begin + 1, lowerBound);
               begin = decl.begin + 1;
             }
@@ -1661,6 +1662,10 @@ public class ControlFlowHandler {
           }
           begin = Math.max(lowerBound, begin);
           begin = Math.min(upperBound, begin);
+          Block breakable = enclosing_breakable_block(state, b.line);
+          if(breakable != null) {
+            begin = Math.max(breakable.begin, begin);
+          }
           state.blocks.add(new OnceLoop(state.function, begin, end));
           Break breakStatement = new Break(state.function, b.line, b.targetFirst);
           state.blocks.add(breakStatement);
