@@ -52,6 +52,10 @@ public abstract class Version {
     this.versionNumber = versionNumber;
   }
   
+  public int getVersionNumber() {
+    return versionNumber;
+  }
+  
   public String getName() {
     return versionNumber / 16 + "." + versionNumber % 16;
   }

@@ -1,5 +1,6 @@
 package unluac.parse;
 
+import java.util.Iterator;
 import java.util.List;
 
 public class BList<T extends BObject> extends BObject {
@@ -14,6 +15,10 @@ public class BList<T extends BObject> extends BObject {
   
   public T get(int index) {
     return values.get(index);
+  }
+  
+  public Iterator<T> iterator() {
+    return values.iterator();
   }
   
   public T[] asArray(final T[] array) {

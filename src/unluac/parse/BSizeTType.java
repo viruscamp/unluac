@@ -1,5 +1,7 @@
 package unluac.parse;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 public class BSizeTType extends BObjectType<BSizeT> {
@@ -13,12 +15,18 @@ public class BSizeTType extends BObjectType<BSizeT> {
     integerType = new BIntegerType(sizeTSize);
   }
   
+  @Override
   public BSizeT parse(ByteBuffer buffer, BHeader header) {
     BSizeT value = new BSizeT(integerType.raw_parse(buffer, header));
     if(header.debug) {
       System.out.println("-- parsed <size_t> " + value.asInt());
     }
     return value;
+  }
+  
+  @Override
+  public void write(OutputStream out, BHeader header, BSizeT object) throws IOException {
+    integerType.raw_write(out, header, object);
   }
   
 }

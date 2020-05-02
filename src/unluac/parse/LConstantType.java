@@ -1,5 +1,7 @@
 package unluac.parse;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 
@@ -54,6 +56,24 @@ class LConstantType50 extends LConstantType {
     }
   }
   
+  @Override
+  public void write(OutputStream out, BHeader header, LObject object) throws IOException {
+    if(object instanceof LNil) {
+      out.write(0);
+    } else if(object instanceof LBoolean) {
+      out.write(1);
+      header.bool.write(out, header, (LBoolean)object);
+    } else if(object instanceof LNumber) {
+      out.write(3);
+      header.number.write(out, header, (LNumber)object);
+    } else if(object instanceof LString) {
+      out.write(4);
+      header.string.write(out, header, (LString)object);
+    } else {
+      throw new IllegalStateException();
+    }
+  }
+  
 }
 
 class LConstantType53 extends LConstantType {
@@ -101,6 +121,31 @@ class LConstantType53 extends LConstantType {
         return header.string.parse(buffer, header);
       default:
         throw new IllegalStateException();
+    }
+  }
+  
+  @Override
+  public void write(OutputStream out, BHeader header, LObject object) throws IOException {
+    if(object instanceof LNil) {
+      out.write(0);
+    } else if(object instanceof LBoolean) {
+      out.write(1);
+      header.bool.write(out, header, (LBoolean)object);
+    } else if(object instanceof LNumber) {
+      LNumber n = (LNumber)object;
+      if(!n.integralType()) {
+        out.write(3);
+        header.lfloat.write(out, header, (LNumber)object);
+      } else {
+        out.write(0x13);
+        header.linteger.write(out, header, (LNumber)object);
+      }
+    } else if(object instanceof LString) {
+      out.write(4);
+      // TODO: long strings?
+      header.string.write(out, header, (LString)object);
+    } else {
+      throw new IllegalStateException();
     }
   }
   

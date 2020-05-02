@@ -1,5 +1,7 @@
 package unluac.parse;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 import unluac.Version;
@@ -55,6 +57,15 @@ class LStringType50 extends LStringType {
     }
     return new LString(version, sizeT, s);
   }
+  
+  @Override
+  public void write(OutputStream out, BHeader header, LString string) throws IOException {
+    header.sizeT.write(out, header, string.size);
+    for(int i = 0; i < string.value.length(); i++) {
+      out.write(string.value.charAt(i));
+    }
+    out.write(0);
+  }
 }
 
 class LStringType53 extends LStringType {
@@ -92,5 +103,18 @@ class LStringType53 extends LStringType {
       System.out.println("-- parsed <string> \"" + s + "\"");
     }
     return new LString(version, sizeT, s);
+  }
+  
+  @Override
+  public void write(OutputStream out, BHeader header, LString string) throws IOException {
+    if(string.size.lessThan(0xFF)) {
+      out.write((byte)string.size.asInt());
+    } else {
+      out.write(0xFF);
+      header.sizeT.write(out, header, string.size);
+    }
+    for(int i = 0; i < string.value.length() - 1; i++) {
+      out.write(string.value.charAt(i));
+    }
   }
 }

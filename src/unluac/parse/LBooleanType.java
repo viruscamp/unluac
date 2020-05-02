@@ -1,5 +1,7 @@
 package unluac.parse;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 
@@ -19,4 +21,10 @@ public class LBooleanType extends BObjectType<LBoolean> {
     }
   }
 
+  @Override
+  public void write(OutputStream out, BHeader header, LBoolean object) throws IOException {
+    int value = object.value() ? 1 : 0;
+    out.write(value);
+  }
+  
 }

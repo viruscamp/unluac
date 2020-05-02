@@ -1,5 +1,7 @@
 package unluac.parse;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -62,6 +64,10 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
     }
   }
   
+  protected void write_format(OutputStream out, BHeader header, LHeader object) throws IOException {
+    out.write(object.format);
+  }
+  
   protected void parse_endianness(ByteBuffer buffer, BHeader header, LHeaderParseState s) {
     // 1 byte endianness
     int endianness = 0xFF & buffer.get();
@@ -82,6 +88,21 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
     }
   }
   
+  protected void write_endianness(OutputStream out, BHeader header, LHeader object) throws IOException {
+    int value;
+    switch(object.endianness) {
+    case BIG:
+      value = 0;
+      break;
+    case LITTLE:
+      value = 1;
+      break;
+    default:
+      throw new IllegalStateException();
+    }
+    out.write(value);
+  }
+  
   protected void parse_int_size(ByteBuffer buffer, BHeader header, LHeaderParseState s) {
     // 1 byte int size
     int intSize = 0xFF & buffer.get();
@@ -91,6 +112,10 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
     s.integer = new BIntegerType(intSize);
   }
   
+  protected void write_int_size(OutputStream out, BHeader header, LHeader object) throws IOException {
+    out.write(object.integer.intSize);
+  }
+  
   protected void parse_size_t_size(ByteBuffer buffer, BHeader header, LHeaderParseState s) {
     // 1 byte sizeT size
     int sizeTSize = 0xFF & buffer.get();
@@ -98,6 +123,10 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
       System.out.println("-- size_t size: " + sizeTSize);
     }
     s.sizeT = new BSizeTType(sizeTSize);
+  }
+  
+  protected void write_size_t_size(OutputStream out, BHeader header, LHeader object) throws IOException {
+    out.write(object.sizeT.sizeTSize);
   }
   
   protected void parse_instruction_size(ByteBuffer buffer, BHeader header, LHeaderParseState s) {
@@ -111,12 +140,20 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
     }
   }
   
+  protected void write_instruction_size(OutputStream out, BHeader header, LHeader object) throws IOException {
+    out.write(4);
+  }
+  
   protected void parse_number_size(ByteBuffer buffer, BHeader header, LHeaderParseState s) {
     int lNumberSize = 0xFF & buffer.get();
     if(header.debug) {
       System.out.println("-- Lua number size: " + lNumberSize);
     }
     s.lNumberSize = lNumberSize;
+  }
+  
+  protected void write_number_size(OutputStream out, BHeader header, LHeader object) throws IOException {
+    out.write(object.number.size);
   }
   
   protected void parse_number_integrality(ByteBuffer buffer, BHeader header, LHeaderParseState s) {
@@ -130,6 +167,10 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
     s.lNumberIntegrality = (lNumberIntegralityCode == 1);
   }
   
+  protected void write_number_integrality(OutputStream out, BHeader header, LHeader object) throws IOException {
+    out.write((byte)(object.number.integral ? 1 : 0));
+  }
+  
   protected void parse_extractor(ByteBuffer buffer, BHeader header, LHeaderParseState s) {
     int sizeOp = 0xFF & buffer.get();
     int sizeA = 0xFF & buffer.get();
@@ -141,11 +182,24 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
     s.extractor = new CodeExtract(header.version, sizeOp, sizeA, sizeB, sizeC);
   }
   
+  protected void write_extractor(OutputStream out, BHeader header, LHeader object) throws IOException {
+    out.write(object.extractor.op.size);
+    out.write(object.extractor.A.size);
+    out.write(object.extractor.B.size);
+    out.write(object.extractor.C.size);
+  }
+  
   protected void parse_tail(ByteBuffer buffer, BHeader header, LHeaderParseState s) {
     for(int i = 0; i < luacTail.length; i++) {
       if(buffer.get() != luacTail[i]) {
         throw new IllegalStateException("The input file does not have the header tail of a valid Lua file (it may be corrupted).");
       }
+    }
+  }
+  
+  protected void write_tail(OutputStream out, BHeader header, LHeader object) throws IOException {
+    for(int i = 0; i < luacTail.length; i++) {
+      out.write(luacTail[i]);
     }
   }
   
@@ -182,6 +236,13 @@ class LHeaderType50 extends LHeaderType {
     s.constant = LConstantType.getType50();
   }
   
+  @Override
+  public void write(OutputStream out, BHeader header, LHeader object) throws IOException {
+    // TODO:
+    
+    throw new IllegalStateException();
+  }
+  
 }
 
 class LHeaderType51 extends LHeaderType {
@@ -200,6 +261,17 @@ class LHeaderType51 extends LHeaderType {
     s.string = LStringType.getType50(header.version);
     s.constant = LConstantType.getType50();
     s.extractor = new CodeExtract(header.version);
+  }
+  
+  @Override
+  public void write(OutputStream out, BHeader header, LHeader object) throws IOException {
+    write_format(out, header, object);
+    write_endianness(out, header, object);
+    write_int_size(out, header, object);
+    write_size_t_size(out, header, object);
+    write_instruction_size(out, header, object);
+    write_number_size(out, header, object);
+    write_number_integrality(out, header, object);
   }
   
 }
@@ -221,6 +293,13 @@ class LHeaderType52 extends LHeaderType {
     s.string = LStringType.getType50(header.version);
     s.constant = LConstantType.getType50();
     s.extractor = new CodeExtract(header.version);
+  }
+  
+  @Override
+  public void write(OutputStream out, BHeader header, LHeader object) throws IOException {
+    // TODO:
+    
+    throw new IllegalStateException();
   }
   
 }
@@ -274,6 +353,13 @@ class LHeaderType53 extends LHeaderType {
     if(floatcheck != s.lfloat.convert(370.5)) {
       throw new IllegalStateException("The input chunk is using an unrecognized floating point format: " + floatcheck);
     }
+  }
+  
+  @Override
+  public void write(OutputStream out, BHeader header, LHeader object) throws IOException {
+    // TODO:
+    
+    throw new IllegalStateException();
   }
   
 }

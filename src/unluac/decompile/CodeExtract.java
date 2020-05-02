@@ -11,6 +11,7 @@ public static class Field {
     }
     
     public Field(int size, int shift, int offset) {
+      this.size = size;
       this.shift = shift;
       this.mask = size_to_mask(size);
       this.offset = offset;
@@ -28,6 +29,7 @@ public static class Field {
       return (x + offset) << shift;
     }
     
+    public final int size;
     private final int shift;
     private final int mask;
     private final int offset;

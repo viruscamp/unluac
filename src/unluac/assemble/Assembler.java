@@ -3,20 +3,36 @@ package unluac.assemble;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import unluac.Version;
-import unluac.decompile.Code;
 import unluac.decompile.CodeExtract;
 import unluac.decompile.Op;
 import unluac.decompile.OpcodeMap;
 import unluac.decompile.OperandFormat;
 import unluac.parse.BHeader;
+import unluac.parse.BInteger;
+import unluac.parse.BIntegerType;
+import unluac.parse.BList;
+import unluac.parse.BSizeT;
+import unluac.parse.BSizeTType;
+import unluac.parse.LBooleanType;
+import unluac.parse.LConstantType;
+import unluac.parse.LFunction;
+import unluac.parse.LFunctionType;
 import unluac.parse.LHeader;
+import unluac.parse.LLocal;
+import unluac.parse.LLocalType;
+import unluac.parse.LNumberType;
+import unluac.parse.LNumberType.NumberMode;
+import unluac.parse.LObject;
+import unluac.parse.LString;
+import unluac.parse.LStringType;
+import unluac.parse.LUpvalue;
+import unluac.parse.LUpvalueType;
 import unluac.util.StringUtils;
 
 class AssemblerConstant {
@@ -247,9 +263,11 @@ class AssemblerChunk {
   
   public boolean hasIntSize;
   public int int_size;
+  public BIntegerType integer;
   
   public boolean hasSizeTSize;
   public int size_t_size;
+  public BSizeTType sizeT;
   
   public boolean hasInstructionSize;
   public int instruction_size;
@@ -257,6 +275,7 @@ class AssemblerChunk {
   public boolean hasNumberFormat;
   public boolean number_integral;
   public int number_size;
+  public LNumberType number;
   
   public AssemblerFunction main;
   public AssemblerFunction current;
@@ -299,11 +318,13 @@ class AssemblerChunk {
       if(hasIntSize) throw new AssemblerException("Duplicate .int_size directive");
       hasIntSize = true;
       int_size = a.getInteger();
+      integer = new BIntegerType(int_size);
       break;
     case SIZE_T_SIZE:
       if(hasSizeTSize) throw new AssemblerException("Duplicate .size_t_size directive");
       hasSizeTSize = true;
       size_t_size = a.getInteger();
+      sizeT = new BSizeTType(size_t_size);
       break;
     case INSTRUCTION_SIZE:
       if(hasInstructionSize) throw new AssemblerException("Duplicate .instruction_size directive");
@@ -320,6 +341,7 @@ class AssemblerChunk {
       default: throw new AssemblerException("Unknown number_format \"" + numberTypeName + "\"");
       }
       number_size = a.getInteger();
+      number = new LNumberType(number_size, number_integral, NumberMode.MODE_NUMBER);
       break;
     }
     default:
@@ -356,105 +378,92 @@ class AssemblerChunk {
   }
   
   public void write(OutputStream out) throws IOException {
-    out.write(new byte[] {0x1B, 'L', 'u', 'a'});
-    out.write(0x51);
-    out.write(format);
-    write_endianness(out);
-    out.write(int_size);
-    out.write(size_t_size);
-    out.write(instruction_size);
-    out.write(number_size);
-    out.write(number_integral ? 1 : 0);
-    write_function(out, main);
+    Version version = Version.LUA51;
+    LBooleanType bool = new LBooleanType();
+    LStringType string = LStringType.getType50(version);
+    LConstantType constant = LConstantType.getType50();
+    LLocalType local = new LLocalType();
+    LUpvalueType upvalue = new LUpvalueType();
+    LFunctionType function = LFunctionType.TYPE51;
+    CodeExtract extract = new CodeExtract(version); // TODO: 
+    
+    LHeader lheader = new LHeader(format, endianness, integer, sizeT, bool, number, null, null, string, constant, local, upvalue, function, extract);
+    BHeader header = new BHeader(version, lheader);
+    LFunction main = convert_function(header, this.main);
+    header = new BHeader(version, lheader, main);
+    
+    header.write(out);
   }
   
-  private void write_endianness(OutputStream out) throws IOException {
-    switch(endianness) {
-    case BIG: out.write(0); break;
-    case LITTLE: out.write(1); break;
-    default: throw new IllegalStateException();
+  private LFunction convert_function(BHeader header, AssemblerFunction function) {
+    int i;
+    int[] code = new int[function.code.size()];
+    i = 0;
+    for(int codepoint : function.code) {
+      code[i++] = codepoint;
     }
-  }
-  
-  private void write_function(OutputStream out, AssemblerFunction f) throws IOException {
-    write_string(out, f.source);
-    write_int(out, f.linedefined);
-    write_int(out, f.lastlinedefined);
-    out.write(f.upvalues.size());
-    out.write(f.numParams);
-    out.write(f.vararg);
-    out.write(f.maxStackSize);
-    write_int(out, f.code.size());
-    for(int codepoint : f.code) {
-      write_sized_integer(out, codepoint, 4);
+    ArrayList<BInteger> lines = new ArrayList<BInteger>(function.lines.size());
+    for(int line : function.lines) {
+      lines.add(new BInteger(line));
     }
-    write_int(out, f.constants.size());
-    for(AssemblerConstant constant : f.constants) {
-      out.write(constant.type.code);
+    LLocal[] locals = new LLocal[function.locals.size()];
+    i = 0;
+    for(AssemblerLocal local : function.locals) {
+      locals[i++] = new LLocal(convert_string(header, local.name), new BInteger(local.begin), new BInteger(local.end));
+    }
+    LObject[] constants = new LObject[function.constants.size()];
+    i = 0;
+    for(AssemblerConstant constant : function.constants) {
+      LObject object;
       switch(constant.type) {
       case NUMBER:
-        write_sized_integer(out, Double.doubleToLongBits(constant.numberValue), 8);
+        object = header.number.create(constant.numberValue);
         break;
       case STRING:
-        write_string(out, constant.stringValue);
+        object = convert_string(header, constant.stringValue);
         break;
       default:
         throw new IllegalStateException();
       }
+      constants[i++] = object;
     }
-    write_int(out, f.children.size());
-    for(AssemblerFunction child : f.children) {
-      write_function(out, child);
+    LUpvalue[] upvalues = new LUpvalue[function.upvalues.size()];
+    i = 0;
+    for(AssemblerUpvalue upvalue : function.upvalues) {
+      LUpvalue lup = new LUpvalue();
+      lup.bname = convert_string(header, upvalue.name);
+      lup.idx = upvalue.index;
+      lup.instack = upvalue.instack;
+      upvalues[i++] = lup;
     }
-    write_int(out, f.lines.size());
-    for(int line : f.lines) {
-      write_int(out, line);
+    LFunction[] functions = new LFunction[function.children.size()];
+    i = 0;
+    for(AssemblerFunction f : function.children) {
+      functions[i++] = convert_function(header, f);
     }
-    write_int(out, f.locals.size());
-    for(AssemblerLocal local : f.locals) {
-      write_string(out, local.name);
-      write_int(out, local.begin);
-      write_int(out, local.end);
-    }
-    write_int(out, f.upvalues.size());
-    for(AssemblerUpvalue upvalue : f.upvalues) {
-      write_string(out, upvalue.name);
-    }
+    return new LFunction(
+      header,
+      convert_string(header, function.source),
+      function.linedefined,
+      function.lastlinedefined,
+      code,
+      new BList<BInteger>(new BInteger(function.lines.size()), lines),
+      locals,
+      constants,
+      upvalues,
+      functions,
+      function.maxStackSize,
+      function.upvalues.size(),
+      function.numParams,
+      function.vararg
+   );
   }
   
-  private void write_sized_integer(OutputStream out, long x, int size) throws IOException {
-    switch(endianness) {
-    case BIG:
-      while(size > 0) {
-        size--;
-        out.write((int)(0xFFL & (x >>> (8 * size))));
-      }
-      break;
-    case LITTLE:
-      while(size-- > 0) {
-        out.write((int)(0xFFL & x));
-        x = x >>> 8;
-      }
-      break;
-    default: throw new IllegalStateException();
-    }
+  private LString convert_string(BHeader header, String string) {
+    // TODO:
+    return new LString(header.version, new BSizeT(string.length() + 1), string.concat("\0"));
   }
-  
-  private void write_size_t(OutputStream out, long x) throws IOException {
-    write_sized_integer(out, x, size_t_size);
-  }
-  
-  private void write_int(OutputStream out, long x) throws IOException {
-    write_sized_integer(out, x, int_size);
-  }
-  
-  private void write_string(OutputStream out, String s) throws IOException {
-    write_size_t(out, s.length() + 1);
-    for(int i = 0; i < s.length(); i++) {
-      out.write(s.charAt(i));
-    }
-    out.write(0);
-  }
+
 }
 
 enum DirectiveType {

@@ -1,5 +1,7 @@
 package unluac.parse;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 public class LUpvalueType extends BObjectType<LUpvalue> {
@@ -11,5 +13,10 @@ public class LUpvalueType extends BObjectType<LUpvalue> {
     upvalue.idx = 0xFF & buffer.get();
     return upvalue;
   }
-
+  
+  @Override
+  public void write(OutputStream out, BHeader header, LUpvalue object) throws IOException {
+    out.write((byte)(object.instack ? 1 : 0));
+    out.write(object.idx);
+  }
 }

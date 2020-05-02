@@ -1,5 +1,7 @@
 package unluac.parse;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -45,6 +47,19 @@ public class BIntegerType extends BObjectType<BInteger> {
     return value;
   }
   
+  protected void raw_write(OutputStream out, BHeader header, BInteger object) throws IOException {
+    byte[] bytes = object.littleEndianBytes(intSize);
+    if(header.lheader.endianness == LHeader.LEndianness.LITTLE) {
+      for(byte b : bytes) {
+        out.write(b);
+      }
+    } else {
+      for(int i = bytes.length - 1; i >= 0; i--) {
+        out.write(bytes[i]);
+      }
+    }
+  }
+  
   @Override
   public BInteger parse(ByteBuffer buffer, BHeader header) {
     BInteger value = raw_parse(buffer, header);
@@ -52,6 +67,11 @@ public class BIntegerType extends BObjectType<BInteger> {
       System.out.println("-- parsed <integer> " + value.asInt());
     }
     return value;
+  }
+  
+  @Override
+  public void write(OutputStream out, BHeader header, BInteger object) throws IOException {
+    raw_write(out, header, object);
   }
   
 }

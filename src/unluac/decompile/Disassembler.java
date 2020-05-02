@@ -1,12 +1,8 @@
 package unluac.decompile;
 
 import unluac.Version;
-import unluac.parse.LConstantType;
 import unluac.parse.LFunction;
-import unluac.parse.LFunctionType;
 import unluac.parse.LLocal;
-import unluac.parse.LNumberType;
-import unluac.parse.LStringType;
 import unluac.parse.LUpvalue;
 import unluac.util.StringUtils;
 
@@ -59,7 +55,7 @@ public class Disassembler {
     out.println();
     
     if(function.header.version == Version.LUA51) {
-      out.println(".source\t" + StringUtils.toPrintString(function.name) + "");
+      out.println(".source\t" + StringUtils.toPrintString(function.name.deref()) + "");
       out.println(".linedefined\t" + function.linedefined);
       out.println(".lastlinedefined\t" + function.lastlinedefined);
       out.println();

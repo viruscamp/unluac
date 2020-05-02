@@ -1,5 +1,7 @@
 package unluac.parse;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 import unluac.Configuration;
@@ -32,6 +34,29 @@ public class BHeader {
   public final CodeExtract extractor;
   
   public final LFunction main;
+  
+  public BHeader(Version version, LHeader lheader) {
+    this(version, lheader, null);
+  }
+  
+  public BHeader(Version version, LHeader lheader, LFunction main) {
+    this.config = null;
+    this.version = version;
+    this.lheader = lheader;
+    integer = lheader.integer;
+    sizeT = lheader.sizeT;
+    bool = lheader.bool;
+    number = lheader.number;
+    linteger = lheader.linteger;
+    lfloat = lheader.lfloat;
+    string = lheader.string;
+    constant = lheader.constant;
+    local = lheader.local;
+    upvalue = lheader.upvalue;
+    function = lheader.function;
+    extractor = lheader.extractor;
+    this.main = main;
+  }
   
   public BHeader(ByteBuffer buffer, Configuration config) {
     this.config = config;
@@ -94,6 +119,14 @@ public class BHeader {
     if(main.numUpvalues >= 1 && versionNumber >= 0x52 && (main.upvalues[0].name == null || main.upvalues[0].name.isEmpty())) {
       main.upvalues[0].name = "_ENV";
     }
+  }
+  
+  public void write(OutputStream out) throws IOException {
+    out.write(signature);
+    out.write(version.getVersionNumber());
+    version.getLHeaderType().write(out, this, lheader);
+    // TODO: 5.3
+    function.write(out, this, main);
   }
   
 }

@@ -11,6 +11,10 @@ public abstract class LNumber extends LObject {
     
   //TODO: problem solution for this issue
   public abstract double value();
+  
+  public abstract boolean integralType();
+  
+  public abstract long bits();
 }
 
 class LFloatNumber extends LNumber {
@@ -49,6 +53,16 @@ class LFloatNumber extends LNumber {
   @Override
   public double value() {
     return number;
+  }
+  
+  @Override
+  public boolean integralType() {
+    return false;
+  }
+  
+  @Override
+  public long bits() {
+    return Float.floatToRawIntBits(number);
   }
   
 }
@@ -91,6 +105,16 @@ class LDoubleNumber extends LNumber {
     return number;
   }
   
+  @Override
+  public boolean integralType() {
+    return false;
+  }
+  
+  @Override
+  public long bits() {
+    return Double.doubleToRawLongBits(number);
+  }
+  
 }
 
 class LIntNumber extends LNumber {
@@ -121,6 +145,16 @@ class LIntNumber extends LNumber {
     return number;
   }
   
+  @Override
+  public boolean integralType() {
+    return true;
+  }
+  
+  @Override
+  public long bits() {
+    return number;
+  }
+  
 }
 
 class LLongNumber extends LNumber {
@@ -148,6 +182,16 @@ class LLongNumber extends LNumber {
   
   @Override
   public double value() {
+    return number;
+  }
+  
+  @Override
+  public boolean integralType() {
+    return true;
+  }
+  
+  @Override
+  public long bits() {
     return number;
   }
   

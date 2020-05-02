@@ -6,6 +6,7 @@ public class LUpvalue extends BObject {
   public int idx;
   
   public String name;
+  public LString bname;
   
   public boolean equals(Object obj) {
     if(obj instanceof LUpvalue) {
