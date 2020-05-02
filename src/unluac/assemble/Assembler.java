@@ -20,7 +20,6 @@ import unluac.parse.BHeader;
 import unluac.parse.BInteger;
 import unluac.parse.BIntegerType;
 import unluac.parse.BList;
-import unluac.parse.BSizeTType;
 import unluac.parse.LBooleanType;
 import unluac.parse.LConstantType;
 import unluac.parse.LFunction;
@@ -277,7 +276,7 @@ class AssemblerChunk {
   public BIntegerType integer;
   
   public int size_t_size;
-  public BSizeTType sizeT;
+  public BIntegerType sizeT;
   
   public int instruction_size;
   public int op_size;
@@ -337,7 +336,7 @@ class AssemblerChunk {
       break;
     case SIZE_T_SIZE:
       size_t_size = a.getInteger();
-      sizeT = new BSizeTType(size_t_size);
+      sizeT = new BIntegerType(size_t_size);
       break;
     case INSTRUCTION_SIZE:
       instruction_size = a.getInteger();

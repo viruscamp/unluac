@@ -64,7 +64,7 @@ public enum Directive {
     case FORMAT: out.println(String.valueOf(header.format)); break;
     case ENDIANNESS: out.println(header.endianness.toString()); break;
     case INT_SIZE: out.println(String.valueOf(header.integer.intSize)); break;
-    case SIZE_T_SIZE: out.println(String.valueOf(header.sizeT.sizeTSize)); break;
+    case SIZE_T_SIZE: out.println(String.valueOf(header.sizeT.intSize)); break;
     case INSTRUCTION_SIZE: out.println("4"); break;
     case SIZE_OP: out.println(String.valueOf(header.extractor.op.size)); break;
     case SIZE_A: out.println(String.valueOf(header.extractor.A.size)); break;

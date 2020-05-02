@@ -22,7 +22,7 @@ public class BHeader {
   public final LHeader lheader;
   public final LHeaderType lheader_type;
   public final BIntegerType integer;
-  public final BSizeTType sizeT;
+  public final BIntegerType sizeT;
   public final LBooleanType bool;
   public final LNumberType number;
   public final LNumberType linteger;

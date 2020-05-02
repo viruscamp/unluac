@@ -48,7 +48,7 @@ class LStringType50 extends LStringType {
   
   @Override
   public LString parse(final ByteBuffer buffer, BHeader header) {
-    BSizeT sizeT = header.sizeT.parse(buffer, header);
+    BInteger sizeT = header.sizeT.parse(buffer, header);
     final StringBuilder b = this.b.get();
     b.setLength(0);
     sizeT.iterate(new Runnable() {
@@ -91,12 +91,12 @@ class LStringType53 extends LStringType {
   
   @Override
   public LString parse(final ByteBuffer buffer, BHeader header) {
-    BSizeT sizeT;
+    BInteger sizeT;
     int size = 0xFF & buffer.get();
     if(size == 0xFF) {
       sizeT = header.sizeT.parse(buffer, header);
     } else {
-      sizeT = new BSizeT(size);
+      sizeT = new BInteger(size);
     }
     final StringBuilder b = this.b.get();
     b.setLength(0);

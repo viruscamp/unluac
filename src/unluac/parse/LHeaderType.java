@@ -23,7 +23,7 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
   
   protected static class LHeaderParseState {
     BIntegerType integer;
-    BSizeTType sizeT;
+    BIntegerType sizeT;
     LNumberType number;
     LNumberType linteger;
     LNumberType lfloat;
@@ -126,11 +126,11 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
     if(header.debug) {
       System.out.println("-- size_t size: " + sizeTSize);
     }
-    s.sizeT = new BSizeTType(sizeTSize);
+    s.sizeT = new BIntegerType(sizeTSize);
   }
   
   protected void write_size_t_size(OutputStream out, BHeader header, LHeader object) throws IOException {
-    out.write(object.sizeT.sizeTSize);
+    out.write(object.sizeT.intSize);
   }
   
   protected void parse_instruction_size(ByteBuffer buffer, BHeader header, LHeaderParseState s) {
