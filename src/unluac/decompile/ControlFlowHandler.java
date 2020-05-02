@@ -1882,6 +1882,7 @@ public class ControlFlowHandler {
       case FORPREP:
       case TFORCALL:
       case TFORLOOP:
+      case TFORLOOP52:
       case TFORPREP:
       case CLOSE:
         return true;

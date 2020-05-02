@@ -29,6 +29,10 @@ public static class Field {
       return (x + offset) << shift;
     }
     
+    public int clear(int codepoint) {
+      return codepoint & ~(mask << shift);
+    }
+    
     public final int size;
     private final int shift;
     private final int mask;
@@ -47,6 +51,7 @@ public static class Field {
     Ax = new Field(26, 6);
     Bx = new Field(18, 14);
     sBx = new Field(18, 14, 131071);
+    x = new Field(32, 0);
     rk_offset = version.getConstantsOffset();
   }
 
@@ -61,6 +66,7 @@ public static class Field {
     Ax = null;
     Bx = new Field(sizeB + sizeC, sizeOp);
     sBx = new Field(sizeB + sizeC, sizeOp, size_to_mask(sizeB + sizeC) / 2);
+    x = new Field(32, 0);
     rk_offset = version.getConstantsOffset();
   }
   
@@ -71,6 +77,10 @@ public static class Field {
   public int get_k(int field) {
     return field - rk_offset;
   }
+  
+  public int encode_k(int constant) {
+    return constant + rk_offset;
+  }
 
   public final Field op;
   public final Field A;
@@ -79,6 +89,7 @@ public static class Field {
   public final Field Ax;
   public final Field Bx;
   public final Field sBx;
+  public final Field x;
   
   private final int rk_offset;
   

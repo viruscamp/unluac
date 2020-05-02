@@ -24,6 +24,7 @@ public class LString extends LObject {
   
   @Override
   public String toString() {
+    // TODO: yikes
     return "\"" + value + "\"";
   }
   

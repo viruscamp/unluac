@@ -390,6 +390,7 @@ public class Decompiler {
       case TFORPREP:
       case TFORCALL:
       case TFORLOOP:
+      case TFORLOOP52:
         /* Do nothing ... handled with branches */
         break;
       case SETLIST50:

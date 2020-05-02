@@ -36,6 +36,7 @@ public enum Directive {
   NUMPARAMS(".numparams", DirectiveType.FUNCTION, 1),
   IS_VARARG(".is_vararg", DirectiveType.FUNCTION, 1),
   MAXSTACKSIZE(".maxstacksize", DirectiveType.FUNCTION, 1),
+  LABEL(".label", DirectiveType.FUNCTION, 1),
   CONSTANT(".constant", DirectiveType.FUNCTION, 2),
   LINE(".line", DirectiveType.FUNCTION, 1),
   LOCAL(".local", DirectiveType.FUNCTION, 3),

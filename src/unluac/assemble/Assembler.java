@@ -20,6 +20,7 @@ import unluac.parse.BHeader;
 import unluac.parse.BInteger;
 import unluac.parse.BIntegerType;
 import unluac.parse.BList;
+import unluac.parse.LBoolean;
 import unluac.parse.LBooleanType;
 import unluac.parse.LConstantType;
 import unluac.parse.LFunction;
@@ -27,6 +28,7 @@ import unluac.parse.LFunctionType;
 import unluac.parse.LHeader;
 import unluac.parse.LLocal;
 import unluac.parse.LLocalType;
+import unluac.parse.LNil;
 import unluac.parse.LNumberType;
 import unluac.parse.LNumberType.NumberMode;
 import unluac.parse.LObject;
@@ -36,9 +38,18 @@ import unluac.parse.LUpvalue;
 import unluac.parse.LUpvalueType;
 import unluac.util.StringUtils;
 
+class AssemblerLabel {
+  
+  public String name;
+  public int code_index;
+  
+}
+
 class AssemblerConstant {
   
   enum Type {
+    NIL,
+    BOOLEAN,
     NUMBER,
     INTEGER,
     FLOAT,
@@ -48,6 +59,7 @@ class AssemblerConstant {
   public String name;
   public Type type;
   
+  public boolean booleanValue;
   public double numberValue;
   public String stringValue;
   public BigInteger integerValue;
@@ -70,6 +82,22 @@ class AssemblerUpvalue {
 }
 
 class AssemblerFunction {
+  
+  class FunctionFixup {
+    
+    int code_index;
+    String function;
+    CodeExtract.Field field;
+    
+  }
+  
+  class JumpFixup {
+    
+    int code_index;
+    String label;
+    CodeExtract.Field field;
+    
+  }
   
   public AssemblerChunk chunk;
   public AssemblerFunction parent;
@@ -94,11 +122,15 @@ class AssemblerFunction {
   public boolean hasVararg;
   public int vararg;
   
+  public List<AssemblerLabel> labels;
   public List<AssemblerConstant> constants;
   public List<AssemblerUpvalue> upvalues;
   public List<Integer> code;
   public List<Integer> lines;
   public List<AssemblerLocal> locals;
+  
+  public List<FunctionFixup> f_fixup;
+  public List<JumpFixup> j_fixup;
   
   public AssemblerFunction(AssemblerChunk chunk, AssemblerFunction parent, String name) {
     this.chunk = chunk;
@@ -113,11 +145,15 @@ class AssemblerFunction {
     hasNumParams = false;
     hasVararg = false;
     
+    labels = new ArrayList<AssemblerLabel>();
     constants = new ArrayList<AssemblerConstant>();
     upvalues = new ArrayList<AssemblerUpvalue>();
     code = new ArrayList<Integer>();
     lines = new ArrayList<Integer>();
     locals = new ArrayList<AssemblerLocal>();
+    
+    f_fixup = new ArrayList<FunctionFixup>();
+    j_fixup = new ArrayList<JumpFixup>();
   }
   
   public AssemblerFunction addChild(String name) {
@@ -168,12 +204,28 @@ class AssemblerFunction {
       hasVararg = true;
       vararg = a.getInteger();
       break;
+    case LABEL: {
+      String name = a.getAny();
+      AssemblerLabel label = new AssemblerLabel();
+      label.name = name;
+      label.code_index = code.size();
+      labels.add(label);
+      break;
+    }
     case CONSTANT: {
       String name = a.getName();
       String value = a.getAny();
       AssemblerConstant constant = new AssemblerConstant();
       constant.name = name;
-      if(value.startsWith("\"")) {
+      if(value.equals("nil")) {
+        constant.type = AssemblerConstant.Type.NIL;
+      } else if(value.equals("true")) {
+        constant.type = AssemblerConstant.Type.BOOLEAN;
+        constant.booleanValue = true;
+      } else if(value.equals("false")) {
+        constant.type = AssemblerConstant.Type.BOOLEAN;
+        constant.booleanValue = false;
+      } else if(value.startsWith("\"")) {
         constant.type = AssemblerConstant.Type.STRING;
         constant.stringValue = StringUtils.fromPrintString(value);
       } else {
@@ -225,41 +277,109 @@ class AssemblerFunction {
   
   public void processOp(Assembler a, CodeExtract extract, Op op, int opcode) throws AssemblerException, IOException {
     if(!hasMaxStackSize) throw new AssemblerException("Expected .maxstacksize before code");
-    if(!extract.op.check(opcode)) throw new IllegalStateException();
-    int codepoint = extract.op.encode(opcode);
+    if(opcode >= 0 && !extract.op.check(opcode)) throw new IllegalStateException();
+    int codepoint = opcode >= 0 ? extract.op.encode(opcode) : 0;
     for(OperandFormat operand : op.operands) {
-      switch(operand) {
-      case A: {
-        int A = a.getInteger();
-        if(!extract.A.check(A)) throw new AssemblerException("Operand A out of range"); 
-        codepoint |= extract.A.encode(A);
-        break;
+      CodeExtract.Field field;
+      switch(operand.field) {
+      case A: field = extract.A; break;
+      case B: field = extract.B; break;
+      case C: field = extract.C; break;
+      case Ax: field = extract.Ax; break;
+      case Bx: field = extract.Bx; break;
+      case sBx: field = extract.sBx; break;
+      case x: field = extract.x; break;
+      default: throw new IllegalStateException();
       }
-      case AR: {
-        int r = a.getRegister();
+      int x;
+      switch(operand.format) {
+      case RAW: x = a.getInteger(); break;
+      case REGISTER: {
+        x = a.getRegister();
         //TODO: stack warning
-        if(!extract.A.check(r)) throw new AssemblerException("Operand A out of range");
-        codepoint |= extract.A.encode(r);
         break;
       }
-      case B: {
-        int B = a.getInteger();
-        if(!extract.B.check(B)) throw new AssemblerException("Operand B out of range"); 
-        codepoint |= extract.B.encode(B);
+      case REGISTER_K: {
+        x = a.getRegisterK(extract);
+        //TODO: stack warning
         break;
       }
-      case BxK: {
-        int Bx = a.getConstant();
-        if(!extract.Bx.check(Bx)) throw new AssemblerException("Operand Bx out of range");
-        codepoint |= extract.Bx.encode(Bx);
+      case CONSTANT: {
+        x = a.getConstant();
         break;
       }
-      
+      case UPVALUE: {
+        x = a.getUpvalue();
+        break;
+      }
+      case FUNCTION: {
+        FunctionFixup fix = new FunctionFixup();
+        fix.code_index = code.size();
+        fix.function = a.getAny();
+        fix.field = field;
+        f_fixup.add(fix);
+        x = 0;
+        break;
+      }
+      case JUMP: {
+        JumpFixup fix = new JumpFixup();
+        fix.code_index = code.size();
+        fix.label = a.getAny();
+        fix.field = field;
+        j_fixup.add(fix);
+        x = 0;
+        break;
+      }
       default:
-        throw new IllegalStateException("Unhandled operand format: " + operand);
+        throw new IllegalStateException("Unhandled operand format: " + operand.format);
       }
+      if(!field.check(x)) throw new AssemblerException("Operand " + operand.field + " out of range"); 
+      codepoint |= field.encode(x);
     }
     code.add(codepoint);
+  }
+  
+  public void fixup(CodeExtract extract) throws AssemblerException {
+    for(FunctionFixup fix : f_fixup) {
+      int codepoint = code.get(fix.code_index);
+      int x = -1;
+      for(int f = 0; f < children.size(); f++) {
+        AssemblerFunction child = children.get(f);
+        if(fix.function.equals(child.name)) {
+          x = f;
+          break;
+        }
+      }
+      if(x == -1) {
+        throw new AssemblerException("Unknown function: " + fix.function);
+      }
+      codepoint = fix.field.clear(codepoint);
+      codepoint |= fix.field.encode(x);
+      code.set(fix.code_index, codepoint);
+    }
+    
+    for(JumpFixup fix : j_fixup) {
+      int codepoint = code.get(fix.code_index);
+      int x = 0;
+      boolean found = false;
+      for(AssemblerLabel label : labels) {
+        if(fix.label.equals(label.name)) {
+          x = label.code_index - fix.code_index - 1;
+          found = true;
+          break;
+        }
+      }
+      if(!found) {
+        throw new AssemblerException("Unknown label: " + fix.label);
+      }
+      codepoint = fix.field.clear(codepoint);
+      codepoint |= fix.field.encode(x);
+      code.set(fix.code_index, codepoint);
+    }
+    
+    for(AssemblerFunction f : children) {
+      f.fixup(extract);
+    }
   }
   
 }
@@ -415,6 +535,10 @@ class AssemblerChunk {
     current.processOp(a, getCodeExtract(), op, opcode);
   }
   
+  public void fixup() throws AssemblerException {
+    main.fixup(getCodeExtract());
+  }
+  
   public void write(OutputStream out) throws AssemblerException, IOException {
     LBooleanType bool = new LBooleanType();
     LStringType string = LStringType.get(version);
@@ -453,6 +577,12 @@ class AssemblerChunk {
     for(AssemblerConstant constant : function.constants) {
       LObject object;
       switch(constant.type) {
+      case NIL:
+        object = LNil.NIL;
+        break;
+      case BOOLEAN:
+        object = constant.booleanValue ? LBoolean.LTRUE : LBoolean.LFALSE;
+        break;
       case NUMBER:
         object = header.number.create(constant.numberValue);
         break;
@@ -558,6 +688,9 @@ public class Assembler {
       opcodelookup.put(op, i);
     }
     
+    oplookup.put(Op.EXTRABYTE.name().toLowerCase(), Op.EXTRABYTE);
+    opcodelookup.put(Op.EXTRABYTE, -1);
+    
     AssemblerChunk chunk = new AssemblerChunk(version);
     
     while((tok = t.next()) != null) {
@@ -588,6 +721,8 @@ public class Assembler {
       }
       
     }
+    
+    chunk.fixup();
     
     chunk.write(out);
     
@@ -653,6 +788,28 @@ public class Assembler {
     return r;
   }
   
+  int getRegisterK(CodeExtract ex) throws AssemblerException, IOException {
+    String s = t.next();
+    if(s == null) throw new AssemblerException("Unexcepted end of file");
+    int rk;
+    if(s.length() >= 2 && s.charAt(0) == 'r') {
+      try {
+        rk = Integer.parseInt(s.substring(1));
+      } catch(NumberFormatException e) {
+        throw new AssemblerException("Excepted register, got \"" + s + "\"");
+      }
+    } else if(s.length() >= 2 && s.charAt(0) == 'k') {
+      try {
+        rk = ex.encode_k(Integer.parseInt(s.substring(1)));
+      } catch(NumberFormatException e) {
+        throw new AssemblerException("Excepted constant, got \"" + s + "\"");
+      }
+    } else {
+      throw new AssemblerException("Excepted register, got \"" + s + "\"");
+    }
+    return rk;
+  }
+  
   int getConstant() throws AssemblerException, IOException {
     String s = t.next();
     if(s == null) throw new AssemblerException("Unexpected end of file");
@@ -667,6 +824,22 @@ public class Assembler {
       throw new AssemblerException("Excepted constant, got \"" + s + "\"");
     }
     return k;
+  }
+  
+  int getUpvalue() throws AssemblerException, IOException {
+    String s = t.next();
+    if(s == null) throw new AssemblerException("Unexcepted end of file");
+    int u;
+    if(s.length() >= 2 && s.charAt(0) == 'u') {
+      try {
+        u = Integer.parseInt(s.substring(1));
+      } catch(NumberFormatException e) {
+        throw new AssemblerException("Excepted register, got \"" + s + "\"");
+      }
+    } else {
+      throw new AssemblerException("Excepted register, got \"" + s + "\"");
+    }
+    return u;
   }
   
 }

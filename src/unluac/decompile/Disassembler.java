@@ -93,7 +93,7 @@ public class Disassembler {
         out.println(".label\t" + "l" + line);
       }
       if(line <= function.lines.length.asInt()) {
-        out.println(".line\t" + function.lines.get(line - 1).asInt());
+        out.print(".line\t" + function.lines.get(line - 1).asInt() + "\t");
       }
       Op op = code.op(line);
       String cpLabel = null;

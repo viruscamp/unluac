@@ -119,7 +119,7 @@ public class OpcodeMap {
       map[32] = Op.FORLOOP;
       map[33] = Op.FORPREP;
       map[34] = Op.TFORCALL;
-      map[35] = Op.TFORLOOP;
+      map[35] = Op.TFORLOOP52;
       map[36] = Op.SETLIST52;
       map[37] = Op.CLOSURE;
       map[38] = Op.VARARG;
@@ -168,7 +168,7 @@ public class OpcodeMap {
       map[39] = Op.FORLOOP;
       map[40] = Op.FORPREP;
       map[41] = Op.TFORCALL;
-      map[42] = Op.TFORLOOP;
+      map[42] = Op.TFORLOOP52;
       map[43] = Op.SETLIST52;
       map[44] = Op.CLOSURE;
       map[45] = Op.VARARG;

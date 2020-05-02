@@ -75,11 +75,12 @@ class LStringType50 extends LStringType {
   
   @Override
   public void write(OutputStream out, BHeader header, LString string) throws IOException {
-    header.sizeT.write(out, header, header.sizeT.create(string.value.length() + 1));
-    for(int i = 0; i < string.value.length(); i++) {
+    int len = string.value.length();
+    header.sizeT.write(out, header, header.sizeT.create(len == 0 ? 0 : len + 1));
+    for(int i = 0; i < len; i++) {
       out.write(string.value.charAt(i));
     }
-    if(string.value.length() > 0) {
+    if(len > 0) {
       out.write(0);
     }
   }

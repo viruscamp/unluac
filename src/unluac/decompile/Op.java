@@ -48,6 +48,7 @@ public enum Op {
   SETTABUP(OperandFormat.AU, OperandFormat.BRK, OperandFormat.CRK),
   SETLIST52(OperandFormat.AR, OperandFormat.B, OperandFormat.C),
   TFORCALL(OperandFormat.AR, OperandFormat.C),
+  TFORLOOP52(OperandFormat.AR, OperandFormat.sBxJ),
   EXTRAARG(OperandFormat.Ax),
   // Lua 5.0 Opcodes
   NEWTABLE50(OperandFormat.AR, OperandFormat.B, OperandFormat.C),
@@ -154,6 +155,7 @@ public enum Op {
       case TFORPREP:
       case TFORCALL:
       case TFORLOOP:
+      case TFORLOOP52:
       case CLOSE:
       case EXTRAARG:
       case SELF:
