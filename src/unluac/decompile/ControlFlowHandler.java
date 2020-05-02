@@ -658,7 +658,6 @@ public class ControlFlowHandler {
     state.blocks.add(elseBlock);
     elseStack.push(elseBlock);
     remove_branch(state, b);
-    unredirect(state, top.targetFirst, top.targetSecond, top.targetSecond - 1, b.targetSecond);
   }
   
   private static void resolve_hangers(State state, Stack<Branch> stack, Stack<Branch> hanging, Branch b) {
@@ -694,7 +693,6 @@ public class ControlFlowHandler {
             b.targetSecond = enclosing.getUnprotectedLine();
           }
         }
-        //remove_branch(state, b);
         Block breakable = enclosing_breakable_block(state, b.line);
         if(!stack.isEmpty() && stack.peek().targetSecond < b.targetSecond) {
           hanging.push(b);
@@ -727,13 +725,6 @@ public class ControlFlowHandler {
             }
             hangingResolver = b;
           }
-          //unredirect_break(state, line, enclosing);
-          /*while(!hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst) {
-            Branch hanger = hanging.pop();
-            hanger.targetSecond = b.line;
-            stack.push(hanger);
-            resolve_if_stack(state, stack, b.line);
-          }*/
           state.blocks.add(block);
           remove_branch(state, b);
         } else if(!stack.isEmpty() && stack.peek().targetSecond - 1 == b.line) {
@@ -753,7 +744,6 @@ public class ControlFlowHandler {
               b.targetSecond = tailTargetSecond;
               state.blocks.add(new IfThenElseBlock(state.function, top.cond, top.targetFirst, top.targetSecond, b.targetSecond));
               remove_branch(state, b);
-              unredirect(state, top.targetFirst, top.targetSecond, top.targetSecond - 1, b.targetSecond);
               stack.pop();
             }
           }
@@ -768,6 +758,20 @@ public class ControlFlowHandler {
           Branch top = hanging.pop();
           top.targetSecond = line + 1;
           resolve_else(state, stack, hanging, elseStack, top, b, tailTargetSecond);
+        } else if(
+          !stack.isEmpty() && stack.peek().targetSecond == b.targetFirst
+          && line + 1 < state.branches.length && state.branches[line + 1].type == Branch.Type.jump
+          && state.branches[line + 1].targetFirst == b.targetFirst
+        ) {
+          // empty else (redirected)
+          Branch top = stack.peek();
+          if(!splits_decl(top.targetFirst, b.line, declList)) {
+            top.targetSecond = line + 1;
+            b.targetSecond = line + 1;
+            state.blocks.add(new IfThenElseBlock(state.function, top.cond, top.targetFirst, top.targetSecond, b.targetSecond));
+            remove_branch(state, b);
+            stack.pop();
+          }
         }
       }
       b = b.next;
