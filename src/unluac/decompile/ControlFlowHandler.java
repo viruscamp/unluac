@@ -772,6 +772,21 @@ public class ControlFlowHandler {
             remove_branch(state, b);
             stack.pop();
           }
+        } else if(
+          !hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst
+          && line + 1 < state.branches.length && state.branches[line + 1].type == Branch.Type.jump
+          && state.branches[line + 1].targetFirst == b.targetFirst
+        ) {
+          // empty else (redirected)
+          Branch top = hanging.peek();
+          if(!splits_decl(top.targetFirst, b.line, declList)) {
+            hangingResolver = null;
+            top.targetSecond = line + 1;
+            b.targetSecond = line + 1;
+            state.blocks.add(new IfThenElseBlock(state.function, top.cond, top.targetFirst, top.targetSecond, b.targetSecond));
+            remove_branch(state, b);
+            hanging.pop();
+          }
         }
       }
       b = b.next;
