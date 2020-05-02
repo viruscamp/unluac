@@ -19,6 +19,10 @@ public class Stack<T> {
     return data.get(data.size() - 1);
   }
   
+  public T peek(int i) {
+    return data.get(data.size() - 1 - i);
+  }
+  
   public T pop() {
     return data.remove(data.size() - 1);
   }

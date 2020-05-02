@@ -13,7 +13,7 @@ abstract public class ContainerBlock extends Block {
   
   public ContainerBlock(LFunction function, int begin, int end, int priority) {
     super(function, begin, end, priority);
-    statements = new ArrayList<Statement>(end - begin + 1);
+    statements = new ArrayList<Statement>(Math.max(4, end - begin + 1));
   }
   
   @Override

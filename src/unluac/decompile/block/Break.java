@@ -9,6 +9,7 @@ import unluac.parse.LFunction;
 public class Break extends Block {
 
   public final int target;
+  public String comment;
   
   public Break(LFunction function, int line, int target) {
     super(function, line, line, 2);
@@ -54,11 +55,13 @@ public class Break extends Block {
   @Override
   public void print(Decompiler d, Output out) {
     out.print("do break end");
+    if(comment != null) out.print(" -- " + comment);
   }
   
   @Override
   public void printTail(Decompiler d, Output out) {
     out.print("break");
+    if(comment != null) out.print(" -- " + comment);
   }
   
 }
