@@ -15,6 +15,10 @@ public interface Condition {
   
   public boolean isOrCondition();
   
+  public boolean isSplitable();
+  
+  public Condition[] split();
+  
   public Expression asExpression(Registers r);
   
   @Override

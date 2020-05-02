@@ -73,6 +73,14 @@ abstract public class Block extends Statement implements Comparable<Block> {
     return false;
   }
   
+  public boolean isSplitable() {
+    return false;
+  }
+  
+  public Block[] split(int line) {
+    throw new IllegalStateException();
+  }
+  
   @Override
   public int compareTo(Block block) {
     if(this.begin < block.begin) {

@@ -42,6 +42,16 @@ public class RegisterSetCondition implements Condition {
   }
   
   @Override
+  public boolean isSplitable() {
+    return false;
+  }
+  
+  @Override
+  public Condition[] split() {
+    throw new IllegalStateException();
+  }
+  
+  @Override
   public Expression asExpression(Registers r) {
     return r.getExpression(register, line + 1);
   }

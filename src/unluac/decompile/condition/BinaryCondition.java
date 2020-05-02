@@ -69,6 +69,16 @@ public class BinaryCondition implements Condition {
   }
   
   @Override
+  public boolean isSplitable() {
+    return false;
+  }
+  
+  @Override
+  public Condition[] split() {
+    throw new IllegalStateException();
+  }
+  
+  @Override
   public Expression asExpression(Registers r) {
     boolean transpose = false;
     Expression leftExpression = r.getKExpression(left, line);

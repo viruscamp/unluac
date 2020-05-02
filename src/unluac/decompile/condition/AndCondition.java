@@ -44,6 +44,16 @@ public class AndCondition implements Condition {
   }
   
   @Override
+  public boolean isSplitable() {
+    return true;
+  }
+  
+  @Override
+  public Condition[] split() {
+    return new Condition[] {left, right};
+  }
+  
+  @Override
   public Expression asExpression(Registers r) {
     return new BinaryExpression("and", left.asExpression(r), right.asExpression(r), Expression.PRECEDENCE_AND, Expression.ASSOCIATIVITY_NONE);
   }

@@ -42,6 +42,16 @@ public class ConstantCondition implements Condition {
   }
   
   @Override
+  public boolean isSplitable() {
+    return false;
+  }
+  
+  @Override
+  public Condition[] split() {
+    throw new IllegalStateException();
+  }
+  
+  @Override
   public Expression asExpression(Registers r) {
     return new ConstantExpression(new Constant(value ? LBoolean.LTRUE : LBoolean.LFALSE), -1);
   }

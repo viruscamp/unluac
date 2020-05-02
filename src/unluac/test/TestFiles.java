@@ -30,6 +30,7 @@ public class TestFiles {
     "while03",
     "while04",
     "while05",
+    "while06",
     "repeat",
     "repeat02",
     "repeat03",

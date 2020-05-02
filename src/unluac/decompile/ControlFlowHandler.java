@@ -759,6 +759,18 @@ public class ControlFlowHandler {
           top.targetSecond = line + 1;
           resolve_else(state, stack, hanging, elseStack, top, b, tailTargetSecond);
         } else if(
+          breakable != null && breakable.isSplitable()
+          && state.resolved[b.targetFirst] == breakable.getUnprotectedTarget()
+          && line + 1 < state.branches.length && state.branches[line + 1].type == Branch.Type.jump
+          && state.resolved[state.branches[line + 1].targetFirst] == state.resolved[breakable.end]
+        ) {
+          // split while condition (else break)
+          Block[] split = breakable.split(b.line);
+          for(Block block : split) {
+            state.blocks.add(block);
+          }
+          remove_branch(state, b);
+        } else if(
           !stack.isEmpty() && stack.peek().targetSecond == b.targetFirst
           && line + 1 < state.branches.length && state.branches[line + 1].type == Branch.Type.jump
           && state.branches[line + 1].targetFirst == b.targetFirst
