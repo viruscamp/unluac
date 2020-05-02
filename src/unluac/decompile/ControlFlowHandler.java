@@ -731,7 +731,7 @@ public class ControlFlowHandler {
           Branch top = stack.peek();
           while(top != null && top.targetSecond - 1 == b.line && splits_decl(top.targetFirst, top.targetSecond, declList)) {
             resolve_if_stack(state, stack, top.targetSecond, 1);
-            top = stack.peek();
+            top = stack.isEmpty() ? null : stack.peek();
           }
           if(top != null && top.targetSecond - 1 == b.line) {
             if(top.targetSecond != b.targetSecond) {
