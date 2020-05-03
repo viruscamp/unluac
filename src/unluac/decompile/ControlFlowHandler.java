@@ -844,16 +844,17 @@ public class ControlFlowHandler {
     while(!hanging.isEmpty()) {
       if(state.d.getVersion().usesIfBreakRewrite()) {
         // if break (or if goto)
-        // TODO: handle if goto
         Branch top = hanging.pop();
         Block breakable = enclosing_breakable_block(state, top.line);
         if(breakable != null && breakable.end == top.targetSecond) {
           Block block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1, false);
           block.addStatement(new Break(state.function, top.targetFirst - 1, top.targetSecond));
           state.blocks.add(block);
-          
         }  else {
-          throw new IllegalStateException("IF-GOTO");
+          Block block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1, false);
+          block.addStatement(new Goto(state.function, top.targetFirst - 1, top.targetSecond));
+          state.blocks.add(block);
+          state.labels[top.targetSecond] = true;
         }
         remove_branch(state, top);
       } else {

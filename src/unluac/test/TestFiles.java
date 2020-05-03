@@ -204,6 +204,7 @@ public class TestFiles {
     "51_method03",
     "52_loadkx01",
     "52_goto01",
+    "52_goto02",
     "53_expression",
   };
   
