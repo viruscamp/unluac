@@ -652,7 +652,7 @@ public class ControlFlowHandler {
       elseStack.pop().end = b.line;
     }
     Stack<Branch> replace = new Stack<Branch>();
-    while(!hanging.isEmpty() && hanging.peek().targetSecond == tailTargetSecond) {
+    while(!hanging.isEmpty() && hanging.peek().targetSecond == tailTargetSecond && hanging.peek().line > top.line) {
       Branch hanger = hanging.pop();
       hanger.targetSecond = b.line;
       Block breakable = enclosing_breakable_block(state, hanger.line);
@@ -850,7 +850,7 @@ public class ControlFlowHandler {
           Block block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1, false);
           block.addStatement(new Break(state.function, top.targetFirst - 1, top.targetSecond));
           state.blocks.add(block);
-        }  else {
+        } else {
           Block block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1, false);
           block.addStatement(new Goto(state.function, top.targetFirst - 1, top.targetSecond));
           state.blocks.add(block);
