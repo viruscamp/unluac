@@ -741,6 +741,17 @@ public class ControlFlowHandler {
           }
           state.blocks.add(block);
           remove_branch(state, b);
+        } else if(state.function.header.version.hasGoto() && breakable != null && !breakable.contains(b.targetFirst) && state.resolved[b.targetFirst] != state.resolved[breakable.end]) {
+          Goto block = new Goto(state.function, b.line, b.targetFirst);
+          if(!hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst && enclosing_block(state, hanging.peek().line) == enclosing) {
+            if(hangingResolver != null && hangingResolver.targetFirst != b.targetFirst) {
+              resolve_hangers(state, stack, hanging, hangingResolver);
+            }
+            hangingResolver = b;
+          }
+          state.blocks.add(block);
+          state.labels[b.targetFirst] = true;
+          remove_branch(state, b);
         } else if(!stack.isEmpty() && stack.peek().targetSecond - 1 == b.line) {
           Branch top = stack.peek();
           while(top != null && top.targetSecond - 1 == b.line && splits_decl(top.targetFirst, top.targetSecond, declList)) {
