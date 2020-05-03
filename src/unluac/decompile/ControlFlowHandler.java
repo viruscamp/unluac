@@ -735,7 +735,10 @@ public class ControlFlowHandler {
         Block breakable = enclosing_breakable_block(state, line);
         if(breakable != null && (b.targetFirst == breakable.end || b.targetFirst == state.resolved[breakable.end])) {
           Break block = new Break(state.function, b.line, b.targetFirst);
-          if(!hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst && enclosing_block(state, hanging.peek().line) == enclosing) {
+          if(!hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst
+            && enclosing_block(state, hanging.peek().line) == enclosing
+            && (stack.isEmpty() || hanging.peek().line > stack.peek().line)
+          ) {
             if(hangingResolver != null && hangingResolver.targetFirst != b.targetFirst) {
               resolve_hangers(state, stack, hanging, hangingResolver);
             }
@@ -745,7 +748,10 @@ public class ControlFlowHandler {
           remove_branch(state, b);
         } else if(state.function.header.version.hasGoto() && breakable != null && !breakable.contains(b.targetFirst) && state.resolved[b.targetFirst] != state.resolved[breakable.end]) {
           Goto block = new Goto(state.function, b.line, b.targetFirst);
-          if(!hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst && enclosing_block(state, hanging.peek().line) == enclosing) {
+          if(!hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst
+            && enclosing_block(state, hanging.peek().line) == enclosing
+            && (stack.isEmpty() || hanging.peek().line > stack.peek().line)
+          ) {
             if(hangingResolver != null && hangingResolver.targetFirst != b.targetFirst) {
               resolve_hangers(state, stack, hanging, hangingResolver);
             }

@@ -167,6 +167,7 @@ public class TestFiles {
     "break06",
     "break07",
     "break08",
+    "break09",
     "close01",
     "close02",
     "close03",
@@ -207,6 +208,7 @@ public class TestFiles {
     "52_loadkx01",
     "52_goto01",
     "52_goto02",
+    "52_goto03",
     "53_expression",
   };
   
