@@ -29,6 +29,7 @@ import unluac.decompile.operation.ReturnOperation;
 import unluac.decompile.operation.TableSet;
 import unluac.decompile.operation.UpvalueSet;
 import unluac.decompile.statement.Assignment;
+import unluac.decompile.statement.Label;
 import unluac.decompile.statement.Statement;
 import unluac.decompile.target.GlobalTarget;
 import unluac.decompile.target.TableTarget;
@@ -58,6 +59,7 @@ public class Decompiler {
     private Registers r;
     private boolean[] skip;
     private Block outer;
+    private boolean[] labels;
   }
   
   public Decompiler(LFunction function) {
@@ -100,8 +102,10 @@ public class Decompiler {
   public State decompile() {
     State state = new State();
     state.r = new Registers(registers, length, declList, f, function.stripped);
-    List<Block> blocks = ControlFlowHandler.process(this, state.r);
+    ControlFlowHandler.Result result = ControlFlowHandler.process(this, state.r);
+    List<Block> blocks = result.blocks;
     state.outer = blocks.get(0);
+    state.labels = result.labels;
     processSequence(state, blocks, 1, code.length);
     for(Block block : blocks) {
       block.resolve(state.r);
@@ -497,6 +501,7 @@ public class Decompiler {
       State state = new State();
       state.r = new Registers(registers, length, declList, f, function.stripped);
       state.outer = new DoEndBlock(function, begin, end + 1);
+      state.labels = new boolean[code.length + 1];
       List<Block> blocks = Arrays.asList(state.outer);
       processSequence(state, blocks, begin, end);
       return !state.outer.isEmpty();
@@ -523,6 +528,7 @@ public class Decompiler {
     
     state.skip = new boolean[code.length + 1];
     boolean[] skip = state.skip;
+    boolean[] labels_handled = new boolean[code.length + 1];
     
     int line = 1;
     while(true) {
@@ -540,6 +546,11 @@ public class Decompiler {
         operations = Arrays.asList(operation);
         prevLocals = r.getNewLocals(line - 1);
       } else {
+        if(!labels_handled[line] && state.labels[line]) {
+          blockStack.peek().addStatement(new Label(line));
+          labels_handled[line] = true;
+        }
+        
         List<Declaration> locals = r.getNewLocals(line);
         while(blockContainerIndex < blockContainers.size() && blockContainers.get(blockContainerIndex).begin <= line) {
           Block next = blockContainers.get(blockContainerIndex++);

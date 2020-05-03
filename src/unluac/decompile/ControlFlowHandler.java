@@ -15,6 +15,7 @@ import unluac.decompile.block.ForBlock;
 import unluac.decompile.block.ElseEndBlock;
 import unluac.decompile.block.ForBlock50;
 import unluac.decompile.block.ForBlock51;
+import unluac.decompile.block.Goto;
 import unluac.decompile.block.IfThenElseBlock;
 import unluac.decompile.block.IfThenEndBlock;
 import unluac.decompile.block.OnceLoop;
@@ -88,15 +89,28 @@ public class ControlFlowHandler {
     public Branch[] finalsetbranches;
     public boolean[] reverse_targets;
     public int[] resolved;
+    public boolean[] labels;
     public List<Block> blocks;
   }
   
-  public static List<Block> process(Decompiler d, Registers r) {
+  public static class Result {
+    
+    public Result(State state) {
+      blocks = state.blocks;
+      labels = state.labels;
+    }
+    
+    public List<Block> blocks;
+    public boolean[] labels;
+  }
+  
+  public static Result process(Decompiler d, Registers r) {
     State state = new State();
     state.d = d;
     state.function = d.function;
     state.r = r;
     state.code = d.code;
+    state.labels = new boolean[d.code.length + 1];
     find_reverse_targets(state);
     find_branches(state);
     combine_branches(state);
@@ -122,7 +136,7 @@ public class ControlFlowHandler {
       b = b.next;
     }
     */
-    return state.blocks;
+    return new Result(state);
   }
   
   private static void find_reverse_targets(State state) {
@@ -799,6 +813,17 @@ public class ControlFlowHandler {
             remove_branch(state, b);
             hanging.pop();
           }
+        } else if(state.function.header.version.hasGoto()) {
+          Goto block = new Goto(state.function, b.line, b.targetFirst);
+          if(!hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst && enclosing_block(state, hanging.peek().line) == enclosing) {
+            if(hangingResolver != null && hangingResolver.targetFirst != b.targetFirst) {
+              resolve_hangers(state, stack, hanging, hangingResolver);
+            }
+            hangingResolver = b;
+          }
+          state.blocks.add(block);
+          state.labels[b.targetFirst] = true;
+          remove_branch(state, b);
         }
       }
       b = b.next;

@@ -90,6 +90,8 @@ public abstract class Version {
   
   public abstract boolean usesIfBreakRewrite();
   
+  public abstract boolean hasGoto();
+  
   public abstract VarArgType getVarArgType();
   
   public abstract boolean isReserved(String word);
@@ -143,6 +145,11 @@ class Version50 extends Version {
   
   @Override
   public boolean usesIfBreakRewrite() {
+    return false;
+  }
+  
+  @Override
+  public boolean hasGoto() {
     return false;
   }
   
@@ -210,6 +217,11 @@ class Version51 extends Version {
   }
   
   @Override
+  public boolean hasGoto() {
+    return false;
+  }
+  
+  @Override
   public VarArgType getVarArgType() {
     return VarArgType.HYBRID;
   }
@@ -268,6 +280,11 @@ class Version52 extends Version {
   }
   
   @Override
+  public boolean hasGoto() {
+    return true;
+  }
+  
+  @Override
   public VarArgType getVarArgType() {
     return VarArgType.ELLIPSIS;
   }
@@ -322,6 +339,11 @@ class Version53 extends Version {
   
   @Override
   public boolean usesIfBreakRewrite() {
+    return true;
+  }
+  
+  @Override
+  public boolean hasGoto() {
     return true;
   }
   
