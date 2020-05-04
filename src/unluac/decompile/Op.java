@@ -106,8 +106,8 @@ public enum Op {
   SHL54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CR),
   SHR54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CR),
   MMBIN(OperandFormat.AR, OperandFormat.BR, OperandFormat.C),
-  MMBINI(OperandFormat.AR, OperandFormat.BsI, OperandFormat.C),
-  MMBINK(OperandFormat.AR, OperandFormat.BK, OperandFormat.C),
+  MMBINI(OperandFormat.AR, OperandFormat.BsI, OperandFormat.C, OperandFormat.k),
+  MMBINK(OperandFormat.AR, OperandFormat.BK, OperandFormat.C, OperandFormat.k),
   CONCAT54(OperandFormat.AR, OperandFormat.B),
   TBC(OperandFormat.AR),
   JMP54(OperandFormat.sJ),
@@ -348,9 +348,9 @@ public enum Op {
       int x = field.extract(codepoint);
       switch(operands[i].format) {
       case IMMEDIATE_INTEGER:
-      case IMMEDIATE_SIGNED_INTEGER: // TODO:
       case IMMEDIATE_FLOAT:
       case RAW: parameters[i] = fixedOperand(x); break;
+      case IMMEDIATE_SIGNED_INTEGER: parameters[i] = fixedOperand(x - field.max() / 2); break;
       case REGISTER: parameters[i] = registerOperand(x); break;
       case UPVALUE: parameters[i] = upvalueOperand(x); break;
       case REGISTER_K: parameters[i] = rkOperand(x, ex); break;

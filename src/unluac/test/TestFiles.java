@@ -13,6 +13,7 @@ public class TestFiles {
     "multiassign03",
     "multiassign04",
     "expression",
+    "expression02",
     "functioncall",
     "literallist",
     "multiliteraltarget",
@@ -199,6 +200,7 @@ public class TestFiles {
     "scope03",
     "51_expression",
     "51_expression2",
+    "51_expression03",
     "51_string03",
     "51_ellipsis",
     "51_ellipsis02",
@@ -210,6 +212,7 @@ public class TestFiles {
     "52_goto02",
     "52_goto03",
     "53_expression",
+    "53_expression02",
   };
   
   public static TestSuite suite = new TestSuite(null, ".\\test\\src\\", tests);

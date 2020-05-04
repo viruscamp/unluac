@@ -245,7 +245,15 @@ public class Decompiler {
   }
   
   private void handle54BinKOp(List<Operation> operations, State state, int line, Expression.BinaryOperation op) {
-    operations.add(new RegisterSet(line, code.A(line), Expression.make(op, state.r.getExpression(code.B(line), line), f.getConstantExpression(code.C(line)))));
+    if(line + 1 > code.length || code.op(line + 1) != Op.MMBINK) throw new IllegalStateException();
+    Expression left = state.r.getExpression(code.B(line), line);
+    Expression right = f.getConstantExpression(code.C(line));
+    if(code.k(line + 1)) {
+      Expression temp = left;
+      left = right;
+      right = temp;
+    }
+    operations.add(new RegisterSet(line, code.A(line), Expression.make(op, left, right)));
   }
   
   private void handleUnaryOp(List<Operation> operations, State state, int line, Expression.UnaryOperation op) {
@@ -447,14 +455,29 @@ public class Decompiler {
         if(line + 1 > code.length || code.op(line + 1) != Op.MMBINI) throw new IllegalStateException();
         Expression.BinaryOperation op = decodeBinOp(code.C(line + 1));
         int immediate = code.sC(line);
-        if(op == Expression.BinaryOperation.ADD) {
-          // do nothing
-        } else if(op == Expression.BinaryOperation.SUB) {
-          immediate = -immediate;
+        boolean swap = false;
+        if(code.k(line + 1)) {
+          if(op != Expression.BinaryOperation.ADD) {
+            throw new IllegalStateException();
+          }
+          swap = true;
         } else {
-          throw new IllegalStateException();
+          if(op == Expression.BinaryOperation.ADD) {
+            // do nothing
+          } else if(op == Expression.BinaryOperation.SUB) {
+            immediate = -immediate;
+          } else {
+            throw new IllegalStateException();
+          }
         }
-        operations.add(new RegisterSet(line, A, Expression.make(op, r.getExpression(B, line), ConstantExpression.createInteger(immediate))));
+        Expression left = r.getExpression(B, line);
+        Expression right = ConstantExpression.createInteger(immediate);
+        if(swap) {
+          Expression temp = left;
+          left = right;
+          right = temp;
+        }
+        operations.add(new RegisterSet(line, A, Expression.make(op, left, right)));
         break;
       }
       case ADDK:
@@ -488,11 +511,15 @@ public class Decompiler {
         handle54BinKOp(operations, state, line, Expression.BinaryOperation.BXOR);
         break;
       case SHRI: {
+        if(line + 1 > code.length || code.op(line + 1) != Op.MMBINI) throw new IllegalStateException();
         int immediate = code.sC(line);
-        Expression.BinaryOperation op = Expression.BinaryOperation.SHR;
-        if(immediate < 0) {
+        Expression.BinaryOperation op = decodeBinOp(code.C(line + 1));
+        if(op == Expression.BinaryOperation.SHR) {
+          // okay
+        } else if(op == Expression.BinaryOperation.SHL) {
           immediate = -immediate;
-          op = Expression.BinaryOperation.SHL;
+        } else {
+          throw new IllegalStateException();
         }
         operations.add(new RegisterSet(line, A, Expression.make(op, r.getExpression(B, line), ConstantExpression.createInteger(immediate))));
         break;
