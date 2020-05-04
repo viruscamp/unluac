@@ -6,11 +6,27 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class BIntegerType extends BObjectType<BInteger> {
+abstract public class BIntegerType extends BObjectType<BInteger> {
+  
+  public static BIntegerType create50Type(int intSize) {
+    return new BIntegerType50(intSize);
+  }
+  
+  public int getSize() {
+    throw new IllegalStateException();
+  }
+  
+  public BInteger create(int n) {
+    throw new IllegalStateException();
+  }
+  
+}
+
+class BIntegerType50 extends BIntegerType {
 
   public final int intSize;
   
-  public BIntegerType(int intSize) {
+  public BIntegerType50(int intSize) {
     this.intSize = intSize;
   }
   
@@ -74,8 +90,42 @@ public class BIntegerType extends BObjectType<BInteger> {
     raw_write(out, header, object);
   }
   
+  @Override
+  public int getSize() {
+    return intSize;
+  }
+  
+  @Override
   public BInteger create(int n) {
     return new BInteger(n);
+  }
+  
+}
+
+class BIntegerType54 extends BIntegerType {
+
+  public BIntegerType54() {
+    
+  }
+  
+  @Override
+  public BInteger parse(ByteBuffer buffer, BHeader header) {
+    long x = 0;
+    byte b;
+    do {
+      b = buffer.get();
+      x = (x << 7) | (b & 0x7F);
+    } while((b & 0x80) == 0);
+    if(Integer.MIN_VALUE <= x && x <= Integer.MAX_VALUE) {
+      return new BInteger((int) x);
+    } else {
+      return new BInteger(BigInteger.valueOf(x));
+    }
+  }
+  
+  @Override
+  public void write(OutputStream out, BHeader header, BInteger object) throws IOException {
+    throw new IllegalStateException("TODO");
   }
   
 }

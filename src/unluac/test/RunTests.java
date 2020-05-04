@@ -7,7 +7,7 @@ public class RunTests {
   public static void main(String[] args) throws IOException {
     boolean result = true;
     TestReport report = new TestReport();
-    for(int version = 0x50; version <= 0x53; version++) {
+    for(int version = 0x50; version <= 0x54; version++) {
       LuaSpec spec = new LuaSpec(version);
       UnluacSpec uspec = new UnluacSpec();
       System.out.print("lua" + Integer.toHexString(version));

@@ -24,6 +24,14 @@ public class Constant {
     reserved = false;
   }
   
+  public Constant(double x) {
+    type = 2;
+    bool = false;
+    number = LNumber.makeDouble(x);
+    string = null;
+    reserved = false;
+  }
+  
   public Constant(LObject constant) {
     if(constant instanceof LNil) {
       type = 0;

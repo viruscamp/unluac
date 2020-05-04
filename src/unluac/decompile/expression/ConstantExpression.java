@@ -16,6 +16,14 @@ public class ConstantExpression extends Expression {
     return new ConstantExpression(new Constant(LNil.NIL), -1, line);
   }
   
+  public static ConstantExpression createInteger(int i) {
+    return new ConstantExpression(new Constant(i), -1);
+  }
+  
+  public static ConstantExpression createDouble(double x) {
+    return new ConstantExpression(new Constant(x), -1);
+  }
+  
   private static int getPrecedence(Constant constant) {
     if(constant.isNumber() && constant.isNegative()) {
       return PRECEDENCE_UNARY;

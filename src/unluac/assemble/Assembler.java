@@ -20,6 +20,7 @@ import unluac.parse.BHeader;
 import unluac.parse.BInteger;
 import unluac.parse.BIntegerType;
 import unluac.parse.BList;
+import unluac.parse.LAbsLineInfoType;
 import unluac.parse.LBoolean;
 import unluac.parse.LBooleanType;
 import unluac.parse.LConstantType;
@@ -452,11 +453,11 @@ class AssemblerChunk {
     }
     case INT_SIZE:
       int_size = a.getInteger();
-      integer = new BIntegerType(int_size);
+      integer = BIntegerType.create50Type(int_size);
       break;
     case SIZE_T_SIZE:
       size_t_size = a.getInteger();
-      sizeT = new BIntegerType(size_t_size);
+      sizeT = BIntegerType.create50Type(size_t_size);
       break;
     case INSTRUCTION_SIZE:
       instruction_size = a.getInteger();
@@ -543,12 +544,13 @@ class AssemblerChunk {
     LBooleanType bool = new LBooleanType();
     LStringType string = LStringType.get(version);
     LConstantType constant = LConstantType.get(version);
+    LAbsLineInfoType abslineinfo = new LAbsLineInfoType();
     LLocalType local = new LLocalType();
-    LUpvalueType upvalue = new LUpvalueType();
+    LUpvalueType upvalue = LUpvalueType.get(version);
     LFunctionType function = LFunctionType.get(version);
     CodeExtract extract = getCodeExtract();
     
-    LHeader lheader = new LHeader(format, endianness, integer, sizeT, bool, number, linteger, lfloat, string, constant, local, upvalue, function, extract);
+    LHeader lheader = new LHeader(format, endianness, integer, sizeT, bool, number, linteger, lfloat, string, constant, abslineinfo, local, upvalue, function, extract);
     BHeader header = new BHeader(version, lheader);
     LFunction main = convert_function(header, this.main);
     header = new BHeader(version, lheader, main);
@@ -673,7 +675,7 @@ public class Assembler {
     }
     
     int version_number = (major << 4) | minor;
-    version = Version.getVersion(version_number);
+    version = Version.getVersion(major, minor);
     
     if(version == null) {
       throw new AssemblerException("Unsupported version " + tok);

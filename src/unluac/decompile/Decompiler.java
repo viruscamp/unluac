@@ -215,6 +215,50 @@ public class Decompiler {
     }
   }
   
+  /**
+   * Decodes values from the Lua TMS enumeration used for the MMBIN family of operations.
+   */
+  private Expression.BinaryOperation decodeBinOp(int tm) {
+    switch(tm) {
+    case 6: return Expression.BinaryOperation.ADD;
+    case 7: return Expression.BinaryOperation.SUB;
+    case 8: return Expression.BinaryOperation.MUL;
+    case 9: return Expression.BinaryOperation.MOD;
+    case 10: return Expression.BinaryOperation.POW;
+    case 11: return Expression.BinaryOperation.DIV;
+    case 12: return Expression.BinaryOperation.IDIV;
+    case 13: return Expression.BinaryOperation.BAND;
+    case 14: return Expression.BinaryOperation.BOR;
+    case 15: return Expression.BinaryOperation.BXOR;
+    case 16: return Expression.BinaryOperation.SHL;
+    case 17: return Expression.BinaryOperation.SHR;
+    default: throw new IllegalStateException();
+    }
+  }
+  
+  private void handle50BinOp(List<Operation> operations, State state, int line, Expression.BinaryOperation op) {
+    operations.add(new RegisterSet(line, code.A(line), Expression.make(op, state.r.getKExpression(code.B(line), line), state.r.getKExpression(code.C(line), line))));
+  }
+  
+  private void handle54BinOp(List<Operation> operations, State state, int line, Expression.BinaryOperation op) {
+    operations.add(new RegisterSet(line, code.A(line), Expression.make(op, state.r.getExpression(code.B(line), line), state.r.getExpression(code.C(line), line))));
+  }
+  
+  private void handle54BinKOp(List<Operation> operations, State state, int line, Expression.BinaryOperation op) {
+    operations.add(new RegisterSet(line, code.A(line), Expression.make(op, state.r.getExpression(code.B(line), line), f.getConstantExpression(code.C(line)))));
+  }
+  
+  private void handleUnaryOp(List<Operation> operations, State state, int line, Expression.UnaryOperation op) {
+    operations.add(new RegisterSet(line, code.A(line), Expression.make(op, state.r.getExpression(code.B(line), line))));
+  }
+  
+  private void handleSetList(List<Operation> operations, State state, int line, int stack, int count, int offset) {
+    Expression table = state.r.getValue(stack, line);
+    for(int i = 1; i <= count; i++) {
+      operations.add(new TableSet(line, table, ConstantExpression.createInteger(offset + i), state.r.getExpression(stack + i, line), false, state.r.getUpdated(stack + i, line)));
+    }
+  }
+  
   private List<Operation> processLine(State state, int line) {
     Registers r = state.r;
     boolean[] skip = state.skip;
@@ -227,6 +271,12 @@ public class Decompiler {
       case MOVE:
         operations.add(new RegisterSet(line, A, r.getExpression(B, line)));
         break;
+      case LOADI:
+        operations.add(new RegisterSet(line, A, ConstantExpression.createInteger(code.sBx(line))));
+        break;
+      case LOADF:
+        operations.add(new RegisterSet(line, A, ConstantExpression.createDouble((double) code.sBx(line))));
+        break;
       case LOADK:
         operations.add(new RegisterSet(line, A, f.getConstantExpression(Bx)));
         break;
@@ -237,41 +287,75 @@ public class Decompiler {
       case LOADBOOL:
         operations.add(new RegisterSet(line, A, new ConstantExpression(new Constant(B != 0 ? LBoolean.LTRUE : LBoolean.LFALSE), -1)));
         break;
+      case LOADFALSE:
+      case LFALSESKIP:
+        operations.add(new RegisterSet(line, A, new ConstantExpression(new Constant(LBoolean.LFALSE), -1)));
+        break;
+      case LOADTRUE:
+        operations.add(new RegisterSet(line, A, new ConstantExpression(new Constant(LBoolean.LTRUE), -1)));
+        break;
       case LOADNIL:
         operations.add(new LoadNil(line, A, B));
         break;
       case LOADNIL52:
         operations.add(new LoadNil(line, A, A + B));
         break;
-      case GETUPVAL:
-        operations.add(new RegisterSet(line, A, upvalues.getExpression(B)));
-        break;
-      case GETTABUP:
-        operations.add(new RegisterSet(line, A, new TableReference(upvalues.getExpression(B), r.getKExpression(C, line))));
-        break;
       case GETGLOBAL:
         operations.add(new RegisterSet(line, A, f.getGlobalExpression(Bx)));
-        break;
-      case GETTABLE:
-        operations.add(new RegisterSet(line, A, new TableReference(r.getExpression(B, line), r.getKExpression(C, line))));
-        break;
-      case SETUPVAL:
-        operations.add(new UpvalueSet(line, upvalues.getName(B), r.getExpression(A, line)));
-        break;
-      case SETTABUP:
-        operations.add(new TableSet(line, upvalues.getExpression(A), r.getKExpression(B, line), r.getKExpression(C, line), true, line));
         break;
       case SETGLOBAL:
         operations.add(new GlobalSet(line, f.getGlobalName(Bx), r.getExpression(A, line)));
         break;
+      case GETUPVAL:
+        operations.add(new RegisterSet(line, A, upvalues.getExpression(B)));
+        break;
+      case SETUPVAL:
+        operations.add(new UpvalueSet(line, upvalues.getName(B), r.getExpression(A, line)));
+        break;
+      case GETTABUP:
+        operations.add(new RegisterSet(line, A, new TableReference(upvalues.getExpression(B), r.getKExpression(C, line))));
+        break;
+      case GETTABUP54:
+        operations.add(new RegisterSet(line, A, new TableReference(upvalues.getExpression(B), f.getConstantExpression(C))));
+        break;
+      case GETTABLE:
+        operations.add(new RegisterSet(line, A, new TableReference(r.getExpression(B, line), r.getKExpression(C, line))));
+        break;
+      case GETTABLE54:
+        operations.add(new RegisterSet(line, A, new TableReference(r.getExpression(B, line), r.getExpression(C, line))));
+        break;
+      case GETI:
+        operations.add(new RegisterSet(line, A, new TableReference(r.getExpression(B, line), ConstantExpression.createInteger(C))));
+        break;
+      case GETFIELD:
+        operations.add(new RegisterSet(line, A, new TableReference(r.getExpression(B, line), f.getConstantExpression(C))));
+        break;
       case SETTABLE:
         operations.add(new TableSet(line, r.getExpression(A, line), r.getKExpression(B, line), r.getKExpression(C, line), true, line));
+        break;
+      case SETTABLE54:
+        operations.add(new TableSet(line, r.getExpression(A, line), r.getExpression(B, line), r.getKExpression54(C, code.k(line), line), true, line));
+        break;
+      case SETI:
+        operations.add(new TableSet(line, r.getExpression(A, line), ConstantExpression.createInteger(B), r.getKExpression54(C, code.k(line), line), true, line));
+        break;
+      case SETFIELD:
+        operations.add(new TableSet(line, r.getExpression(A, line), f.getConstantExpression(B), r.getKExpression54(C, code.k(line), line), true, line));
+        break;
+      case SETTABUP:
+        operations.add(new TableSet(line, upvalues.getExpression(A), r.getKExpression(B, line), r.getKExpression(C, line), true, line));
+        break;
+      case SETTABUP54:
+        operations.add(new TableSet(line, upvalues.getExpression(A), f.getConstantExpression(B), r.getKExpression54(C, code.k(line), line), true, line));
+        break;
+      case NEWTABLE50:
+        operations.add(new RegisterSet(line, A, new TableLiteral(fb2int50(B), C == 0 ? 0 : 1 << C)));
         break;
       case NEWTABLE:
         operations.add(new RegisterSet(line, A, new TableLiteral(fb2int(B), fb2int(C))));
         break;
-      case NEWTABLE50:
-        operations.add(new RegisterSet(line, A, new TableLiteral(fb2int50(B), C == 0 ? 0 : 1 << C)));
+      case NEWTABLE54:
+        operations.add(new RegisterSet(line, A, new TableLiteral(C, B == 0 ? 0 : (1 << (B - 1)))));
         break;
       case SELF: {
         // We can later determine if : syntax was used by comparing subexpressions with ==
@@ -280,71 +364,184 @@ public class Decompiler {
         operations.add(new RegisterSet(line, A, new TableReference(common, r.getKExpression(C, line))));
         break;
       }
+      case SELF54: {
+        // We can later determine if : syntax was used by comparing subexpressions with ==
+        Expression common = r.getExpression(B, line);
+        operations.add(new RegisterSet(line, A + 1, common));
+        operations.add(new RegisterSet(line, A, new TableReference(common, f.getConstantExpression(C))));
+        break;
+      }
       case ADD:
-        operations.add(new RegisterSet(line, A, Expression.makeADD(r.getKExpression(B, line), r.getKExpression(C, line))));
+        handle50BinOp(operations, state, line, Expression.BinaryOperation.ADD);
         break;
       case SUB:
-        operations.add(new RegisterSet(line, A, Expression.makeSUB(r.getKExpression(B, line), r.getKExpression(C, line))));
+        handle50BinOp(operations, state, line, Expression.BinaryOperation.SUB);
         break;
       case MUL:
-        operations.add(new RegisterSet(line, A, Expression.makeMUL(r.getKExpression(B, line), r.getKExpression(C, line))));
+        handle50BinOp(operations, state, line, Expression.BinaryOperation.MUL);
         break;
       case DIV:
-        operations.add(new RegisterSet(line, A, Expression.makeDIV(r.getKExpression(B, line), r.getKExpression(C, line))));
-        break;
-      case MOD:
-        operations.add(new RegisterSet(line, A, Expression.makeMOD(r.getKExpression(B, line), r.getKExpression(C, line))));
-        break;
-      case POW:
-        operations.add(new RegisterSet(line, A, Expression.makePOW(r.getKExpression(B, line), r.getKExpression(C, line))));
+        handle50BinOp(operations, state, line, Expression.BinaryOperation.DIV);
         break;
       case IDIV:
-        operations.add(new RegisterSet(line, A, Expression.makeIDIV(r.getKExpression(B, line), r.getKExpression(C, line))));
+        handle50BinOp(operations, state, line, Expression.BinaryOperation.IDIV);
+        break;
+      case MOD:
+        handle50BinOp(operations, state, line, Expression.BinaryOperation.MOD);
+        break;
+      case POW:
+        handle50BinOp(operations, state, line, Expression.BinaryOperation.POW);
         break;
       case BAND:
-        operations.add(new RegisterSet(line, A, Expression.makeBAND(r.getKExpression(B, line), r.getKExpression(C, line))));
+        handle50BinOp(operations, state, line, Expression.BinaryOperation.BAND);
         break;
       case BOR:
-        operations.add(new RegisterSet(line, A, Expression.makeBOR(r.getKExpression(B, line), r.getKExpression(C, line))));
+        handle50BinOp(operations, state, line, Expression.BinaryOperation.BOR);
         break;
       case BXOR:
-        operations.add(new RegisterSet(line, A, Expression.makeBXOR(r.getKExpression(B, line), r.getKExpression(C, line))));
+        handle50BinOp(operations, state, line, Expression.BinaryOperation.BXOR);
         break;
       case SHL:
-        operations.add(new RegisterSet(line, A, Expression.makeSHL(r.getKExpression(B, line), r.getKExpression(C, line))));
+        handle50BinOp(operations, state, line, Expression.BinaryOperation.SHL);
         break;
       case SHR:
-        operations.add(new RegisterSet(line, A, Expression.makeSHR(r.getKExpression(B, line), r.getKExpression(C, line))));
+        handle50BinOp(operations, state, line, Expression.BinaryOperation.SHR);
+        break;
+      case ADD54:
+        handle54BinOp(operations, state, line, Expression.BinaryOperation.ADD);
+        break;
+      case SUB54:
+        handle54BinOp(operations, state, line, Expression.BinaryOperation.SUB);
+        break;
+      case MUL54:
+        handle54BinOp(operations, state, line, Expression.BinaryOperation.MUL);
+        break;
+      case DIV54:
+        handle54BinOp(operations, state, line, Expression.BinaryOperation.DIV);
+        break;
+      case IDIV54:
+        handle54BinOp(operations, state, line, Expression.BinaryOperation.IDIV);
+        break;
+      case MOD54:
+        handle54BinOp(operations, state, line, Expression.BinaryOperation.MOD);
+        break;
+      case POW54:
+        handle54BinOp(operations, state, line, Expression.BinaryOperation.POW);
+        break;
+      case BAND54:
+        handle54BinOp(operations, state, line, Expression.BinaryOperation.BAND);
+        break;
+      case BOR54:
+        handle54BinOp(operations, state, line, Expression.BinaryOperation.BOR);
+        break;
+      case BXOR54:
+        handle54BinOp(operations, state, line, Expression.BinaryOperation.BXOR);
+        break;
+      case SHL54:
+        handle54BinOp(operations, state, line, Expression.BinaryOperation.SHL);
+        break;
+      case SHR54:
+        handle54BinOp(operations, state, line, Expression.BinaryOperation.SHR);
+        break;
+      case ADDI: {
+        if(line + 1 > code.length || code.op(line + 1) != Op.MMBINI) throw new IllegalStateException();
+        Expression.BinaryOperation op = decodeBinOp(code.C(line + 1));
+        int immediate = code.sC(line);
+        if(op == Expression.BinaryOperation.ADD) {
+          // do nothing
+        } else if(op == Expression.BinaryOperation.SUB) {
+          immediate = -immediate;
+        } else {
+          throw new IllegalStateException();
+        }
+        operations.add(new RegisterSet(line, A, Expression.make(op, r.getExpression(B, line), ConstantExpression.createInteger(immediate))));
+        break;
+      }
+      case ADDK:
+        handle54BinKOp(operations, state, line, Expression.BinaryOperation.ADD);
+        break;
+      case SUBK:
+        handle54BinKOp(operations, state, line, Expression.BinaryOperation.SUB);
+        break;
+      case MULK:
+        handle54BinKOp(operations, state, line, Expression.BinaryOperation.MUL);
+        break;
+      case DIVK:
+        handle54BinKOp(operations, state, line, Expression.BinaryOperation.DIV);
+        break;
+      case IDIVK:
+        handle54BinKOp(operations, state, line, Expression.BinaryOperation.IDIV);
+        break;
+      case MODK:
+        handle54BinKOp(operations, state, line, Expression.BinaryOperation.MOD);
+        break;
+      case POWK:
+        handle54BinKOp(operations, state, line, Expression.BinaryOperation.POW);
+        break;
+      case BANDK:
+        handle54BinKOp(operations, state, line, Expression.BinaryOperation.BAND);
+        break;
+      case BORK:
+        handle54BinKOp(operations, state, line, Expression.BinaryOperation.BOR);
+        break;
+      case BXORK:
+        handle54BinKOp(operations, state, line, Expression.BinaryOperation.BXOR);
+        break;
+      case SHRI: {
+        int immediate = code.sC(line);
+        Expression.BinaryOperation op = Expression.BinaryOperation.SHR;
+        if(immediate < 0) {
+          immediate = -immediate;
+          op = Expression.BinaryOperation.SHL;
+        }
+        operations.add(new RegisterSet(line, A, Expression.make(op, r.getExpression(B, line), ConstantExpression.createInteger(immediate))));
+        break;
+      }
+      case SHLI: {
+        operations.add(new RegisterSet(line, A, Expression.make(Expression.BinaryOperation.SHL, ConstantExpression.createInteger(code.sC(line)), r.getExpression(B, line))));
+        break;
+      }
+      case MMBIN:
+      case MMBINI:
+      case MMBINK:
+        /* Do nothing ... handled with preceding operation. */
         break;
       case UNM:
-        operations.add(new RegisterSet(line, A, Expression.makeUNM(r.getExpression(B, line))));
+        handleUnaryOp(operations, state, line, Expression.UnaryOperation.UNM);
         break;
       case NOT:
-        operations.add(new RegisterSet(line, A, Expression.makeNOT(r.getExpression(B, line))));
+        handleUnaryOp(operations, state, line, Expression.UnaryOperation.NOT);
         break;
       case LEN:
-        operations.add(new RegisterSet(line, A, Expression.makeLEN(r.getExpression(B, line))));
+        handleUnaryOp(operations, state, line, Expression.UnaryOperation.LEN);
         break;
       case BNOT:
-        operations.add(new RegisterSet(line, A, Expression.makeBNOT(r.getExpression(B, line))));
+        handleUnaryOp(operations, state, line, Expression.UnaryOperation.BNOT);
         break;
       case CONCAT: {
         Expression value = r.getExpression(C, line);
         //Remember that CONCAT is right associative.
         while(C-- > B) {
-          value = Expression.makeCONCAT(r.getExpression(C, line), value);
+          value = Expression.make(Expression.BinaryOperation.CONCAT, r.getExpression(C, line), value);
         }
         operations.add(new RegisterSet(line, A, value));        
         break;
       }
-      case JMP:
-      case JMP52:
-      case EQ:
-      case LT:
-      case LE:
-      case TEST:
-      case TESTSET:
-      case TEST50:
+      case CONCAT54: {
+        if(B < 2) throw new IllegalStateException();
+        B--;
+        Expression value = r.getExpression(A + B, line);
+        while(B-- > 0) {
+          value = Expression.make(Expression.BinaryOperation.CONCAT, r.getExpression(A + B, line), value);
+        }
+        operations.add(new RegisterSet(line, A, value));        
+        break;
+      }
+      case JMP: case JMP52: case JMP54:
+      case EQ: case LT: case LE:
+      case EQ54: case LT54: case LE54:
+      case EQK: case EQI: case LTI: case LEI: case GTI: case GEI:
+      case TEST50: case TEST: case TEST54: case TESTSET: case TESTSET54:
         /* Do nothing ... handled with branches */
         break;
       case CALL: {
@@ -368,7 +565,8 @@ public class Decompiler {
         }
         break;
       }
-      case TAILCALL: {
+      case TAILCALL:
+      case TAILCALL54: {
         if(B == 0) B = registers - A;
         Expression function = r.getExpression(A, line);
         Expression[] arguments = new Expression[B - 1];
@@ -380,7 +578,8 @@ public class Decompiler {
         skip[line + 1] = true;
         break;
       }
-      case RETURN: {
+      case RETURN:
+      case RETURN54: {
         if(B == 0) B = registers - A + 1;
         Expression[] values = new Expression[B - 1];
         for(int register = A; register <= A + B - 2; register++) {
@@ -389,49 +588,64 @@ public class Decompiler {
         operations.add(new ReturnOperation(line, values));
         break;
       }
-      case FORLOOP:
-      case FORPREP:
-      case TFORPREP:
-      case TFORCALL:
-      case TFORLOOP:
-      case TFORLOOP52:
+      case RETURN0:
+        operations.add(new ReturnOperation(line, new Expression[0]));
+        break;
+      case RETURN1:
+        operations.add(new ReturnOperation(line, new Expression[] {r.getExpression(A, line)}));
+        break;
+      case FORLOOP: case FORLOOP54:
+      case FORPREP: case FORPREP54:
+      case TFORPREP: case TFORPREP54:
+      case TFORCALL: case TFORCALL54:
+      case TFORLOOP: case TFORLOOP52: case TFORLOOP54:
         /* Do nothing ... handled with branches */
         break;
-      case SETLIST50:
-      case SETLISTO: {
-        Expression table = r.getValue(A, line);
-        int n;
-        if(code.op(line) == Op.SETLISTO) {
-          n = registers - A - 1;
-        } else {
-          n = 1 + Bx % 32;
-        }
-        int constant = Bx - Bx % 32;
-        for(int i = 1; i <= n; i++) {
-          operations.add(new TableSet(line, table, new ConstantExpression(new Constant(constant + i), -1), r.getExpression(A + i, line), false, r.getUpdated(A + i, line)));
-        }
+      case SETLIST50: {
+        handleSetList(operations, state, line, A, 1 + Bx % 32, Bx - Bx % 32);
         break;
       }
-      case SETLIST:
-      case SETLIST52: {
+      case SETLISTO: {
+        handleSetList(operations, state, line, A, registers - A - 1, Bx - Bx % 32);
+        break;
+      }
+      case SETLIST: {
         if(C == 0) {
-          if(code.op(line) == Op.SETLIST) {
-            C = code.codepoint(line + 1);
-          } else {
-            if(line + 1 > code.length || code.op(line + 1) != Op.EXTRAARG) throw new IllegalStateException();
-            C = code.Ax(line + 1);
-          }
+          C = code.codepoint(line + 1);
           skip[line + 1] = true;
         }
         if(B == 0) {
           B = registers - A - 1;
         }
-        Expression table = r.getValue(A, line);
-        for(int i = 1; i <= B; i++) {
-          operations.add(new TableSet(line, table, new ConstantExpression(new Constant((C - 1) * 50 + i), -1), r.getExpression(A + i, line), false, r.getUpdated(A + i, line)));
-        }
+        handleSetList(operations, state, line, A, B, (C - 1) * 50);
         break;
       }
+      case SETLIST52: {
+        if(C == 0) {
+          if(line + 1 > code.length || code.op(line + 1) != Op.EXTRAARG) throw new IllegalStateException();
+          C = code.Ax(line + 1);
+          skip[line + 1] = true;
+        }
+        if(B == 0) {
+          B = registers - A - 1;
+        }
+        handleSetList(operations, state, line, A, B, (C - 1) * 50);
+        break;
+      }
+      case SETLIST54: {
+        if(code.k(line)) {
+          if(line + 1 > code.length || code.op(line + 1) != Op.EXTRAARG) throw new IllegalStateException();
+          C += code.Ax(line + 1) * (code.getExtractor().C.max() + 1);
+          skip[line + 1] = true;
+        }
+        if(B == 0) {
+          B = registers - A - 1;
+        }
+        handleSetList(operations, state, line, A, B, C);
+        break;
+      }
+      case TBC:
+        break;
       case CLOSE:
         break;
       case CLOSURE: {
@@ -445,12 +659,23 @@ public class Decompiler {
         }
         break;
       }
+      case VARARGPREP:
+        /* Do nothing ... internal operation */
+        break;
       case VARARG: {
         boolean multiple = (B != 2);
         if(B == 1) throw new IllegalStateException();
         if(B == 0) B = registers - A + 1;
         Expression value = new Vararg(B - 1, multiple);
         operations.add(new MultipleRegisterSet(line, A, A + B - 2, value));
+        break;
+      }
+      case VARARG54: {
+        boolean multiple = (C != 2);
+        if(C == 1) throw new IllegalStateException();
+        if(C == 0) C = registers - A + 1;
+        Expression value = new Vararg(C - 1, multiple);
+        operations.add(new MultipleRegisterSet(line, A, A + C - 2, value));
         break;
       }
       case EXTRAARG:
@@ -480,13 +705,21 @@ public class Decompiler {
           }
         }
         //System.out.println("-- checking for multiassign @" + nextLine);
-        while(!declare && nextLine < block.end && isMoveIntoTarget(r, nextLine)) {
-          //System.out.println("-- found multiassign @" + nextLine);
-          Target target = getMoveIntoTargetTarget(r, nextLine, line + 1);
-          Expression value = getMoveIntoTargetValue(r, nextLine, line + 1); //updated?
-          assign.addFirst(target, value, nextLine);
-          skip[nextLine] = true;
-          nextLine++;
+        while(!declare && nextLine < block.end) {
+          Op op = code.op(nextLine);
+          if(isMoveIntoTarget(r, nextLine)) {
+            //System.out.println("-- found multiassign @" + nextLine);
+            Target target = getMoveIntoTargetTarget(r, nextLine, line + 1);
+            Expression value = getMoveIntoTargetValue(r, nextLine, line + 1); //updated?
+            assign.addFirst(target, value, nextLine);
+            skip[nextLine] = true;
+            nextLine++;
+          } else if(op == Op.MMBIN || op == Op.MMBINI || op == Op.MMBINK) {
+            // skip
+            nextLine++;
+          } else {
+            break;
+          }
         }
       }
       
@@ -652,6 +885,16 @@ public class Decompiler {
           return !r.isLocal(C, line);
         }
       }
+      case SETTABLE54:
+      case SETI:
+      case SETFIELD:
+      case SETTABUP54: {
+        if(code.k(line)) {
+          return false;
+        } else {
+          return !r.isLocal(code.C(line), line);
+        }
+      }
       default:
         return false;
     }
@@ -667,10 +910,21 @@ public class Decompiler {
         return new GlobalTarget(f.getGlobalName(code.Bx(line)));
       case SETTABLE:
         return new TableTarget(r.getExpression(code.A(line), previous), r.getKExpression(code.B(line), previous));
+      case SETTABLE54:
+        return new TableTarget(r.getExpression(code.A(line), previous), r.getExpression(code.B(line), previous));
+      case SETI:
+        return new TableTarget(r.getExpression(code.A(line), previous), ConstantExpression.createInteger(code.B(line)));
+      case SETFIELD:
+        return new TableTarget(r.getExpression(code.A(line), previous), f.getConstantExpression(code.B(line)));
       case SETTABUP: {
         int A = code.A(line);
         int B = code.B(line);
         return new TableTarget(upvalues.getExpression(A), r.getKExpression(B, previous));
+      }
+      case SETTABUP54: {
+        int A = code.A(line);
+        int B = code.B(line);
+        return new TableTarget(upvalues.getExpression(A), f.getConstantExpression(B));
       }
       default:
         throw new IllegalStateException();
@@ -690,6 +944,12 @@ public class Decompiler {
       case SETTABLE:
       case SETTABUP:
         if(f.isConstant(C)) {
+          throw new IllegalStateException();
+        } else {
+          return r.getExpression(C, previous);
+        }
+      case SETTABUP54:
+        if(code.k(line)) {
           throw new IllegalStateException();
         } else {
           return r.getExpression(C, previous);

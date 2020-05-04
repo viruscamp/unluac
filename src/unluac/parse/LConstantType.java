@@ -25,6 +25,10 @@ public abstract class LConstantType extends BObjectType<LObject> {
     return new LConstantType53();
   }
   
+  public static LConstantType54 getType54() {
+    return new LConstantType54();
+  }
+  
 }
 
 class LConstantType50 extends LConstantType {
@@ -126,6 +130,57 @@ class LConstantType53 extends LConstantType {
         return header.lfloat.parse(buffer, header);
       case 0x13:
         return header.linteger.parse(buffer, header);
+      case 4:
+      case 0x14:
+        return header.string.parse(buffer, header);
+      default:
+        throw new IllegalStateException();
+    }
+  }
+  
+  @Override
+  public void write(OutputStream out, BHeader header, LObject object) throws IOException {
+    if(object instanceof LNil) {
+      out.write(0);
+    } else if(object instanceof LBoolean) {
+      out.write(1);
+      header.bool.write(out, header, (LBoolean)object);
+    } else if(object instanceof LNumber) {
+      LNumber n = (LNumber)object;
+      if(!n.integralType()) {
+        out.write(3);
+        header.lfloat.write(out, header, (LNumber)object);
+      } else {
+        out.write(0x13);
+        header.linteger.write(out, header, (LNumber)object);
+      }
+    } else if(object instanceof LString) {
+      out.write(4);
+      // TODO: long strings?
+      header.string.write(out, header, (LString)object);
+    } else {
+      throw new IllegalStateException();
+    }
+  }
+  
+}
+
+class LConstantType54 extends LConstantType {
+
+  @Override
+  public LObject parse(ByteBuffer buffer, BHeader header) {
+    int type = 0xFF & buffer.get();
+    switch(type) {
+      case 0:
+        return LNil.NIL;
+      case 1:
+        return LBoolean.LFALSE;
+      case 0x11:
+        return LBoolean.LTRUE;
+      case 3:
+        return header.linteger.parse(buffer, header);
+      case 0x13:
+        return header.lfloat.parse(buffer, header);
       case 4:
       case 0x14:
         return header.string.parse(buffer, header);

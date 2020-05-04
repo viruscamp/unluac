@@ -21,8 +21,6 @@ import unluac.decompile.block.IfThenEndBlock;
 import unluac.decompile.block.OnceLoop;
 import unluac.decompile.block.RepeatBlock;
 import unluac.decompile.block.SetBlock;
-import unluac.decompile.block.TForBlock50;
-import unluac.decompile.block.TForBlock51;
 import unluac.decompile.block.WhileBlock;
 import unluac.decompile.block.OuterBlock;
 import unluac.decompile.block.TForBlock;
@@ -183,18 +181,33 @@ public class ControlFlowHandler {
   
   private static int find_loadboolblock(State state, int target) {
     int loadboolblock = -1;
-    if(state.code.op(target) == Op.LOADBOOL) {
+    Op op = state.code.op(target);
+    if(op == Op.LOADBOOL) {
       if(state.code.C(target) != 0) {
         loadboolblock = target;
       } else if(target - 1 >= 1 && state.code.op(target - 1) == Op.LOADBOOL && state.code.C(target - 1) != 0) {
         loadboolblock = target - 1;
       }
+    } else if(op == Op.LFALSESKIP) {
+      loadboolblock = target;
+    } else if(target - 1 >= 1 && op == Op.LOADTRUE && state.code.op(target - 1) == Op.LFALSESKIP) {
+      loadboolblock = target - 1;
     }
     return loadboolblock;
   }
   
   private static void handle_loadboolblock(State state, boolean[] skip, int loadboolblock, Condition c, int line, int target) {
-    int loadboolvalue = state.code.B(target);
+    boolean loadboolvalue;
+    Op op = state.code.op(target);
+    if(op == Op.LOADBOOL) {
+      loadboolvalue = state.code.B(target) != 0;
+    } else if(op == Op.LFALSESKIP) {
+      loadboolvalue = false;
+    } else if(op == Op.LOADTRUE) {
+      loadboolvalue = true;
+    } else {
+      throw new IllegalStateException();
+    }
     int final_line = -1;
     if(loadboolblock - 1 >= 1 && is_jmp(state, loadboolblock - 1)) {
       int boolskip_target = state.code.target(loadboolblock - 1);
@@ -208,7 +221,7 @@ public class ControlFlowHandler {
       }
     }
     boolean inverse = false;
-    if(loadboolvalue == 1) {
+    if(loadboolvalue) {
       inverse = true;
       c = c.inverse();
     }
@@ -251,32 +264,31 @@ public class ControlFlowHandler {
     }
   }
   
-  private static void handle_test(State state, boolean[] skip, int line, Condition c, int target, boolean constant) {
+  private static void handle_test(State state, boolean[] skip, int line, Condition c, int target, boolean constant, boolean invert) {
     Code code = state.code;
     int loadboolblock = find_loadboolblock(state, target);
     if(loadboolblock >= 1) {
-      if(!constant && code.C(line) != 0) c = c.inverse();
+      if(!constant && invert) c = c.inverse();
       handle_loadboolblock(state, skip, loadboolblock, c, line, target);
     } else {
       int ploadboolblock = !constant && target - 2 >= 1 ? find_loadboolblock(state, target - 2) : -1;
       if(ploadboolblock != -1 && ploadboolblock == target - 2 && code.A(target - 2) == c.register() && !has_statement(state, line + 2, target - 3)) {
-        handle_testset(state, skip, line, c, target, c.register());
+        handle_testset(state, skip, line, c, target, c.register(), invert);
       } else {
-        if(!constant && code.C(line) != 0) c = c.inverse();
+        if(!constant && invert) c = c.inverse();
         Branch b = new Branch(line, line, constant ? Branch.Type.testset : Branch.Type.test, c, line + 2, target);
         b.target = code.A(line);
-        if(code.C(line) != 0) b.inverseValue = true;
+        if(invert) b.inverseValue = true;
         insert_branch(state, b);
       }
     }
     skip[line + 1] = true;
   }
   
-  private static void handle_testset(State state, boolean[] skip, int line, Condition c, int target, int register) {
-    Code code = state.code;
+  private static void handle_testset(State state, boolean[] skip, int line, Condition c, int target, int register, boolean invert) {
     Branch b = new Branch(line, line, Branch.Type.testset, c, line + 2, target);
     b.target = register;
-    if(code.C(line) != 0) b.inverseValue = true;
+    if(invert) b.inverseValue = true;
     skip[line + 1] = true;
     insert_branch(state, b);
     int final_line = target - 1;
@@ -287,7 +299,7 @@ public class ControlFlowHandler {
         if(line + 2 == target) {
           c = new RegisterSetCondition(line, get_target(state, line));
           final_line = final_line + 1;
-        } else if(code.op(final_line) != Op.JMP && code.op(final_line) != Op.JMP52) {
+        } else if(!is_jmp_raw(state, final_line)) {
           c = new SetCondition(final_line, get_target(state, final_line));
         }
         if(c != null) {
@@ -299,6 +311,24 @@ public class ControlFlowHandler {
     }
   }
   
+  private static void process_condition(State state, boolean[] skip, int line, Condition c, boolean invert) {
+    int target = state.code.target(line + 1);
+    if(invert) {
+      c = c.inverse();
+    }
+    int loadboolblock = find_loadboolblock(state, target);
+    if(loadboolblock >= 1) {
+      handle_loadboolblock(state, skip, loadboolblock, c, line, target);
+    } else {
+      Branch b = new Branch(line, line, Branch.Type.comparison, c, line + 2, target);
+      if(invert) {
+        b.inverseValue = true;
+      }
+      insert_branch(state, b);
+    }
+    skip[line + 1] = true;
+  }
+  
   private static void find_branches(State state) {
     Code code = state.code;
     state.branches = new Branch[state.code.length + 1];
@@ -308,39 +338,58 @@ public class ControlFlowHandler {
     for(int line = 1; line <= code.length; line++) {
       if(!skip[line]) {
         switch(code.op(line)) {
-          case EQ:
-          case LT:
-          case LE: {
+          case EQ: case LT: case LE: {
             BinaryCondition.Operator op = BinaryCondition.Operator.EQ;
             if(code.op(line) == Op.LT) op = BinaryCondition.Operator.LT;
             if(code.op(line) == Op.LE) op = BinaryCondition.Operator.LE;
-            int left = code.B(line);
-            int right = code.C(line);
-            int target = code.target(line + 1);
+            Condition.Operand left = new BinaryCondition.Operand(Condition.OperandType.RK, code.B(line));
+            Condition.Operand right = new BinaryCondition.Operand(Condition.OperandType.RK, code.C(line));
             Condition c = new BinaryCondition(op, line, left, right);
-            if(code.A(line) == 1) {
-              c = c.inverse();
+            process_condition(state, skip, line, c, code.A(line) != 0);
+            break;
+          }
+          case EQ54: case LT54: case LE54: {
+            BinaryCondition.Operator op = BinaryCondition.Operator.EQ;
+            if(code.op(line) == Op.LT54) op = BinaryCondition.Operator.LT;
+            if(code.op(line) == Op.LE54) op = BinaryCondition.Operator.LE;
+            Condition.Operand left = new Condition.Operand(Condition.OperandType.R, code.A(line));
+            Condition.Operand right = new Condition.Operand(Condition.OperandType.R, code.B(line));
+            Condition c = new BinaryCondition(op, line, left, right);
+            process_condition(state, skip, line, c, code.k(line));
+            break;
+          }
+          case EQK: {
+            BinaryCondition.Operator op = BinaryCondition.Operator.EQ;
+            Condition.Operand left = new Condition.Operand(Condition.OperandType.R, code.A(line));
+            Condition.Operand right = new Condition.Operand(Condition.OperandType.K, code.B(line));
+            Condition c = new BinaryCondition(op, line, left, right);
+            process_condition(state, skip, line, c, code.k(line));
+            break;
+          }
+          case EQI: case LTI: case LEI: case GTI: case GEI: {
+            BinaryCondition.Operator op = BinaryCondition.Operator.EQ;
+            if(code.op(line) == Op.LTI) op = BinaryCondition.Operator.LT;
+            if(code.op(line) == Op.LEI) op = BinaryCondition.Operator.LE;
+            if(code.op(line) == Op.GTI) op = BinaryCondition.Operator.LT;
+            if(code.op(line) == Op.GEI) op = BinaryCondition.Operator.LE;
+            Condition.Operand left = new Condition.Operand(Condition.OperandType.R, code.A(line));
+            Condition.Operand right = new Condition.Operand(Condition.OperandType.I, code.sB(line));
+            if(code.op(line) == Op.GTI || code.op(line) == Op.GEI) {
+              Condition.Operand swap = left;
+              left = right;
+              right = swap;
             }
-            int loadboolblock = find_loadboolblock(state, target);
-            if(loadboolblock >= 1) {
-              handle_loadboolblock(state, skip, loadboolblock, c, line, target);
-            } else {
-              Branch b = new Branch(line, line, Branch.Type.comparison, c, line + 2, target);
-              if(code.A(line) == 1) {
-                b.inverseValue = true;
-              }
-              insert_branch(state, b);
-            }
-            skip[line + 1] = true;
+            Condition c = new BinaryCondition(op, line, left, right);
+            process_condition(state, skip, line, c, code.k(line));
             break;
           }
           case TEST50: {
             Condition c = new TestCondition(line, code.B(line));
             int target = code.target(line + 1);
             if(code.A(line) == code.B(line)) {
-              handle_test(state, skip, line, c, target, false);
+              handle_test(state, skip, line, c, target, false, code.C(line) != 0);
             } else {
-              handle_testset(state, skip, line, c, target, code.A(line));
+              handle_testset(state, skip, line, c, target, code.A(line), code.C(line) != 0);
             }
             break;
           }
@@ -354,17 +403,35 @@ public class ControlFlowHandler {
               }
             }
             c = new TestCondition(line, code.A(line));
-            handle_test(state, skip, line, c, target, constant);
+            handle_test(state, skip, line, c, target, constant, code.C(line) != 0);
+            break;
+          }
+          case TEST54: {
+            Condition c;
+            boolean constant = false;
+            int target = code.target(line + 1);
+            if(line - 1 >= 1 && code.op(line - 1) == Op.LOADTRUE && code.A(line - 1) == code.A(line)) {
+              if(target <= code.length && target - 2 >= 1 && code.op(target - 2) == Op.LFALSESKIP) {
+                constant = true;
+              }
+            }
+            c = new TestCondition(line, code.A(line));
+            handle_test(state, skip, line, c, target, constant, code.k(line));
             break;
           }
           case TESTSET: {
             Condition c = new TestCondition(line, code.B(line));
             int target = code.target(line + 1);
-            handle_testset(state, skip, line, c, target, code.A(line));
+            handle_testset(state, skip, line, c, target, code.A(line), code.C(line) != 0);
             break;
           }
-          case JMP:
-          case JMP52: {
+          case TESTSET54: {
+            Condition c = new TestCondition(line, code.B(line));
+            int target = code.target(line + 1);
+            handle_testset(state, skip, line, c, target, code.A(line), code.k(line));
+            break;
+          }
+          case JMP: case JMP52: case JMP54: {
             if(is_jmp(state, line)) {
               int target = code.target(line);
               int loadboolblock = find_loadboolblock(state, target);
@@ -434,7 +501,7 @@ public class ControlFlowHandler {
             innerClose = true;
           }
           
-          TForBlock block = new TForBlock51(state.function, line + 1, target + 2, A, C, forvarClose, innerClose);
+          TForBlock block = TForBlock.make51(state.function, line + 1, target + 2, A, C, forvarClose, innerClose);
           block.handleVariableDeclarations(r);
           blocks.add(block);
         } else if(code.op(target) == forTarget && !loop[target]) {
@@ -480,6 +547,15 @@ public class ControlFlowHandler {
           blocks.add(block);
           break;
         }
+        case FORPREP54: {
+          int A = code.A(line);
+          int target = code.target(line);
+          
+          ForBlock block = new ForBlock51(state.function, line + 1, target + 1, A, false, false);
+          block.handleVariableDeclarations(r);
+          blocks.add(block);
+          break;
+        }
         case TFORPREP: {
           int target = code.target(line);
           int A = code.A(target);
@@ -491,10 +567,20 @@ public class ControlFlowHandler {
             innerClose = true;
           }
           
-          TForBlock block = new TForBlock50(state.function, line + 1, target + 2, A, C, innerClose);
+          TForBlock block = TForBlock.make50(state.function, line + 1, target + 2, A, C + 1, innerClose);
           block.handleVariableDeclarations(r);
           blocks.add(block);
           remove_branch(state, state.branches[target + 1]);
+          break;
+        }
+        case TFORPREP54: {
+          int target = code.target(line);
+          int A = code.A(line);
+          int C = code.C(target);
+          
+          TForBlock block = TForBlock.make54(state.function, line + 1, target + 2, A, C);
+          block.handleVariableDeclarations(r);
+          blocks.add(block);
           break;
         }
         default:
@@ -2037,11 +2123,15 @@ public class ControlFlowHandler {
         // Special handling for table literals
         //  also TESTSET (since line will be JMP)
         switch(op) {
-        case SETLIST:
-        case SETLISTO:
         case SETLIST50:
+        case SETLISTO:
+        case SETLIST:
         case SETLIST52:
+        case SETLIST54:
         case SETTABLE:
+        case SETTABLE54:
+        case SETI:
+        case SETFIELD:
           target = code.A(line);
           break;
         case EXTRABYTE:
@@ -2056,8 +2146,10 @@ public class ControlFlowHandler {
           break;
         case JMP:
         case JMP52:
+        case JMP54:
           if(line >= 2) {
-            if(code.op(line - 1) == Op.TESTSET || code.op(line - 1) == Op.TEST50) {
+            Op prev = code.op(line - 1);
+            if(prev == Op.TEST50 || prev == Op.TESTSET || prev == Op.TESTSET54) {
               target = code.op(line - 1).target(code.codepoint(line - 1), code.getExtractor());
             }
           }
@@ -2072,13 +2164,13 @@ public class ControlFlowHandler {
   
   private static boolean is_jmp_raw(State state, int line) {
     Op op = state.code.op(line);
-    return op == Op.JMP || op == Op.JMP52;
+    return op == Op.JMP || op == Op.JMP52 || op == Op.JMP54;
   }
   
   private static boolean is_jmp(State state, int line) {
     Code code = state.code;
     Op op = code.op(line);
-    if(op == Op.JMP) {
+    if(op == Op.JMP || op == Op.JMP54) {
       return true;
     } else if(op == Op.JMP52) {
       return !is_close(state, line);
@@ -2125,34 +2217,22 @@ public class ControlFlowHandler {
     if(code.isUpvalueDeclaration(line)) return false;
     switch(code.op(line)) {
       case MOVE:
-      case LOADK:
-      case LOADKX:
-      case LOADBOOL:
-      case GETUPVAL:
-      case GETTABUP:
+      case LOADI: case LOADF: case LOADK: case LOADKX:
+      case LOADBOOL: case LOADFALSE: case LOADTRUE: case LFALSESKIP:
       case GETGLOBAL:
-      case GETTABLE:
-      case NEWTABLE:
-      case NEWTABLE50:
-      case ADD:
-      case SUB:
-      case MUL:
-      case DIV:
-      case MOD:
-      case POW:
-      case IDIV:
-      case BAND:
-      case BOR:
-      case BXOR:
-      case SHL:
-      case SHR:
-      case UNM:
-      case NOT:
-      case LEN:
-      case BNOT:
-      case CONCAT:
+      case GETUPVAL:
+      case GETTABUP: case GETTABUP54:
+      case GETTABLE: case GETTABLE54: case GETI: case GETFIELD:
+      case NEWTABLE50: case NEWTABLE: case NEWTABLE54:
+      case ADD: case SUB: case MUL: case DIV: case IDIV: case MOD: case POW: case BAND: case BOR: case BXOR: case SHL: case SHR:
+      case ADD54: case SUB54: case MUL54: case DIV54: case IDIV54: case MOD54: case POW54: case BAND54: case BOR54: case BXOR54: case SHL54: case SHR54:
+      case ADDK: case SUBK: case MULK: case DIVK: case IDIVK: case MODK: case POWK: case BANDK: case BORK: case BXORK:
+      case ADDI: case SHLI: case SHRI:
+      case MMBIN: case MMBINI: case MMBINK:
+      case UNM: case NOT: case LEN: case BNOT:
+      case CONCAT: case CONCAT54:
       case CLOSURE:
-      case TESTSET:
+      case TESTSET: case TESTSET54:
         return r.isLocal(code.A(line), line);
       case LOADNIL:
         for(int register = code.A(line); register <= code.B(line); register++) {
@@ -2170,34 +2250,33 @@ public class ControlFlowHandler {
         return false;
       case SETGLOBAL:
       case SETUPVAL:
-      case SETTABUP:
-      case TAILCALL:
-      case RETURN:
-      case FORLOOP:
-      case FORPREP:
-      case TFORCALL:
-      case TFORLOOP:
-      case TFORLOOP52:
-      case TFORPREP:
+      case SETTABUP: case SETTABUP54:
+      case TAILCALL: case TAILCALL54:
+      case RETURN: case RETURN54: case RETURN0: case RETURN1:
+      case FORLOOP: case FORLOOP54:
+      case FORPREP: case FORPREP54:
+      case TFORCALL: case TFORCALL54:
+      case TFORLOOP: case TFORLOOP52: case TFORLOOP54:
+      case TFORPREP: case TFORPREP54:
       case CLOSE:
+      case TBC: // TODO: ?
         return true;
       case TEST50:
         return code.A(line) != code.B(line) && r.isLocal(code.A(line), line);
-      case SELF:
+      case SELF: case SELF54:
         return r.isLocal(code.A(line), line) || r.isLocal(code.A(line) + 1, line);
-      case EQ:
-      case LT:
-      case LE:
-      case TEST:
-      case SETLIST:
-      case SETLIST52:
-      case SETLIST50:
-      case SETLISTO:
+      case EQ: case LT: case LE:
+      case EQ54: case LT54: case LE54:
+      case EQK: case EQI: case LTI: case LEI: case GTI: case GEI:
+      case TEST: case TEST54:
+      case SETLIST50: case SETLISTO: case SETLIST: case SETLIST52: case SETLIST54:
+      case VARARGPREP:
       case EXTRAARG:
       case EXTRABYTE:
         return false;
       case JMP:
       case JMP52: // TODO: CLOSE?
+      case JMP54:
         if(line == 1) {
           return true;
         } else {
@@ -2206,10 +2285,22 @@ public class ControlFlowHandler {
           if(prev == Op.EQ) return false;
           if(prev == Op.LT) return false;
           if(prev == Op.LE) return false;
-          if(prev == Op.TEST) return false;
-          if(prev == Op.TESTSET) return false;
+          if(prev == Op.EQ54) return false;
+          if(prev == Op.LT54) return false;
+          if(prev == Op.LE54) return false;
+          if(prev == Op.EQK) return false;
+          if(prev == Op.EQI) return false;
+          if(prev == Op.LTI) return false;
+          if(prev == Op.LEI) return false;
+          if(prev == Op.GTI) return false;
+          if(prev == Op.GEI) return false;
           if(prev == Op.TEST50) return false;
+          if(prev == Op.TEST) return false;
+          if(prev == Op.TEST54) return false;
+          if(prev == Op.TESTSET) return false;
+          if(prev == Op.TESTSET54) return false;
           if(next == Op.LOADBOOL && code.C(line + 1) != 0) return false;
+          if(next == Op.LFALSESKIP) return false;
           return true;
         }
       case CALL: {
@@ -2237,7 +2328,19 @@ public class ControlFlowHandler {
         }
         return false;
       }
-      case SETTABLE:
+      case VARARG54: {
+        int a = code.A(line);
+        int c = code.C(line);
+        if(c == 0) c = r.registers - a + 1;
+        for(int register = a; register < a + c - 1; register++) {
+          if(r.isLocal(register, line)) {
+            return true;
+          }
+        }
+        return false;
+      }
+      case SETTABLE: case SETTABLE54:
+      case SETI: case SETFIELD:
         // special case -- this is actually ambiguous and must be resolved by the decompiler check
         return false;
     }

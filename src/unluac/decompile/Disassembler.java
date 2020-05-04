@@ -1,6 +1,5 @@
 package unluac.decompile;
 
-import unluac.Version;
 import unluac.assemble.Directive;
 import unluac.parse.LFunction;
 import unluac.parse.LLocal;

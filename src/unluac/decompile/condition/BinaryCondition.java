@@ -23,15 +23,15 @@ public class BinaryCondition implements Condition {
   
   private final Operator op;
   private final int line;
-  private final int left;
-  private final int right;
+  private final Operand left;
+  private final Operand right;
   private final boolean inverted;
   
-  public BinaryCondition(Operator op, int line, int left, int right) {
+  public BinaryCondition(Operator op, int line, Operand left, Operand right) {
     this(op, line, left, right, false);
   }
   
-  private BinaryCondition(Operator op, int line, int left, int right, boolean inverted) {
+  private BinaryCondition(Operator op, int line, Operand left, Operand right, boolean inverted) {
     this.op = op;
     this.line = line;
     this.left = left;
@@ -81,11 +81,11 @@ public class BinaryCondition implements Condition {
   @Override
   public Expression asExpression(Registers r) {
     boolean transpose = false;
-    Expression leftExpression = r.getKExpression(left, line);
-    Expression rightExpression = r.getKExpression(right, line);
+    Expression leftExpression = left.asExpression(r, line);
+    Expression rightExpression = right.asExpression(r, line);
     if(op != Operator.EQ) {
-      if(!r.isKConstant(left) && !r.isKConstant(right)) {
-        transpose = r.getUpdated(left, line) > r.getUpdated(right, line);
+      if(left.isRegister(r) && right.isRegister(r)) {
+        transpose = left.getUpdated(r, line) > right.getUpdated(r, line);
       } else {
         transpose = rightExpression.getConstantIndex() < leftExpression.getConstantIndex();
       }

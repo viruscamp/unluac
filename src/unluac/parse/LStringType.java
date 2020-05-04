@@ -25,6 +25,10 @@ public abstract class LStringType extends BObjectType<LString> {
     return new LStringType53(version);
   }
   
+  public static LStringType54 getType54(Version version) {
+    return new LStringType54(version);
+  }
+  
   protected LStringType(Version version) {
     this.version = version;
   }
@@ -136,3 +140,40 @@ class LStringType53 extends LStringType {
     }
   }
 }
+
+class LStringType54 extends LStringType {
+  
+  LStringType54(Version version) { super(version); }
+  
+  @Override
+  public LString parse(final ByteBuffer buffer, BHeader header) {
+    BInteger sizeT = header.sizeT.parse(buffer, header);
+    final StringBuilder b = this.b.get();
+    b.setLength(0);
+    sizeT.iterate(new Runnable() {
+      
+      boolean first = true;
+      
+      @Override
+      public void run() {
+        if(!first) {
+          b.append((char) (0xFF & buffer.get()));
+        } else {
+          first = false;
+        }
+      }
+      
+    });
+    String s = b.toString();
+    if(header.debug) {
+      System.out.println("-- parsed <string> \"" + s + "\"");
+    }
+    return new LString(version, s);
+  }
+  
+  @Override
+  public void write(OutputStream out, BHeader header, LString string) throws IOException {
+    throw new IllegalStateException();
+  }
+}
+

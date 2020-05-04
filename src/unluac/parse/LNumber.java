@@ -6,6 +6,10 @@ public abstract class LNumber extends LObject {
     return new LIntNumber(number);
   }
   
+  public static LNumber makeDouble(double x) {
+    return new LDoubleNumber(x, LNumberType.NumberMode.MODE_FLOAT);
+  }
+  
   @Override
   public abstract String toString();
     

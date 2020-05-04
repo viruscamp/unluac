@@ -64,10 +64,84 @@ public enum Op {
   SHL(OperandFormat.AR, OperandFormat.BRK, OperandFormat.CRK),
   SHR(OperandFormat.AR, OperandFormat.BRK, OperandFormat.CRK),
   BNOT(OperandFormat.AR, OperandFormat.BR),
+  // Lua 5.4 Opcodes
+  LOADI(OperandFormat.AR, OperandFormat.sBxI),
+  LOADF(OperandFormat.AR, OperandFormat.sBxF),
+  LOADFALSE(OperandFormat.AR),
+  LFALSESKIP(OperandFormat.AR),
+  LOADTRUE(OperandFormat.AR),
+  GETTABUP54(OperandFormat.AR, OperandFormat.BU, OperandFormat.CKS),
+  GETTABLE54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CR),
+  GETI(OperandFormat.AR, OperandFormat.BR, OperandFormat.CI),
+  GETFIELD(OperandFormat.AR, OperandFormat.BR, OperandFormat.CKS),
+  SETTABUP54(OperandFormat.AU, OperandFormat.BK, OperandFormat.CRK),
+  SETTABLE54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CRK),
+  SETI(OperandFormat.AR, OperandFormat.BI, OperandFormat.CRK),
+  SETFIELD(OperandFormat.AR, OperandFormat.BKS, OperandFormat.CRK),
+  NEWTABLE54(OperandFormat.AR, OperandFormat.B, OperandFormat.C),
+  SELF54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CRK),
+  ADDI(OperandFormat.AR, OperandFormat.BR, OperandFormat.CsI),
+  ADDK(OperandFormat.AR, OperandFormat.BR, OperandFormat.CK),
+  SUBK(OperandFormat.AR, OperandFormat.BR, OperandFormat.CK),
+  MULK(OperandFormat.AR, OperandFormat.BR, OperandFormat.CK),
+  MODK(OperandFormat.AR, OperandFormat.BR, OperandFormat.CK),
+  POWK(OperandFormat.AR, OperandFormat.BR, OperandFormat.CK),
+  DIVK(OperandFormat.AR, OperandFormat.BR, OperandFormat.CK),
+  IDIVK(OperandFormat.AR, OperandFormat.BR, OperandFormat.CK),
+  BANDK(OperandFormat.AR, OperandFormat.BR, OperandFormat.CKI),
+  BORK(OperandFormat.AR, OperandFormat.BR, OperandFormat.CKI),
+  BXORK(OperandFormat.AR, OperandFormat.BR, OperandFormat.CKI),
+  SHRI(OperandFormat.AR, OperandFormat.BR, OperandFormat.CsI),
+  SHLI(OperandFormat.AR, OperandFormat.CsI, OperandFormat.BR),
+  ADD54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CR),
+  SUB54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CR),
+  MUL54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CR),
+  MOD54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CR),
+  POW54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CR),
+  DIV54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CR),
+  IDIV54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CR),
+  BAND54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CR),
+  BOR54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CR),
+  BXOR54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CR),
+  SHL54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CR),
+  SHR54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CR),
+  MMBIN(OperandFormat.AR, OperandFormat.BR, OperandFormat.C),
+  MMBINI(OperandFormat.AR, OperandFormat.BsI, OperandFormat.C),
+  MMBINK(OperandFormat.AR, OperandFormat.BK, OperandFormat.C),
+  CONCAT54(OperandFormat.AR, OperandFormat.B),
+  TBC(OperandFormat.AR),
+  JMP54(OperandFormat.sJ),
+  EQ54(OperandFormat.AR, OperandFormat.BR, OperandFormat.k),
+  LT54(OperandFormat.AR, OperandFormat.BR, OperandFormat.k),
+  LE54(OperandFormat.AR, OperandFormat.BR, OperandFormat.k),
+  EQK(OperandFormat.AR, OperandFormat.BK, OperandFormat.k),
+  EQI(OperandFormat.AR, OperandFormat.BsI, OperandFormat.k),
+  LTI(OperandFormat.AR, OperandFormat.BsI, OperandFormat.k),
+  LEI(OperandFormat.AR, OperandFormat.BsI, OperandFormat.k),
+  GTI(OperandFormat.AR, OperandFormat.BsI, OperandFormat.k),
+  GEI(OperandFormat.AR, OperandFormat.BsI, OperandFormat.k),
+  TEST54(OperandFormat.AR, OperandFormat.k),
+  TESTSET54(OperandFormat.AR, OperandFormat.BR, OperandFormat.k),
+  TAILCALL54(OperandFormat.AR, OperandFormat.B),
+  RETURN54(OperandFormat.AR, OperandFormat.B),
+  RETURN0(),
+  RETURN1(OperandFormat.AR),
+  FORLOOP54(OperandFormat.AR, OperandFormat.BxJn),
+  FORPREP54(OperandFormat.AR, OperandFormat.BxJ),
+  TFORPREP54(OperandFormat.AR, OperandFormat.BxJ),
+  TFORCALL54(OperandFormat.AR, OperandFormat.C),
+  TFORLOOP54(OperandFormat.AR, OperandFormat.BxJn),
+  SETLIST54(OperandFormat.AR, OperandFormat.B, OperandFormat.C, OperandFormat.k),
+  VARARG54(OperandFormat.AR, OperandFormat.C),
+  VARARGPREP(OperandFormat.A),
   // Special
   EXTRABYTE(OperandFormat.x);
   
   public final OperandFormat[] operands;
+  
+  private Op() {
+    this.operands = new OperandFormat[] {};
+  }
   
   private Op(OperandFormat f1) {
     this.operands = new OperandFormat[] {f1};
@@ -79,6 +153,10 @@ public enum Op {
   
   private Op(OperandFormat f1, OperandFormat f2, OperandFormat f3) {
     this.operands = new OperandFormat[] {f1, f2, f3};
+  }
+  
+  private Op(OperandFormat f1, OperandFormat f2, OperandFormat f3, OperandFormat f4) {
+    this.operands = new OperandFormat[] {f1, f2, f3, f4};
   }
   
   /**
@@ -93,6 +171,28 @@ public enum Op {
     }
   }
   
+  public int jumpField(int codepoint, CodeExtract ex) {
+    switch(this) {
+      case FORPREP54:
+      case TFORPREP54:
+        return ex.Bx.extract(codepoint);
+      case FORLOOP54:
+      case TFORLOOP54:
+        return -ex.Bx.extract(codepoint);
+      case JMP:
+      case FORLOOP:
+      case FORPREP:
+      case JMP52:
+      case TFORLOOP52:
+      case TFORPREP:
+        return ex.sBx.extract(codepoint);
+      case JMP54:
+        return ex.sJ.extract(codepoint);
+      default:
+        throw new IllegalStateException();
+    }
+  }
+  
   /**
    * Returns the target register of the instruction at the given
    * line or -1 if the instruction does not have a unique target.
@@ -100,35 +200,22 @@ public enum Op {
   public int target(int codepoint, CodeExtract ex) {
     switch(this) {
       case MOVE:
-      case LOADK:
-      case LOADKX:
-      case LOADBOOL:
+      case LOADI: case LOADF: case LOADK: case LOADKX:
+      case LOADBOOL: case LOADFALSE: case LFALSESKIP: case LOADTRUE:
       case GETUPVAL:
-      case GETTABUP:
+      case GETTABUP: case GETTABUP54:
       case GETGLOBAL:
-      case GETTABLE:
-      case NEWTABLE:
-      case NEWTABLE50:
-      case ADD:
-      case SUB:
-      case MUL:
-      case DIV:
-      case MOD:
-      case POW:
-      case IDIV:
-      case BAND:
-      case BOR:
-      case BXOR:
-      case SHL:
-      case SHR:
-      case UNM:
-      case NOT:
-      case LEN:
-      case BNOT:
-      case CONCAT:
+      case GETTABLE: case GETTABLE54: case GETI: case GETFIELD:
+      case NEWTABLE50: case NEWTABLE: case NEWTABLE54:
+      case ADD: case SUB: case MUL: case DIV: case IDIV: case MOD: case POW: case BAND: case BOR: case BXOR: case SHL: case SHR:
+      case ADD54: case SUB54: case MUL54: case DIV54: case IDIV54: case MOD54: case POW54: case BAND54: case BOR54: case BXOR54: case SHL54: case SHR54:
+      case ADDK: case SUBK: case MULK: case DIVK: case IDIVK: case MODK: case POWK: case BANDK: case BORK: case BXORK:
+      case ADDI: case SHLI: case SHRI:
+      case MMBIN: case MMBINI: case MMBINK:
+      case UNM: case NOT: case LEN: case BNOT:
+      case CONCAT: case CONCAT54:
       case CLOSURE:
-      case TESTSET:
-      case TEST50:
+      case TEST50: case TESTSET: case TESTSET54:
         return ex.A.extract(codepoint);
       case LOADNIL:
         if(ex.A.extract(codepoint) == ex.B.extract(codepoint)) {
@@ -144,29 +231,26 @@ public enum Op {
         }
       case SETGLOBAL:
       case SETUPVAL:
-      case SETTABUP:
-      case SETTABLE:
-      case JMP:
-      case JMP52:
-      case TAILCALL:
-      case RETURN:
-      case FORLOOP:
-      case FORPREP:
-      case TFORPREP:
-      case TFORCALL:
-      case TFORLOOP:
-      case TFORLOOP52:
+      case SETTABUP: case SETTABUP54:
+      case SETTABLE: case SETTABLE54: case SETI: case SETFIELD:
+      case JMP: case JMP52: case JMP54:
+      case TAILCALL: case TAILCALL54:
+      case RETURN: case RETURN54: case RETURN0: case RETURN1:
+      case FORLOOP: case FORLOOP54:
+      case FORPREP: case FORPREP54:
+      case TFORPREP: case TFORPREP54:
+      case TFORCALL: case TFORCALL54:
+      case TFORLOOP: case TFORLOOP52: case TFORLOOP54:
+      case TBC:
       case CLOSE:
       case EXTRAARG:
-      case SELF:
-      case EQ:
-      case LT:
-      case LE:
-      case TEST:
-      case SETLIST:
-      case SETLIST52:
-      case SETLIST50:
-      case SETLISTO:
+      case SELF: case SELF54:
+      case EQ: case LT: case LE:
+      case EQ54: case LT54: case LE54:
+      case EQK: case EQI: case LTI: case LEI: case GTI: case GEI:
+      case TEST: case TEST54:
+      case SETLIST50: case SETLISTO: case SETLIST: case SETLIST52: case SETLIST54:
+      case VARARGPREP:
         return -1;
       case CALL: {
         int a = ex.A.extract(codepoint);
@@ -186,10 +270,19 @@ public enum Op {
           return -1;
         }
       }
+      case VARARG54: {
+        int a = ex.A.extract(codepoint);
+        int c = ex.C.extract(codepoint);
+        if(c == 2) {
+          return a;
+        } else {
+          return -1;
+        }
+      }
       case EXTRABYTE:
         return -1;
     }
-    throw new IllegalStateException();
+    throw new IllegalStateException(this.name());
   }
   
   private String fixedOperand(int field) {
@@ -222,15 +315,12 @@ public enum Op {
     
   public boolean hasJump() {
     for(int i = 0; i < operands.length; ++i) {
-      if(operands[i] == OperandFormat.sBxJ) {
+      OperandFormat.Format format = operands[i].format;
+      if(format == OperandFormat.Format.JUMP || format == OperandFormat.Format.JUMP_NEGATIVE) {
         return true;
       }
     }
     return false;
-  }
-  
-  public int getJumpOffset(int codepoint, CodeExtract ex) {
-    return ex.sBx.extract(codepoint);
   }
   
   public String codePointToString(int codepoint, CodeExtract ex, String label) {
@@ -242,59 +332,48 @@ public enum Op {
     }
     String[] parameters = new String[operands.length];
     for(int i = 0; i < operands.length; ++i) {
-      switch(operands[i]) {
-      case A:
-        parameters[i] = fixedOperand(ex.A.extract(codepoint));
-        break;
-      case AR:
-        parameters[i] = registerOperand(ex.A.extract(codepoint));
-        break;
-      case AU:
-        parameters[i] = upvalueOperand(ex.A.extract(codepoint));
-        break;
-      case B:
-        parameters[i] = fixedOperand(ex.B.extract(codepoint));
-        break;
-      case BR:
-        parameters[i] = registerOperand(ex.B.extract(codepoint));
-        break;
-      case BRK:
-        parameters[i] = rkOperand(ex.B.extract(codepoint), ex);
-        break;
-      case BU:
-        parameters[i] = upvalueOperand(ex.B.extract(codepoint));
-        break;
-      case C:
-        parameters[i] = fixedOperand(ex.C.extract(codepoint));
-        break;
-      case CR:
-        parameters[i] = registerOperand(ex.C.extract(codepoint));
-        break;
-      case CRK:
-        parameters[i] = rkOperand(ex.C.extract(codepoint), ex);
-        break;
-      case Ax:
-        parameters[i] = fixedOperand(ex.Ax.extract(codepoint));
-        break;
-      case Bx:
-        parameters[i] = fixedOperand(ex.Bx.extract(codepoint));
-        break;
-      case BxK:
-        parameters[i] = constantOperand(ex.Bx.extract(codepoint));
-        break;
-      case BxF:
-        parameters[i] = functionOperand(ex.Bx.extract(codepoint));
-        break;
-      case sBxJ:
+      CodeExtract.Field field;
+      switch(operands[i].field) {
+      case A: field = ex.A; break;
+      case B: field = ex.B; break;
+      case C: field = ex.C; break;
+      case k: field = ex.k; break;
+      case Ax: field = ex.Ax; break;
+      case sJ: field = ex.sJ; break;
+      case Bx: field = ex.Bx; break;
+      case sBx: field = ex.sBx; break;
+      case x: field = ex.x; break;
+      default: throw new IllegalStateException();
+      }
+      int x = field.extract(codepoint);
+      switch(operands[i].format) {
+      case IMMEDIATE_INTEGER:
+      case IMMEDIATE_SIGNED_INTEGER: // TODO:
+      case IMMEDIATE_FLOAT:
+      case RAW: parameters[i] = fixedOperand(x); break;
+      case REGISTER: parameters[i] = registerOperand(x); break;
+      case UPVALUE: parameters[i] = upvalueOperand(x); break;
+      case REGISTER_K: parameters[i] = rkOperand(x, ex); break;
+      case CONSTANT:
+      case CONSTANT_INTEGER:
+      case CONSTANT_STRING: parameters[i] = constantOperand(x); break;
+      case FUNCTION: parameters[i] = functionOperand(x); break;
+      case JUMP:
         if(label != null) {
           parameters[i] = label;
         } else {
-          parameters[i] = fixedOperand(ex.sBx.extract(codepoint));
+          parameters[i] = fixedOperand(x) + operands[i].offset;
         }
         break;
-      case x:
-        parameters[i] = fixedOperand(codepoint);
+      case JUMP_NEGATIVE:
+        if(label != null) {
+          parameters[i] = label;
+        } else {
+          parameters[i] = fixedOperand(-x);
+        }
         break;
+      default:
+        throw new IllegalStateException();
       }
     }
     for(String parameter : parameters) {

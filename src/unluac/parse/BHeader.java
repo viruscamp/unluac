@@ -29,6 +29,7 @@ public class BHeader {
   public final LNumberType lfloat;
   public final LStringType string;
   public final LConstantType constant;
+  public final LAbsLineInfoType abslineinfo;
   public final LLocalType local;
   public final LUpvalueType upvalue;
   public final LFunctionType function;
@@ -53,6 +54,7 @@ public class BHeader {
     lfloat = lheader.lfloat;
     string = lheader.string;
     constant = lheader.constant;
+    abslineinfo = lheader.abslineinfo;
     local = lheader.local;
     upvalue = lheader.upvalue;
     function = lheader.function;
@@ -68,14 +70,28 @@ public class BHeader {
         throw new IllegalStateException("The input file does not have the signature of a valid Lua file.");
       }
     }
-    // 1 byte Lua version
-    int versionNumber = 0xFF & buffer.get();
     
-    version = Version.getVersion(versionNumber);
+    int versionPos = buffer.position();
+    
+    int major;
+    int minor;
+    
+    int versionNumber = 0xFF & buffer.get();
+    major = versionNumber >> 4;
+    minor = versionNumber & 0x0F;
+    
+    if(major >= 1 && major < 5 || major == 5 && minor >= 0 && minor <= 3) {
+      // okay
+    } else {
+      buffer.position(versionPos);
+      versionNumber = new BIntegerType54().parse(buffer, this).asInt();
+      major = versionNumber / 100;
+      minor = versionNumber % 100;
+    }
+    
+    version = Version.getVersion(major, minor);
     if(version == null) {
-      int major = versionNumber >> 4;
-      int minor = versionNumber & 0x0F;
-      throw new IllegalStateException("The input chunk's Lua version is " + major + "." + minor + "; unluac can only handle Lua 5.0 - Lua 5.3.");
+      throw new IllegalStateException("The input chunk's Lua version is " + major + "." + minor + "; unluac can only handle Lua 5.0 - Lua 5.4.");
     }
     
     lheader_type = version.getLHeaderType();
@@ -88,6 +104,7 @@ public class BHeader {
     lfloat = lheader.lfloat;
     string = lheader.string;
     constant = lheader.constant;
+    abslineinfo = lheader.abslineinfo;
     local = lheader.local;
     upvalue = lheader.upvalue;
     function = lheader.function;

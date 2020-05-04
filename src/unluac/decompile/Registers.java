@@ -48,6 +48,10 @@ public class Registers {
     this.isStripped = isStripped;
   }
   
+  public Function getFunction() {
+    return f;
+  }
+  
   public boolean isAssignable(int register, int line) {
     return isLocal(register, line) && !decls[register][line].forLoop;
   }
@@ -102,6 +106,14 @@ public class Registers {
   public Expression getKExpression(int register, int line) {
     if(f.isConstant(register)) {
       return f.getConstantExpression(f.constantIndex(register));
+    } else {
+      return getExpression(register, line);
+    }
+  }
+  
+  public Expression getKExpression54(int register, boolean k, int line) {
+    if(k) {
+      return f.getConstantExpression(register);
     } else {
       return getExpression(register, line);
     }

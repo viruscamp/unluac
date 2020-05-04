@@ -33,6 +33,10 @@ public static class Field {
       return codepoint & ~(mask << shift);
     }
     
+    public int max() {
+      return mask - offset;
+    }
+    
     public final int size;
     private final int shift;
     private final int mask;
@@ -41,21 +45,6 @@ public static class Field {
   }
   
   /**
-   * Creates standard code extract used for Lua 5.1 through Lua 5.3.
-   */
-  public CodeExtract(Version version) {
-    op = new Field(6, 0);
-    A = new Field(8, 6);
-    B = new Field(9, 23);
-    C = new Field(9, 14);
-    Ax = new Field(26, 6);
-    Bx = new Field(18, 14);
-    sBx = new Field(18, 14, 131071);
-    x = new Field(32, 0);
-    rk_offset = version.getConstantsOffset();
-  }
-
-  /**
    * Creates code extract based on header fields for Lua 5.0.
    */
   public CodeExtract(Version version, int sizeOp, int sizeA, int sizeB, int sizeC) {
@@ -63,13 +52,49 @@ public static class Field {
     A = new Field(sizeA, sizeB + sizeC + sizeOp);
     B = new Field(sizeB, sizeB + sizeOp);
     C = new Field(sizeC, sizeOp);
+    k = null;
     Ax = null;
+    sJ = null;
     Bx = new Field(sizeB + sizeC, sizeOp);
     sBx = new Field(sizeB + sizeC, sizeOp, size_to_mask(sizeB + sizeC) / 2);
     x = new Field(32, 0);
     rk_offset = version.getConstantsOffset();
   }
+
+  /**
+   * Creates standard code extract used for Lua 5.1 through Lua 5.3.
+   */
+  public CodeExtract(Version version) {
+    op = new Field(6, 0);
+    A = new Field(8, 6);
+    B = new Field(9, 23);
+    C = new Field(9, 14);
+    k = null;
+    Ax = new Field(26, 6);
+    sJ = null;
+    Bx = new Field(18, 14);
+    sBx = new Field(18, 14, 131071);
+    x = new Field(32, 0);
+    rk_offset = version.getConstantsOffset();
+  }
   
+  /**
+   * Creates standard code extract used for Lua 5.4.
+   */
+  public CodeExtract() {
+    op = new Field(7, 0);
+    A = new Field(8, 7);
+    B = new Field(8, 16);
+    C = new Field(8, 24);
+    k = new Field(1, 15);
+    Ax = new Field(25, 7);
+    sJ = new Field(25, 7, (1 << 24) - 1);
+    Bx = new Field(17, 15);
+    sBx = new Field(17, 15, (1 << 16) - 1);
+    x = new Field(32, 0);
+    rk_offset = 0;
+  }
+
   public boolean is_k(int field) {
     return field >= rk_offset;
   }
@@ -86,7 +111,9 @@ public static class Field {
   public final Field A;
   public final Field B;
   public final Field C;
+  public final Field k;
   public final Field Ax;
+  public final Field sJ;
   public final Field Bx;
   public final Field sBx;
   public final Field x;

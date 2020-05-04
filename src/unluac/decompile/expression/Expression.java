@@ -27,72 +27,62 @@ abstract public class Expression {
   public static final int ASSOCIATIVITY_LEFT = 1;
   public static final int ASSOCIATIVITY_RIGHT = 2;
   
-  public static BinaryExpression makeCONCAT(Expression left, Expression right) {
-    return new BinaryExpression("..", left, right, PRECEDENCE_CONCAT, ASSOCIATIVITY_RIGHT);
+  static public enum BinaryOperation {
+    CONCAT("..", PRECEDENCE_CONCAT, ASSOCIATIVITY_RIGHT),
+    ADD("+", PRECEDENCE_ADD, ASSOCIATIVITY_LEFT),
+    SUB("-", PRECEDENCE_ADD, ASSOCIATIVITY_LEFT),
+    MUL("*", PRECEDENCE_MUL, ASSOCIATIVITY_LEFT),
+    DIV("/", PRECEDENCE_MUL, ASSOCIATIVITY_LEFT),
+    IDIV("//", PRECEDENCE_MUL, ASSOCIATIVITY_LEFT),
+    MOD("%", PRECEDENCE_MUL, ASSOCIATIVITY_LEFT),
+    POW("^", PRECEDENCE_POW, ASSOCIATIVITY_RIGHT),
+    BAND("&", PRECEDENCE_BAND, ASSOCIATIVITY_LEFT),
+    BOR("|", PRECEDENCE_BOR, ASSOCIATIVITY_LEFT),
+    BXOR("~", PRECEDENCE_BXOR, ASSOCIATIVITY_LEFT),
+    SHL("<<", PRECEDENCE_SHIFT, ASSOCIATIVITY_LEFT),
+    SHR(">>", PRECEDENCE_SHIFT, ASSOCIATIVITY_LEFT),
+    ;
+    
+    public final String op;
+    public final int precedence;
+    public final int associativity;
+    
+    private BinaryOperation(String op, int precedence, int associativity) {
+      this.op = op;
+      this.precedence = precedence;
+      this.associativity = associativity;
+    }
   }
   
-  public static BinaryExpression makeADD(Expression left, Expression right) {
-    return new BinaryExpression("+", left, right, PRECEDENCE_ADD, ASSOCIATIVITY_LEFT);
+  static public enum UnaryOperation {
+    UNM("-"),
+    NOT("not "),
+    LEN("#"),
+    BNOT("~"),
+    ;
+    
+    public final String op;
+    
+    private UnaryOperation(String op) {
+      this.op = op;
+    }
   }
   
-  public static BinaryExpression makeSUB(Expression left, Expression right) {
-    return new BinaryExpression("-", left, right, PRECEDENCE_ADD, ASSOCIATIVITY_LEFT);
+  public static BinaryExpression make(BinaryOperation op, Expression left, Expression right) {
+    return make(op, left, right, false);
   }
   
-  public static BinaryExpression makeMUL(Expression left, Expression right) {
-    return new BinaryExpression("*", left, right, PRECEDENCE_MUL, ASSOCIATIVITY_LEFT);
+  public static BinaryExpression make(BinaryOperation op, Expression left, Expression right, boolean flip) {
+    if(flip) {
+      Expression swap = left;
+      left = right;
+      right = swap;
+    }
+    return new BinaryExpression(op.op, left, right, op.precedence, op.associativity);
   }
   
-  public static BinaryExpression makeDIV(Expression left, Expression right) {
-    return new BinaryExpression("/", left, right, PRECEDENCE_MUL, ASSOCIATIVITY_LEFT);
-  }
-  
-  public static BinaryExpression makeMOD(Expression left, Expression right) {
-    return new BinaryExpression("%", left, right, PRECEDENCE_MUL, ASSOCIATIVITY_LEFT);
-  }
-  
-  public static UnaryExpression makeUNM(Expression expression) {
-    return new UnaryExpression("-", expression, PRECEDENCE_UNARY);
-  }
-  
-  public static UnaryExpression makeNOT(Expression expression) {
-    return new UnaryExpression("not ", expression, PRECEDENCE_UNARY);
-  }
-  
-  public static UnaryExpression makeLEN(Expression expression) {
-    return new UnaryExpression("#", expression, PRECEDENCE_UNARY);
-  }
-  
-  public static BinaryExpression makePOW(Expression left, Expression right) {
-    return new BinaryExpression("^", left, right, PRECEDENCE_POW, ASSOCIATIVITY_RIGHT);
-  }
-  
-  public static BinaryExpression makeIDIV(Expression left, Expression right) {
-    return new BinaryExpression("//", left, right, PRECEDENCE_MUL, ASSOCIATIVITY_LEFT);
-  }
-  
-  public static BinaryExpression makeBAND(Expression left, Expression right) {
-    return new BinaryExpression("&", left, right, PRECEDENCE_BAND, ASSOCIATIVITY_LEFT);
-  }
-  
-  public static BinaryExpression makeBOR(Expression left, Expression right) {
-    return new BinaryExpression("|", left, right, PRECEDENCE_BOR, ASSOCIATIVITY_LEFT);
-  }
-  
-  public static BinaryExpression makeBXOR(Expression left, Expression right) {
-    return new BinaryExpression("~", left, right, PRECEDENCE_BXOR, ASSOCIATIVITY_LEFT);
-  }
-  
-  public static BinaryExpression makeSHL(Expression left, Expression right) {
-    return new BinaryExpression("<<", left, right, PRECEDENCE_SHIFT, ASSOCIATIVITY_LEFT);
-  }
-  
-  public static BinaryExpression makeSHR(Expression left, Expression right) {
-    return new BinaryExpression(">>", left, right, PRECEDENCE_SHIFT, ASSOCIATIVITY_LEFT);
-  }
-  
-  public static UnaryExpression makeBNOT(Expression expression) {
-    return new UnaryExpression("~", expression, PRECEDENCE_UNARY);
+  public static UnaryExpression make(UnaryOperation op, Expression expression) {
+    return new UnaryExpression(op.op, expression, PRECEDENCE_UNARY);
   }
   
   /**

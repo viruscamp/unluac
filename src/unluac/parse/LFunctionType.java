@@ -16,6 +16,7 @@ abstract public class LFunctionType extends BObjectType<LFunction> {
   public static final LFunctionType TYPE51 = new LFunctionType51();
   public static final LFunctionType TYPE52 = new LFunctionType52();
   public static final LFunctionType TYPE53 = new LFunctionType53();
+  public static final LFunctionType TYPE54 = new LFunctionType54();
   
   public static LFunctionType get(Version version) {
     switch(version.getVersionNumber()) {
@@ -203,7 +204,7 @@ class LFunctionType50 extends LFunctionType {
   @Override
   public void write(OutputStream out, BHeader header, LFunction object) throws IOException {
     header.string.write(out, header, object.name);
-    header.integer.raw_write(out, header, new BInteger(object.linedefined));
+    header.integer.write(out, header, new BInteger(object.linedefined));
     out.write(object.numUpvalues);
     out.write(object.numParams);
     out.write(object.vararg);
@@ -246,8 +247,8 @@ class LFunctionType51 extends LFunctionType {
   @Override
   public void write(OutputStream out, BHeader header, LFunction object) throws IOException {
     header.string.write(out, header, object.name);
-    header.integer.raw_write(out, header, new BInteger(object.linedefined));
-    header.integer.raw_write(out, header, new BInteger(object.lastlinedefined));
+    header.integer.write(out, header, new BInteger(object.linedefined));
+    header.integer.write(out, header, new BInteger(object.lastlinedefined));
     out.write(object.numUpvalues);
     out.write(object.numParams);
     out.write(object.vararg);
@@ -288,8 +289,8 @@ class LFunctionType52 extends LFunctionType {
   
   @Override
   public void write(OutputStream out, BHeader header, LFunction object) throws IOException {
-    header.integer.raw_write(out, header, new BInteger(object.linedefined));
-    header.integer.raw_write(out, header, new BInteger(object.lastlinedefined));
+    header.integer.write(out, header, new BInteger(object.linedefined));
+    header.integer.write(out, header, new BInteger(object.lastlinedefined));
     out.write(object.numParams);
     out.write(object.vararg);
     out.write(object.maximumStackSize);
@@ -333,8 +334,8 @@ class LFunctionType53 extends LFunctionType {
   @Override
   public void write(OutputStream out, BHeader header, LFunction object) throws IOException {
     header.string.write(out, header, object.name);
-    header.integer.raw_write(out, header, new BInteger(object.linedefined));
-    header.integer.raw_write(out, header, new BInteger(object.lastlinedefined));
+    header.integer.write(out, header, new BInteger(object.linedefined));
+    header.integer.write(out, header, new BInteger(object.lastlinedefined));
     out.write(object.numParams);
     out.write(object.vararg);
     out.write(object.maximumStackSize);
@@ -343,6 +344,64 @@ class LFunctionType53 extends LFunctionType {
     write_upvalues(out, header, object);
     header.function.writeList(out, header, object.functions);
     write_debug(out, header, object);
+  }
+  
+}
+
+class LFunctionType54 extends LFunctionType {
+  
+  @Override
+  protected void parse_debug(ByteBuffer buffer, BHeader header, LFunctionParseState s) {
+    // TODO: process line info correctly
+    s.lines = (new BIntegerType50(1)).parseList(buffer, header);
+    header.abslineinfo.parseList(buffer, header);
+    s.locals = header.local.parseList(buffer, header);
+    BList<LString> upvalueNames = header.string.parseList(buffer, header);
+    for(int i = 0; i < upvalueNames.length.asInt(); i++) {
+      s.upvalues[i].bname = upvalueNames.get(i);
+      s.upvalues[i].name = s.upvalues[i].bname.deref();
+    }
+  }
+  
+  protected void parse_main(ByteBuffer buffer, BHeader header, LFunctionParseState s) {
+    s.name = header.string.parse(buffer, header);
+    s.lineBegin = header.integer.parse(buffer, header).asInt();
+    s.lineEnd = header.integer.parse(buffer, header).asInt();
+    s.lenParameter = 0xFF & buffer.get();
+    s.vararg = 0xFF & buffer.get();
+    s.maximumStackSize = 0xFF & buffer.get();
+    parse_code(buffer, header, s);
+    s.constants = header.constant.parseList(buffer, header);
+    parse_upvalues(buffer, header, s);
+    s.functions = header.function.parseList(buffer, header);
+    parse_debug(buffer, header, s);
+  }
+  
+  @Override
+  public List<Directive> get_directives() {
+    return Arrays.asList(new Directive[] {
+      Directive.SOURCE,
+      Directive.LINEDEFINED,
+      Directive.LASTLINEDEFINED,
+      Directive.NUMPARAMS,
+      Directive.IS_VARARG,
+      Directive.MAXSTACKSIZE,
+    });
+  }
+  
+  @Override
+  public void write(OutputStream out, BHeader header, LFunction object) throws IOException {
+    header.string.write(out, header, object.name);
+    header.integer.write(out, header, new BInteger(object.linedefined));
+    header.integer.write(out, header, new BInteger(object.lastlinedefined));
+    out.write(object.numParams);
+    out.write(object.vararg);
+    out.write(object.maximumStackSize);
+    write_code(out, header, object);
+    //TODO: header.constant.writeList(out, header, object.constants);
+    write_upvalues(out, header, object);
+    header.function.writeList(out, header, object.functions);
+    //TODO: write_debug(out, header, object);
   }
   
 }

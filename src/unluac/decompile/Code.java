@@ -76,10 +76,34 @@ public class Code {
   }
   
   /**
+   * Returns the sC (signed C) field of the instruction at the given line.
+   */
+  public int sC(int line) {
+    int C = C(line);
+    return C - extractor.C.max() / 2;
+  }
+  
+  
+  /**
+   * Returns the k field of the instruction at the given line (1 is true, 0 is false).
+   */
+  public boolean k(int line) {
+    return extractor.k.extract(code[line - 1]) != 0;
+  }
+  
+  /**
    * Returns the B field of the instruction at the given line.
    */
   public int B(int line) {
     return extractor.B.extract(code[line - 1]);
+  }
+  
+  /**
+   * Returns the sB (signed B) field of the instruction at the given line.
+   */
+  public int sB(int line) {
+    int B = B(line);
+    return B - extractor.B.max() / 2;
   }
   
   /**
@@ -104,10 +128,11 @@ public class Code {
   }
   
   /**
-   * Returns the absolute target address of a jump instruction (using sBx) and the given line.
+   * Returns the absolute target address of a jump instruction and the given line.
+   * This field will be chosen automatically based on the opcode.
    */
   public int target(int line) {
-    return line + 1 + sBx(line);
+    return line + 1 + op(line).jumpField(codepoint(line), extractor);
   }
   
   /**

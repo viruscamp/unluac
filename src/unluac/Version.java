@@ -13,6 +13,7 @@ public abstract class Version {
   public static final Version LUA51 = new Version51();
   public static final Version LUA52 = new Version52();
   public static final Version LUA53 = new Version53();
+  public static final Version LUA54 = new Version54();
   
   protected static final Set<String> reservedWords = new HashSet<String>();
   
@@ -46,12 +47,14 @@ public abstract class Version {
     ELLIPSIS;
   }
   
-  public static Version getVersion(int versionNumber) {
+  public static Version getVersion(int major, int minor) {
+    int versionNumber = (major << 4) | minor;
     switch(versionNumber) {
     case 0x50: return LUA50;
     case 0x51: return LUA51;
     case 0x52: return LUA52;
     case 0x53: return LUA53;
+    case 0x54: return LUA54;
     default: return null;
     }
   }
@@ -305,6 +308,69 @@ class Version53 extends Version {
   @Override
   public LHeaderType getLHeaderType() {
     return LHeaderType.TYPE53;
+  }
+  
+  @Override
+  public int getOuterBlockScopeAdjustment() {
+    return 0;
+  }
+  
+  @Override
+  public boolean usesInlineUpvalueDeclarations() {
+    return false;
+  }
+
+  @Override
+  public Op getTForTarget() {
+    return Op.TFORCALL;
+  }
+
+  @Override
+  public Op getForTarget() {
+    return null;
+  }
+
+  @Override
+  public boolean isAllowedPreceedingSemicolon() {
+    return true;
+  }
+  
+  @Override
+  public boolean isEnvironmentTable(String name) {
+    return name.equals("_ENV");
+  }
+  
+  @Override
+  public boolean usesIfBreakRewrite() {
+    return true;
+  }
+  
+  @Override
+  public boolean hasGoto() {
+    return true;
+  }
+  
+  @Override
+  public VarArgType getVarArgType() {
+    return VarArgType.ELLIPSIS;
+  }
+  
+  @Override
+  public boolean isReserved(String word) {
+    return reservedWords.contains(word) || word.equals("goto");
+  }
+  
+}
+
+class Version54 extends Version {
+  
+  Version54() {
+    super(0x54);
+  }
+  
+  @Override
+  public LHeaderType getLHeaderType() {
+    return LHeaderType.TYPE54;
   }
   
   @Override
