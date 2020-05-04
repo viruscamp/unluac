@@ -981,6 +981,9 @@ public class Decompiler {
         } else {
           return r.getExpression(C, previous);
         }
+      case SETTABLE54:
+      case SETI:
+      case SETFIELD:
       case SETTABUP54:
         if(code.k(line)) {
           throw new IllegalStateException();
