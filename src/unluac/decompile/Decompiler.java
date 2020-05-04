@@ -362,9 +362,15 @@ public class Decompiler {
       case NEWTABLE:
         operations.add(new RegisterSet(line, A, new TableLiteral(fb2int(B), fb2int(C))));
         break;
-      case NEWTABLE54:
-        operations.add(new RegisterSet(line, A, new TableLiteral(C, B == 0 ? 0 : (1 << (B - 1)))));
+      case NEWTABLE54: {
+        if(code.op(line + 1) != Op.EXTRAARG) throw new IllegalStateException();
+        int arraySize = C;
+        if(code.k(line)) {
+          arraySize += code.Ax(line + 1) * (code.getExtractor().C.max() + 1);
+        }
+        operations.add(new RegisterSet(line, A, new TableLiteral(arraySize, B == 0 ? 0 : (1 << (B - 1)))));
         break;
+      }
       case SELF: {
         // We can later determine if : syntax was used by comparing subexpressions with ==
         Expression common = r.getExpression(B, line);

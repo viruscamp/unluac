@@ -78,7 +78,7 @@ public enum Op {
   SETTABLE54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CRK),
   SETI(OperandFormat.AR, OperandFormat.BI, OperandFormat.CRK),
   SETFIELD(OperandFormat.AR, OperandFormat.BKS, OperandFormat.CRK),
-  NEWTABLE54(OperandFormat.AR, OperandFormat.B, OperandFormat.C),
+  NEWTABLE54(OperandFormat.AR, OperandFormat.B, OperandFormat.C, OperandFormat.k),
   SELF54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CRK),
   ADDI(OperandFormat.AR, OperandFormat.BR, OperandFormat.CsI),
   ADDK(OperandFormat.AR, OperandFormat.BR, OperandFormat.CK),
