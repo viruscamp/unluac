@@ -101,6 +101,7 @@ public class TestFiles {
     "combinebassign03",
     "combinebassign04",
     "combinebassign05",
+    "combinebassign07",
     "complexassign01",
     "complexassign02",
     "complexassign03",

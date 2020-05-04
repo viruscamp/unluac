@@ -292,6 +292,11 @@ public class ControlFlowHandler {
     skip[line + 1] = true;
     insert_branch(state, b);
     int final_line = target - 1;
+    Op op = state.code.op(final_line);
+    if(op == Op.MMBIN || op == Op.MMBINI || op == Op.MMBINK) {
+      final_line--;
+    }
+    int begin = final_line;
     if(state.finalsetbranches[final_line] == null) {
       int loadboolblock = find_loadboolblock(state, target - 2);
       if(loadboolblock == -1) {
@@ -303,7 +308,7 @@ public class ControlFlowHandler {
           c = new SetCondition(final_line, get_target(state, final_line));
         }
         if(c != null) {
-          b = new Branch(final_line, final_line, Branch.Type.finalset, c, target, target);
+          b = new Branch(final_line, final_line, Branch.Type.finalset, c, begin, target);
           b.target = register;
           insert_branch(state, b);
         }
@@ -2134,6 +2139,11 @@ public class ControlFlowHandler {
         case SETFIELD:
           target = code.A(line);
           break;
+        case MMBIN: case MMBINI: case MMBINK:
+          if(line >= 2) {
+            target = code.A(line - 1);
+          }
+          break;
         case EXTRABYTE:
           if(line >= 2 && code.op(line - 1) == Op.SETLIST) {
             target = code.A(line - 1);
@@ -2225,16 +2235,19 @@ public class ControlFlowHandler {
       case GETTABLE: case GETTABLE54: case GETI: case GETFIELD:
       case NEWTABLE50: case NEWTABLE: case NEWTABLE54:
       case ADD: case SUB: case MUL: case DIV: case IDIV: case MOD: case POW: case BAND: case BOR: case BXOR: case SHL: case SHR:
-      case ADD54: case SUB54: case MUL54: case DIV54: case IDIV54: case MOD54: case POW54: case BAND54: case BOR54: case BXOR54: case SHL54: case SHR54:
-      case ADDK: case SUBK: case MULK: case DIVK: case IDIVK: case MODK: case POWK: case BANDK: case BORK: case BXORK:
-      case ADDI: case SHLI: case SHRI:
-      case MMBIN: case MMBINI: case MMBINK:
       case UNM: case NOT: case LEN: case BNOT:
       case CONCAT: case CONCAT54:
       case CLOSURE:
       case TESTSET: case TESTSET54:
         return r.isLocal(code.A(line), line);
-      case LOADNIL:
+      case ADD54: case SUB54: case MUL54: case DIV54: case IDIV54: case MOD54: case POW54: case BAND54: case BOR54: case BXOR54: case SHL54: case SHR54:
+      case ADDK: case SUBK: case MULK: case DIVK: case IDIVK: case MODK: case POWK: case BANDK: case BORK: case BXORK:
+      case ADDI: case SHLI: case SHRI:
+        return false; // only count following MMBIN* instruction
+      case MMBIN: case MMBINI: case MMBINK:
+        if(line <= 1) throw new IllegalStateException();
+        return r.isLocal(code.A(line - 1), line - 1);
+     case LOADNIL:
         for(int register = code.A(line); register <= code.B(line); register++) {
           if(r.isLocal(register, line)) {
             return true;

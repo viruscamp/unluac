@@ -22,8 +22,7 @@ public class SetBlock extends Block {
   
   public SetBlock(LFunction function, Condition cond, int target, int line, int begin, int end, Registers r) {
     super(function, begin, end, 2);
-    if(begin == end)
-      this.begin -= 1;
+    if(begin == end) throw new IllegalStateException();
     this.target = target;
     this.cond = cond;
     this.r = r;

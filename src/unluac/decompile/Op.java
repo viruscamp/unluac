@@ -211,12 +211,13 @@ public enum Op {
       case ADD54: case SUB54: case MUL54: case DIV54: case IDIV54: case MOD54: case POW54: case BAND54: case BOR54: case BXOR54: case SHL54: case SHR54:
       case ADDK: case SUBK: case MULK: case DIVK: case IDIVK: case MODK: case POWK: case BANDK: case BORK: case BXORK:
       case ADDI: case SHLI: case SHRI:
-      case MMBIN: case MMBINI: case MMBINK:
       case UNM: case NOT: case LEN: case BNOT:
       case CONCAT: case CONCAT54:
       case CLOSURE:
       case TEST50: case TESTSET: case TESTSET54:
         return ex.A.extract(codepoint);
+      case MMBIN: case MMBINI: case MMBINK:
+        return -1; // depends on previous instruction
       case LOADNIL:
         if(ex.A.extract(codepoint) == ex.B.extract(codepoint)) {
           return ex.A.extract(codepoint);
