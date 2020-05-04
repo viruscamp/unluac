@@ -293,7 +293,7 @@ public class ControlFlowHandler {
     insert_branch(state, b);
     int final_line = target - 1;
     Op op = state.code.op(final_line);
-    if(op == Op.MMBIN || op == Op.MMBINI || op == Op.MMBINK) {
+    if(op == Op.MMBIN || op == Op.MMBINI || op == Op.MMBINK || op == Op.EXTRAARG) {
       final_line--;
     }
     int begin = final_line;
