@@ -28,9 +28,8 @@ import unluac.decompile.condition.AndCondition;
 import unluac.decompile.condition.BinaryCondition;
 import unluac.decompile.condition.Condition;
 import unluac.decompile.condition.ConstantCondition;
+import unluac.decompile.condition.FinalSetCondition;
 import unluac.decompile.condition.OrCondition;
-import unluac.decompile.condition.RegisterSetCondition;
-import unluac.decompile.condition.SetCondition;
 import unluac.decompile.condition.TestCondition;
 import unluac.parse.LFunction;
 import unluac.util.Stack;
@@ -91,6 +90,7 @@ public class ControlFlowHandler {
     public int[] resolved;
     public boolean[] labels;
     public List<Block> blocks;
+    public List<FinalSetCondition> finalsetconditions;
   }
   
   public static class Result {
@@ -111,6 +111,7 @@ public class ControlFlowHandler {
     state.r = r;
     state.code = d.code;
     state.labels = new boolean[d.code.length + 1];
+    state.finalsetconditions = new ArrayList<FinalSetCondition>();
     find_reverse_targets(state);
     find_branches(state);
     combine_branches(state);
@@ -243,23 +244,15 @@ public class ControlFlowHandler {
     
     if(final_line != -1)
     {
-      if(constant && final_line < begin && state.finalsetbranches[final_line + 1] == null) {
-        c = new TestCondition(final_line + 1, state.code.A(target));
-        b = new Branch(final_line + 1, final_line + 1, Branch.Type.finalset, c, final_line, loadboolblock + 2);
-        b.target = state.code.A(loadboolblock);
-        insert_branch(state, b);
+      if(constant && final_line < begin) {
+        final_line++;
       }
-      if(final_line >= begin && state.finalsetbranches[final_line] == null) {
-        c = new SetCondition(final_line, get_target(state, final_line));
-        b = new Branch(final_line, final_line, Branch.Type.finalset, c, final_line, loadboolblock + 2);
-        b.target = state.code.A(loadboolblock);
-        insert_branch(state, b);
-      }
-      if(final_line + 1 == begin && state.finalsetbranches[final_line + 1] == null) {
-        c = new RegisterSetCondition(loadboolblock, get_target(state, loadboolblock));
-        b = new Branch(final_line + 1, final_line + 1, Branch.Type.finalset, c, final_line, loadboolblock + 2);
-        b.target = state.code.A(loadboolblock);
-        insert_branch(state, b);
+      if(state.finalsetbranches[final_line] == null) {
+        FinalSetCondition finalc = new FinalSetCondition(final_line, b.target);
+        Branch finalb = new Branch(final_line, final_line, Branch.Type.finalset, finalc, final_line, loadboolblock + 2);
+        finalb.target = b.target;
+        insert_branch(state, finalb);
+        state.finalsetconditions.add(finalc);
       }
     }
   }
@@ -300,18 +293,11 @@ public class ControlFlowHandler {
     if(state.finalsetbranches[final_line] == null) {
       int loadboolblock = find_loadboolblock(state, target - 2);
       if(loadboolblock == -1) {
-        c = null;
-        if(line + 2 == target) {
-          c = new RegisterSetCondition(line, get_target(state, line));
-          final_line = final_line + 1;
-        } else if(!is_jmp_raw(state, final_line)) {
-          c = new SetCondition(final_line, get_target(state, final_line));
-        }
-        if(c != null) {
-          b = new Branch(final_line, final_line, Branch.Type.finalset, c, begin, target);
-          b.target = register;
-          insert_branch(state, b);
-        }
+        FinalSetCondition finalc = new FinalSetCondition(final_line, register);
+        Branch finalb = new Branch(final_line, final_line, Branch.Type.finalset, finalc, begin, target);
+        finalb.target = register;
+        insert_branch(state, finalb);
+        state.finalsetconditions.add(finalc);
       }
     }
   }
@@ -1025,6 +1011,13 @@ public class ControlFlowHandler {
  
   private static void find_set_blocks(State state) {
     List<Block> blocks = state.blocks;
+    for(FinalSetCondition c : state.finalsetconditions) {
+      if(is_jmp_raw(state, c.line)) {
+        c.type = FinalSetCondition.Type.REGISTER;
+      } else {
+        c.type = FinalSetCondition.Type.VALUE;
+      }
+    }
     Branch b = state.begin_branch;
     while(b != null) {
       if(is_assignment(b) || b.type == Branch.Type.finalset) {
@@ -1867,7 +1860,7 @@ public class ControlFlowHandler {
     if(branch0 == null || branch1 == null) {
       return false;
     } else {
-      boolean adjacent = branch0.targetFirst <= branch1.line;
+      boolean adjacent = branch0.targetFirst <= branch1.line || branch1.type == Branch.Type.finalset && branch1.line + 1 == branch0.targetFirst;
       if(adjacent) {
         adjacent = !has_statement(state, branch0.targetFirst, branch1.line - 1);
         adjacent = adjacent && !state.reverse_targets[branch1.line];

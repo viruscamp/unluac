@@ -6,8 +6,8 @@ import unluac.decompile.Registers;
 import unluac.decompile.Walker;
 import unluac.decompile.condition.AndCondition;
 import unluac.decompile.condition.Condition;
+import unluac.decompile.condition.FinalSetCondition;
 import unluac.decompile.condition.OrCondition;
-import unluac.decompile.condition.SetCondition;
 import unluac.decompile.expression.Expression;
 import unluac.decompile.operation.Operation;
 import unluac.decompile.statement.Assignment;
@@ -78,7 +78,8 @@ public class IfThenEndBlock extends ContainerBlock {
         }
       }
       if(assign != null && (cond.isRegisterTest() || cond.isOrCondition() || assign.isDeclaration()) && assign.getLastTarget().isLocal() && assign.getLastTarget().getIndex() == test || statements.isEmpty()) {
-        Condition finalset = new SetCondition(end - 1, test);
+        FinalSetCondition finalset = new FinalSetCondition(end - 1, test);
+        finalset.type = FinalSetCondition.Type.VALUE;
         Condition combined;
         
         if(cond.invertible()) {

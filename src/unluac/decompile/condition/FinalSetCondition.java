@@ -1,16 +1,25 @@
 package unluac.decompile.condition;
 
 import unluac.decompile.Registers;
+import unluac.decompile.expression.ConstantExpression;
 import unluac.decompile.expression.Expression;
 
-public class SetCondition implements Condition {
+public class FinalSetCondition implements Condition {
 
-  private int line;
-  private int register;
+  public static enum Type {
+    NONE,
+    REGISTER,
+    VALUE,
+  }
   
-  public SetCondition(int line, int register) {
+  public int line;
+  private int register;
+  public Type type;
+  
+  public FinalSetCondition(int line, int register) {
     this.line = line;
     this.register = register;
+    this.type = Type.NONE;
     if(register < 0) {
       throw new IllegalStateException();
     }
@@ -53,7 +62,15 @@ public class SetCondition implements Condition {
   
   @Override
   public Expression asExpression(Registers r) {
-    return r.getValue(register, line + 1);
+    switch(type) {
+      case REGISTER:
+        return r.getExpression(register, line + 1);
+      case VALUE:
+        return r.getValue(register, line + 1);
+      case NONE:
+      default:
+        return ConstantExpression.createDouble(register + ((double)line) / 100.0);
+    }
   }
   
   @Override
