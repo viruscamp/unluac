@@ -62,15 +62,23 @@ public class FinalSetCondition implements Condition {
   
   @Override
   public Expression asExpression(Registers r) {
+    Expression expr;
     switch(type) {
       case REGISTER:
-        return r.getExpression(register, line + 1);
+        expr = r.getExpression(register, line + 1);
+        break;
       case VALUE:
-        return r.getValue(register, line + 1);
+        expr = r.getValue(register, line + 1);
+        break;
       case NONE:
       default:
-        return ConstantExpression.createDouble(register + ((double)line) / 100.0);
+        expr = ConstantExpression.createDouble(register + ((double)line) / 100.0);
+        break;
     }
+    if(expr == null) {
+      throw new IllegalStateException();
+    }
+    return expr;
   }
   
   @Override

@@ -58,8 +58,9 @@ public class ControlFlowHandler {
     public int targetFirst;
     public int targetSecond;
     public boolean inverseValue;
+    public FinalSetCondition finalset;
     
-    public Branch(int line, int line2, Type type, Condition cond, int targetFirst, int targetSecond) {
+    public Branch(int line, int line2, Type type, Condition cond, int targetFirst, int targetSecond, FinalSetCondition finalset) {
       this.line = line;
       this.line2 = line2;
       this.type = type;
@@ -68,6 +69,7 @@ public class ControlFlowHandler {
       this.targetSecond = targetSecond;
       this.inverseValue = false;
       this.target = -1;
+      this.finalset = finalset;
     }
 
     @Override
@@ -232,11 +234,11 @@ public class ControlFlowHandler {
     
     if(constant) {
       begin--;
-      b = new Branch(line, line, Branch.Type.testset, c, begin, loadboolblock + 2);
+      b = new Branch(line, line, Branch.Type.testset, c, begin, loadboolblock + 2, null);
     } else if(line + 2 == loadboolblock) {
-      b = new Branch(line, line, Branch.Type.finalset, c, begin, loadboolblock + 2);
+      b = new Branch(line, line, Branch.Type.finalset, c, begin, loadboolblock + 2, null);
     } else {
-      b = new Branch(line, line, Branch.Type.testset, c, begin, loadboolblock + 2);
+      b = new Branch(line, line, Branch.Type.testset, c, begin, loadboolblock + 2, null);
     }
     b.target = state.code.A(loadboolblock);
     b.inverseValue = inverse;
@@ -249,11 +251,12 @@ public class ControlFlowHandler {
       }
       if(state.finalsetbranches[final_line] == null) {
         FinalSetCondition finalc = new FinalSetCondition(final_line, b.target);
-        Branch finalb = new Branch(final_line, final_line, Branch.Type.finalset, finalc, final_line, loadboolblock + 2);
+        Branch finalb = new Branch(final_line, final_line, Branch.Type.finalset, finalc, final_line, loadboolblock + 2, finalc);
         finalb.target = b.target;
         insert_branch(state, finalb);
         state.finalsetconditions.add(finalc);
       }
+      b.finalset = state.finalsetbranches[final_line].finalset;
     }
   }
   
@@ -269,7 +272,7 @@ public class ControlFlowHandler {
         handle_testset(state, skip, line, c, target, c.register(), invert);
       } else {
         if(!constant && invert) c = c.inverse();
-        Branch b = new Branch(line, line, constant ? Branch.Type.testset : Branch.Type.test, c, line + 2, target);
+        Branch b = new Branch(line, line, constant ? Branch.Type.testset : Branch.Type.test, c, line + 2, target, null);
         b.target = code.A(line);
         if(invert) b.inverseValue = true;
         insert_branch(state, b);
@@ -279,7 +282,7 @@ public class ControlFlowHandler {
   }
   
   private static void handle_testset(State state, boolean[] skip, int line, Condition c, int target, int register, boolean invert) {
-    Branch b = new Branch(line, line, Branch.Type.testset, c, line + 2, target);
+    Branch b = new Branch(line, line, Branch.Type.testset, c, line + 2, target, null);
     b.target = register;
     if(invert) b.inverseValue = true;
     skip[line + 1] = true;
@@ -290,15 +293,16 @@ public class ControlFlowHandler {
       final_line--;
     }
     int begin = final_line;
-    if(state.finalsetbranches[final_line] == null) {
-      int loadboolblock = find_loadboolblock(state, target - 2);
-      if(loadboolblock == -1) {
+    int loadboolblock = find_loadboolblock(state, target - 2);
+    if(loadboolblock == -1) {
+      if(state.finalsetbranches[final_line] == null) {
         FinalSetCondition finalc = new FinalSetCondition(final_line, register);
-        Branch finalb = new Branch(final_line, final_line, Branch.Type.finalset, finalc, begin, target);
+        Branch finalb = new Branch(final_line, final_line, Branch.Type.finalset, finalc, begin, target, finalc);
         finalb.target = register;
         insert_branch(state, finalb);
         state.finalsetconditions.add(finalc);
       }
+      b.finalset = state.finalsetbranches[final_line].finalset;
     }
   }
   
@@ -311,7 +315,7 @@ public class ControlFlowHandler {
     if(loadboolblock >= 1) {
       handle_loadboolblock(state, skip, loadboolblock, c, line, target);
     } else {
-      Branch b = new Branch(line, line, Branch.Type.comparison, c, line + 2, target);
+      Branch b = new Branch(line, line, Branch.Type.comparison, c, line + 2, target, null);
       if(invert) {
         b.inverseValue = true;
       }
@@ -429,7 +433,7 @@ public class ControlFlowHandler {
               if(loadboolblock >= 1) {
                 handle_loadboolblock(state, skip, loadboolblock, new ConstantCondition(-1, false), line, target);
               } else {
-                Branch b = new Branch(line, line, Branch.Type.jump, null, target, target);
+                Branch b = new Branch(line, line, Branch.Type.jump, null, target, target, null);
                 insert_branch(state, b);
               }
             }
@@ -730,6 +734,7 @@ public class ControlFlowHandler {
     while(!elseStack.isEmpty() && elseStack.peek().end == tailTargetSecond && elseStack.peek().begin >= top.targetFirst) {
       elseStack.pop().end = b.line;
     }
+    
     Stack<Branch> replace = new Stack<Branch>();
     while(!hanging.isEmpty() && hanging.peek().targetSecond == tailTargetSecond && hanging.peek().line > top.line) {
       Branch hanger = hanging.pop();
@@ -745,6 +750,21 @@ public class ControlFlowHandler {
     while(!replace.isEmpty()) {
       hanging.push(replace.pop());
     }
+    
+    Branch b2 = state.begin_branch;
+    while(b2 != null) {
+      if(b2.type == Branch.Type.finalset) {
+        if(b2.targetSecond == tailTargetSecond && b2.line < b.line && b2.line > top.line) {
+          b2.targetFirst = b.line - 1;
+          b2.targetSecond = b.line;
+          if(b2.finalset != null) {
+            b2.finalset.line = b.line - 1;
+          }
+        }
+      }
+      b2 = b2.next;
+    }
+    
     b.targetSecond = tailTargetSecond;
     state.blocks.add(new IfThenElseBlock(state.function, top.cond, top.targetFirst, top.targetSecond, b.targetSecond));
     ElseEndBlock elseBlock = new ElseEndBlock(state.function, top.targetSecond, b.targetSecond);
@@ -1857,10 +1877,13 @@ public class ControlFlowHandler {
   }
   
   private static boolean adjacent(State state, Branch branch0, Branch branch1) {
-    if(branch0 == null || branch1 == null) {
+    if(branch1.finalset != null && branch0.finalset == branch1.finalset) {
+      // With redirects, there can be real statements between a finalset and paired branches.
+      return true;
+    } else if(branch0 == null || branch1 == null) {
       return false;
     } else {
-      boolean adjacent = branch0.targetFirst <= branch1.line || branch1.type == Branch.Type.finalset && branch1.line + 1 == branch0.targetFirst;
+      boolean adjacent = branch0.targetFirst <= branch1.line;
       if(adjacent) {
         adjacent = !has_statement(state, branch0.targetFirst, branch1.line - 1);
         adjacent = adjacent && !state.reverse_targets[branch1.line];
@@ -1901,7 +1924,7 @@ public class ControlFlowHandler {
         // Combination if not branch0 or branch1 then
         branch0 = combine_conditional(state, branch0);
         Condition c = new OrCondition(branch0.cond.inverse(), branch1.cond);
-        Branch branchn = new Branch(branch0.line, branch1.line2, Branch.Type.comparison, c, branch1.targetFirst, branch1.targetSecond);
+        Branch branchn = new Branch(branch0.line, branch1.line2, Branch.Type.comparison, c, branch1.targetFirst, branch1.targetSecond, branch1.finalset);
         branchn.inverseValue = branch1.inverseValue;
         if(verbose) System.err.println("conditional or " + branchn.line);
         replace_branch(state, branch0, branch1, branchn);
@@ -1910,7 +1933,7 @@ public class ControlFlowHandler {
         // Combination if branch0 and branch1 then
         branch0 = combine_conditional(state, branch0);
         Condition c = new AndCondition(branch0.cond, branch1.cond);
-        Branch branchn = new Branch(branch0.line, branch1.line2, Branch.Type.comparison, c, branch1.targetFirst, branch1.targetSecond);
+        Branch branchn = new Branch(branch0.line, branch1.line2, Branch.Type.comparison, c, branch1.targetFirst, branch1.targetSecond, branch1.finalset);
         branchn.inverseValue = branch1.inverseValue;
         if(verbose) System.err.println("conditional and " + branchn.line);
         replace_branch(state, branch0, branch1, branchn);
@@ -1925,7 +1948,11 @@ public class ControlFlowHandler {
     Branch branchn = branch1;
     while(branch0 != null && branchn == branch1) {
       branchn = combine_assignment_helper(state, branch0, branch1);
-      if(branch0.targetSecond > branch1.targetFirst) break;
+      if(branch1.cond == branch1.finalset) {
+        // keep searching for the first branch paired with a raw finalset
+      } else if(branch0.targetSecond > branch1.targetFirst) {
+        break;
+      }
       branch0 = branch0.previous;
     }
     return branchn;
@@ -1953,7 +1980,7 @@ public class ControlFlowHandler {
             //System.err.println("bridge and " + branch0.line + " " + branch0.inverseValue);
             c = new AndCondition(branch0.cond, branch1.cond);
           }
-          Branch branchn = new Branch(branch0.line, branch1.line2, branch1.type, c, branch1.targetFirst, branch1.targetSecond);
+          Branch branchn = new Branch(branch0.line, branch1.line2, branch1.type, c, branch1.targetFirst, branch1.targetSecond, branch1.finalset);
           branchn.inverseValue = branch1.inverseValue;
           branchn.target = register;
           replace_branch(state, branch0, branch1, branchn);
@@ -1990,7 +2017,7 @@ public class ControlFlowHandler {
             //System.err.println("assign or " + branch1.line + " " + branch0.line);
             c = new AndCondition(branch0.cond, branch1.cond);
           }
-          Branch branchn = new Branch(branch0.line, branch1.line2, branch1.type, c, branch1.targetFirst, branch1.targetSecond);
+          Branch branchn = new Branch(branch0.line, branch1.line2, branch1.type, c, branch1.targetFirst, branch1.targetSecond, branch1.finalset);
           branchn.inverseValue = branch1.inverseValue;
           branchn.target = register;
           replace_branch(state, branch0, branch1, branchn);
@@ -2020,7 +2047,7 @@ public class ControlFlowHandler {
             //System.err.println("final assign and " + branch1.line + " " + branch0.line);
             c = new AndCondition(branch0.cond, branch1.cond);
           }
-          Branch branchn = new Branch(branch0.line, branch1.line2, Branch.Type.finalset, c, branch1.targetFirst, branch1.targetSecond);
+          Branch branchn = new Branch(branch0.line, branch1.line2, Branch.Type.finalset, c, branch1.targetFirst, branch1.targetSecond, branch1.finalset);
           branchn.target = register;
           replace_branch(state, branch0, branch1, branchn);
           return combine_assignment(state, branchn);
