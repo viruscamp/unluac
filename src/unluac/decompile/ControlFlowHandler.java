@@ -742,19 +742,7 @@ public class ControlFlowHandler {
       hanging.push(replace.pop());
     }
     
-    Branch b2 = state.begin_branch;
-    while(b2 != null) {
-      if(b2.type == Branch.Type.finalset) {
-        if(b2.targetSecond == tailTargetSecond && b2.line < b.line && b2.line > top.line) {
-          b2.targetFirst = b.line - 1;
-          b2.targetSecond = b.line;
-          if(b2.finalset != null) {
-            b2.finalset.line = b.line - 1;
-          }
-        }
-      }
-      b2 = b2.next;
-    }
+    unredirect_finalsets(state, tailTargetSecond, b.line, top.targetFirst);
     
     b.targetSecond = tailTargetSecond;
     state.blocks.add(new IfThenElseBlock(state.function, top.cond, top.targetFirst, top.targetSecond, b.targetSecond));
@@ -832,6 +820,7 @@ public class ControlFlowHandler {
             }
             hangingResolver = b;
           }
+          unredirect_finalsets(state, b.targetFirst, line, breakable.begin);
           state.blocks.add(block);
           remove_branch(state, b);
         } else if(state.function.header.version.hasGoto() && breakable != null && !breakable.contains(b.targetFirst) && state.resolved[b.targetFirst] != state.resolved[breakable.end]) {
@@ -845,6 +834,7 @@ public class ControlFlowHandler {
             }
             hangingResolver = b;
           }
+          unredirect_finalsets(state, b.targetFirst, line, 1);
           state.blocks.add(block);
           state.labels[b.targetFirst] = true;
           remove_branch(state, b);
@@ -958,6 +948,22 @@ public class ControlFlowHandler {
       }
     }
     resolve_if_stack(state, stack, Integer.MAX_VALUE, -1);
+  }
+  
+  private static void unredirect_finalsets(State state, int target, int line, int begin) {
+    Branch b = state.begin_branch;
+    while(b != null) {
+      if(b.type == Branch.Type.finalset) {
+        if(b.targetSecond == target && b.line < line && b.line >= begin) {
+          b.targetFirst = line - 1;
+          b.targetSecond = line;
+          if(b.finalset != null) {
+            b.finalset.line = line - 1;
+          }
+        }
+      }
+      b = b.next;
+    }
   }
   
   private static void find_if_blocks(State state, Declaration[] declList) {
