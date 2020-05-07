@@ -92,7 +92,6 @@ public class ControlFlowHandler {
     public int[] resolved;
     public boolean[] labels;
     public List<Block> blocks;
-    public List<FinalSetCondition> finalsetconditions;
   }
   
   public static class Result {
@@ -113,7 +112,6 @@ public class ControlFlowHandler {
     state.r = r;
     state.code = d.code;
     state.labels = new boolean[d.code.length + 1];
-    state.finalsetconditions = new ArrayList<FinalSetCondition>();
     find_reverse_targets(state);
     find_branches(state);
     combine_branches(state);
@@ -254,7 +252,6 @@ public class ControlFlowHandler {
         Branch finalb = new Branch(final_line, final_line, Branch.Type.finalset, finalc, final_line, loadboolblock + 2, finalc);
         finalb.target = b.target;
         insert_branch(state, finalb);
-        state.finalsetconditions.add(finalc);
       }
       b.finalset = state.finalsetbranches[final_line].finalset;
     }
@@ -288,19 +285,13 @@ public class ControlFlowHandler {
     skip[line + 1] = true;
     insert_branch(state, b);
     int final_line = target - 1;
-    Op op = state.code.op(final_line);
-    if(op == Op.MMBIN || op == Op.MMBINI || op == Op.MMBINK || op == Op.EXTRAARG) {
-      final_line--;
-    }
-    int begin = final_line;
     int loadboolblock = find_loadboolblock(state, target - 2);
     if(loadboolblock == -1) {
       if(state.finalsetbranches[final_line] == null) {
         FinalSetCondition finalc = new FinalSetCondition(final_line, register);
-        Branch finalb = new Branch(final_line, final_line, Branch.Type.finalset, finalc, begin, target, finalc);
+        Branch finalb = new Branch(final_line, final_line, Branch.Type.finalset, finalc, final_line, target, finalc);
         finalb.target = register;
         insert_branch(state, finalb);
-        state.finalsetconditions.add(finalc);
       }
       b.finalset = state.finalsetbranches[final_line].finalset;
     }
@@ -1031,16 +1022,25 @@ public class ControlFlowHandler {
  
   private static void find_set_blocks(State state) {
     List<Block> blocks = state.blocks;
-    for(FinalSetCondition c : state.finalsetconditions) {
-      if(is_jmp_raw(state, c.line)) {
-        c.type = FinalSetCondition.Type.REGISTER;
-      } else {
-        c.type = FinalSetCondition.Type.VALUE;
-      }
-    }
     Branch b = state.begin_branch;
     while(b != null) {
       if(is_assignment(b) || b.type == Branch.Type.finalset) {
+        if(b.finalset != null) {
+          FinalSetCondition c = b.finalset;
+          Op op = state.code.op(c.line);
+          if(c.line >= 2 && (op == Op.MMBIN || op == Op.MMBINI || op == Op.MMBINK || op == Op.EXTRAARG)) {
+            c.line--;
+            if(b.targetFirst == c.line + 1) {
+              b.targetFirst = c.line;
+            }
+          }
+          
+          if(is_jmp_raw(state, c.line)) {
+            c.type = FinalSetCondition.Type.REGISTER;
+          } else {
+            c.type = FinalSetCondition.Type.VALUE;
+          }
+        }
         Block block = new SetBlock(state.function, b.cond, b.target, b.line, b.targetFirst, b.targetSecond, state.r);
         blocks.add(block);
         remove_branch(state, b);
