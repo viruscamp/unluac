@@ -48,6 +48,7 @@ public class TestFiles {
     "else03",
     "else04",
     "else05",
+    "else06",
     "booleanassign01",
     "booleanassign02",
     "booleanassign03",

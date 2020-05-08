@@ -87,7 +87,7 @@ public class ControlFlowHandler {
     public Branch end_branch;
     public Branch[] branches;
     public Branch[] setbranches;
-    public Branch[] finalsetbranches;
+    public ArrayList<List<Branch>> finalsetbranches;
     public boolean[] reverse_targets;
     public int[] resolved;
     public boolean[] labels;
@@ -247,13 +247,11 @@ public class ControlFlowHandler {
       if(constant && final_line < begin) {
         final_line++;
       }
-      if(state.finalsetbranches[final_line] == null) {
-        FinalSetCondition finalc = new FinalSetCondition(final_line, b.target);
-        Branch finalb = new Branch(final_line, final_line, Branch.Type.finalset, finalc, final_line, loadboolblock + 2, finalc);
-        finalb.target = b.target;
-        insert_branch(state, finalb);
-      }
-      b.finalset = state.finalsetbranches[final_line].finalset;
+      FinalSetCondition finalc = new FinalSetCondition(final_line, b.target);
+      Branch finalb = new Branch(final_line, final_line, Branch.Type.finalset, finalc, final_line, loadboolblock + 2, finalc);
+      finalb.target = b.target;
+      insert_branch(state, finalb);
+      b.finalset = finalc;
     }
   }
   
@@ -287,13 +285,11 @@ public class ControlFlowHandler {
     int final_line = target - 1;
     int loadboolblock = find_loadboolblock(state, target - 2);
     if(loadboolblock == -1) {
-      if(state.finalsetbranches[final_line] == null) {
-        FinalSetCondition finalc = new FinalSetCondition(final_line, register);
-        Branch finalb = new Branch(final_line, final_line, Branch.Type.finalset, finalc, final_line, target, finalc);
-        finalb.target = register;
-        insert_branch(state, finalb);
-      }
-      b.finalset = state.finalsetbranches[final_line].finalset;
+      FinalSetCondition finalc = new FinalSetCondition(final_line, register);
+      Branch finalb = new Branch(final_line, final_line, Branch.Type.finalset, finalc, final_line, target, finalc);
+      finalb.target = register;
+      insert_branch(state, finalb);
+      b.finalset = finalc;
     }
   }
   
@@ -319,7 +315,8 @@ public class ControlFlowHandler {
     Code code = state.code;
     state.branches = new Branch[state.code.length + 1];
     state.setbranches = new Branch[state.code.length + 1];
-    state.finalsetbranches = new Branch[state.code.length + 1];
+    state.finalsetbranches = new ArrayList<List<Branch>>(state.code.length + 1);
+    for(int i = 0; i <= state.code.length; i++) state.finalsetbranches.add(null);
     boolean[] skip = new boolean[code.length + 1];
     for(int line = 1; line <= code.length; line++) {
       if(!skip[line]) {
@@ -1047,9 +1044,13 @@ public class ControlFlowHandler {
             c.type = FinalSetCondition.Type.VALUE;
           }
         }
-        Block block = new SetBlock(state.function, b.cond, b.target, b.line, b.targetFirst, b.targetSecond, state.r);
-        blocks.add(block);
-        remove_branch(state, b);
+        if(b.cond == b.finalset) {
+          remove_branch(state, b);
+        } else {
+          Block block = new SetBlock(state.function, b.cond, b.target, b.line, b.targetFirst, b.targetSecond, state.r);
+          blocks.add(block);
+          remove_branch(state, b);
+        }
       }
       b = b.next;
     }
@@ -1956,6 +1957,8 @@ public class ControlFlowHandler {
       branchn = combine_assignment_helper(state, branch0, branch1);
       if(branch1.cond == branch1.finalset) {
         // keep searching for the first branch paired with a raw finalset
+      } else if(branch0.cond == branch0.finalset) {
+        // ignore duped finalset
       } else if(branch0.targetSecond > branch1.targetFirst) {
         break;
       }
@@ -2034,6 +2037,17 @@ public class ControlFlowHandler {
         if(branch0.targetSecond == branch1.targetSecond) {
           Condition c;
           //System.err.println("final preassign " + branch1.line + " " + branch0.line);
+          if(branch0.finalset != null && branch0.finalset != branch1.finalset) {
+            Branch b = branch0.next;
+            while(b != null) {
+              if(b.cond == branch0.finalset) {
+                remove_branch(state, b);
+                break;
+              }
+              b = b.next;
+            }
+          }
+          
           if(is_conditional(branch0)) {
             branch0 = combine_conditional(state, branch0);
             if(branch0.inverseValue) {
@@ -2063,19 +2077,38 @@ public class ControlFlowHandler {
     return branch1;
   }
   
-  private static Branch[] branches(State state, Branch b) {
+  private static void raw_add_branch(State state, Branch b) {
     if(b.type == Branch.Type.finalset) {
-      return state.finalsetbranches;
+      List<Branch> list = state.finalsetbranches.get(b.line);
+      if(list == null) {
+        list = new LinkedList<Branch>();
+        state.finalsetbranches.set(b.line, list);
+      }
+      list.add(b);
     } else if(b.type == Branch.Type.testset) {
-      return state.setbranches;
+      state.setbranches[b.line] = b;
     } else {
-      return state.branches;
+      state.branches[b.line] = b;
+    }
+  }
+  
+  private static void raw_remove_branch(State state, Branch b) {
+    if(b.type == Branch.Type.finalset) {
+      List<Branch> list = state.finalsetbranches.get(b.line);
+      if(list == null) {
+        throw new IllegalStateException();
+      }
+      list.remove(b);
+    } else if(b.type == Branch.Type.testset) {
+      state.setbranches[b.line] = null;
+    } else {
+      state.branches[b.line] = null;
     }
   }
   
   private static void replace_branch(State state, Branch branch0, Branch branch1, Branch branchn) {
     remove_branch(state, branch0);
-    branches(state, branch1)[branch1.line] = null;
+    raw_remove_branch(state, branch1);
     branchn.previous = branch1.previous;
     if(branchn.previous == null) {
       state.begin_branch = branchn;
@@ -2088,11 +2121,11 @@ public class ControlFlowHandler {
     } else {
       branchn.next.previous = branchn;
     }
-    branches(state, branchn)[branchn.line] = branchn;
+    raw_add_branch(state, branchn);
   }
   
   private static void remove_branch(State state, Branch b) {
-    branches(state, b)[b.line] = null;
+    raw_remove_branch(state, b);
     Branch prev = b.previous;
     Branch next = b.next;
     if(prev != null) {
@@ -2108,30 +2141,43 @@ public class ControlFlowHandler {
   }
   
   private static void insert_branch(State state, Branch b) {
-    branches(state, b)[b.line] = b;
+    raw_add_branch(state, b);
   }
   
   private static void link_branches(State state) {
     Branch previous = null;
     for(int index = 0; index < state.branches.length; index++) {
       for(int array = 0; array < 3; array ++) {
-        Branch[] branches;
         if(array == 0) {
-          branches = state.finalsetbranches;
-        } else if(array == 1) {
-          branches = state.setbranches;
-        } else {
-          branches = state.branches;
-        }
-        Branch b = branches[index];
-        if(b != null) {
-          b.previous = previous;
-          if(previous != null) {
-            previous.next = b;
-          } else {
-            state.begin_branch = b;
+          List<Branch> list = state.finalsetbranches.get(index);
+          if(list != null) {
+            for(Branch b : list) {
+              b.previous = previous;
+              if(previous != null) {
+                previous.next = b;
+              } else {
+                state.begin_branch = b;
+              }
+              previous = b;
+            }
           }
-          previous = b;
+        } else {
+          Branch[] branches;
+          if(array == 1) {
+            branches = state.setbranches;
+          } else {
+            branches = state.branches;
+          }
+          Branch b = branches[index];
+          if(b != null) {
+            b.previous = previous;
+            if(previous != null) {
+              previous.next = b;
+            } else {
+              state.begin_branch = b;
+            }
+            previous = b;
+          }
         }
       }
     }
