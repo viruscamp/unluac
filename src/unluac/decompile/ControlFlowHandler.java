@@ -356,7 +356,12 @@ public class ControlFlowHandler {
             if(code.op(line) == Op.GTI) op = BinaryCondition.Operator.LT;
             if(code.op(line) == Op.GEI) op = BinaryCondition.Operator.LE;
             Condition.Operand left = new Condition.Operand(Condition.OperandType.R, code.A(line));
-            Condition.Operand right = new Condition.Operand(Condition.OperandType.I, code.sB(line));
+            Condition.Operand right;
+            if(code.C(line) != 0) {
+              right = new Condition.Operand(Condition.OperandType.F, code.sB(line));
+            } else {
+              right = new Condition.Operand(Condition.OperandType.I, code.sB(line));
+            }
             if(code.op(line) == Op.GTI || code.op(line) == Op.GEI) {
               Condition.Operand swap = left;
               left = right;

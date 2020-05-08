@@ -110,6 +110,7 @@ public class TestFiles {
     "complexassign01",
     "complexassign02",
     "complexassign03",
+    "compare01",
     "compareorder01",
     "compareorder02",
     "compareorder03",

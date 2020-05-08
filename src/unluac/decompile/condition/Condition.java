@@ -11,6 +11,7 @@ public interface Condition {
     RK,
     K,
     I,
+    F,
   }
   
   public static class Operand {
@@ -26,6 +27,7 @@ public interface Condition {
       case RK: return r.getKExpression(this.value, line);
       case K: return r.getFunction().getConstantExpression(this.value);
       case I: return ConstantExpression.createInteger(this.value);
+      case F: return ConstantExpression.createDouble((double) this.value);
       default: throw new IllegalStateException();
       }
     }
@@ -36,6 +38,7 @@ public interface Condition {
       case RK: return !r.isKConstant(this.value);
       case K: return false;
       case I: return false;
+      case F: return false;
       default: throw new IllegalStateException();
       }
     }
