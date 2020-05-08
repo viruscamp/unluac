@@ -16,6 +16,7 @@ public class TestFiles {
     "expression",
     "expression02",
     "functioncall",
+    "self01",
     "literallist",
     "multiliteraltarget",
     "closure",

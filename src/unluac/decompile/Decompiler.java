@@ -382,7 +382,7 @@ public class Decompiler {
         // We can later determine if : syntax was used by comparing subexpressions with ==
         Expression common = r.getExpression(B, line);
         operations.add(new RegisterSet(line, A + 1, common));
-        operations.add(new RegisterSet(line, A, new TableReference(common, f.getConstantExpression(C))));
+        operations.add(new RegisterSet(line, A, new TableReference(common, r.getKExpression54(C, code.k(line), line))));
         break;
       }
       case ADD:
