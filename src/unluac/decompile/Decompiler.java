@@ -678,6 +678,7 @@ public class Decompiler {
         break;
       }
       case TBC:
+        r.getDeclaration(A, line).tbc = true;
         break;
       case CLOSE:
         break;

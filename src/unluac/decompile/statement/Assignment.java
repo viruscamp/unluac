@@ -182,10 +182,10 @@ public class Assignment extends Statement {
         //if(closure.isUpvalueOf(targets.get(0).))
       }
       if(!functionSugar) {
-        targets.get(0).print(d, out);
+        targets.get(0).print(d, out, declare);
         for(int i = 1; i < targets.size(); i++) {
           out.print(", ");
-          targets.get(i).print(d, out);
+          targets.get(i).print(d, out, declare);
         }
         if(!declare || !allnil) {
           out.print(" = ");

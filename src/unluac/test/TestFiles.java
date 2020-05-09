@@ -229,6 +229,7 @@ public class TestFiles {
     "52_goto03",
     "53_expression",
     "53_expression02",
+    "54_tbc01",
   };
   
   public static TestSuite suite = new TestSuite(null, ".\\test\\src\\", tests);

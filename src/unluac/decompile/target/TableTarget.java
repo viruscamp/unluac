@@ -23,7 +23,7 @@ public class TableTarget extends Target {
   }
   
   @Override
-  public void print(Decompiler d, Output out) {
+  public void print(Decompiler d, Output out, boolean declare) {
     new TableReference(table, index).print(d, out);
   }
   

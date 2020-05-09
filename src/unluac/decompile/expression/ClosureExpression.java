@@ -75,7 +75,7 @@ public class ClosureExpression extends Expression {
       name.printMethod(outer, out);
       printMain(out, d, false);
     } else {
-      name.print(outer, out);
+      name.print(outer, out, false);
       printMain(out, d, true);
     }
   }
@@ -84,10 +84,10 @@ public class ClosureExpression extends Expression {
     out.print("(");
     int start = includeFirst ? 0 : 1;
     if(function.numParams > start) {
-      new VariableTarget(d.declList[start]).print(d, out);
+      new VariableTarget(d.declList[start]).print(d, out, false);
       for(int i = start + 1; i < function.numParams; i++) {
         out.print(", ");
-        new VariableTarget(d.declList[i]).print(d, out);
+        new VariableTarget(d.declList[i]).print(d, out, false);
       }
     }
     if(function.vararg != 0) {

@@ -158,10 +158,10 @@ public class TForBlock extends ContainerBlock {
   @Override
   public void print(Decompiler d, Output out) {
     out.print("for ");
-    targets[0].print(d, out);
+    targets[0].print(d, out, false);
     for(int i = 1; i < targets.length; i++) {
       out.print(", ");
-      targets[i].print(d, out);
+      targets[i].print(d, out, false);
     }
     out.print(" in ");
     values[0].print(d, out);

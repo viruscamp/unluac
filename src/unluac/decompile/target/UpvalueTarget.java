@@ -16,7 +16,7 @@ public class UpvalueTarget extends Target{
   public void walk(Walker w) {}
   
   @Override
-  public void print(Decompiler d, Output out) {
+  public void print(Decompiler d, Output out, boolean declare) {
     out.print(name);    
   }
   

@@ -9,7 +9,7 @@ abstract public class Target {
 
   abstract public void walk(Walker w);
   
-  abstract public void print(Decompiler d, Output out);
+  abstract public void print(Decompiler d, Output out, boolean declare);
   
   abstract public void printMethod(Decompiler d, Output out);
   

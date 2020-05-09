@@ -17,8 +17,11 @@ public class VariableTarget extends Target {
   public void walk(Walker w) {}
   
   @Override
-  public void print(Decompiler d, Output out) {
+  public void print(Decompiler d, Output out, boolean declare) {
     out.print(decl.name);
+    if(declare && decl.tbc) {
+      out.print(" <close>");
+    }
   }
   
   @Override

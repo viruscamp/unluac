@@ -20,7 +20,7 @@ public class GlobalTarget extends Target {
   }
   
   @Override
-  public void print(Decompiler d, Output out) {
+  public void print(Decompiler d, Output out, boolean declare) {
     out.print(name.asName());
   }
   

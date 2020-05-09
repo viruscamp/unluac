@@ -80,7 +80,7 @@ abstract public class ForBlock extends ContainerBlock {
   @Override
   public void print(Decompiler d, Output out) {
     out.print("for ");
-    target.print(d, out);
+    target.print(d, out, false);
     out.print(" = ");
     start.print(d, out);
     out.print(", ");

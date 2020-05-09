@@ -8,6 +8,7 @@ public class Declaration {
   public final int begin;
   public final int end;
   public int register;
+  public boolean tbc;
   
   /**
    * Whether this is an invisible for-loop book-keeping variable.
@@ -30,6 +31,7 @@ public class Declaration {
     this.name = local.toString();
     this.begin = local.start + adjust;
     this.end = local.end;
+    this.tbc = false;
   }
   
   public Declaration(String name, int begin, int end) {
