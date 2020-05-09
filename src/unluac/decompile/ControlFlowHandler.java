@@ -642,19 +642,39 @@ public class ControlFlowHandler {
           loop = new WhileBlock(state.function, b.cond, b.targetFirst, b.targetSecond, loopback);
           unredirect(state, loopback, end, j.line, loopback);
         } else {
-          boolean repeat = false;
-          if(state.function.header.version == Version.LUA50) {
-            repeat = true;
-            if(loopback - 1 >= 1 && state.branches[loopback - 1] != null) {
-              Branch head = state.branches[loopback - 1];
-              if(head.type == Branch.Type.jump && head.targetFirst == j.line) {
-                remove_branch(state, head);
-                repeat = false;
+          if(j.line - 5 >= 1 && state.code.op(j.line - 3) == Op.CLOSE
+            && is_jmp_raw(state, j.line - 2) && state.code.target(j.line - 2) == end
+            && state.code.op(j.line - 1) == Op.CLOSE
+          ) {
+            b = j.previous;
+            while(b != null && !(is_conditional(b) && b.line2 == j.line - 5)) {
+              b = b.previous;
+            }
+            if(b == null) throw new IllegalStateException();
+            Branch skip = state.branches[j.line - 2];
+            if(skip == null) throw new IllegalStateException();
+            int scopeEnd = j.line - 3;
+            if(state.function.header.version.getVersionNumber() == 0x51) {
+              scopeEnd = j.line - 2;
+            }
+            loop = new RepeatBlock(state.function, b.cond, j.targetFirst, j.line + 1, scopeEnd);
+            remove_branch(state, b);
+            remove_branch(state, skip);
+          } else {
+            boolean repeat = false;
+            if(state.function.header.version == Version.LUA50) {
+              repeat = true;
+              if(loopback - 1 >= 1 && state.branches[loopback - 1] != null) {
+                Branch head = state.branches[loopback - 1];
+                if(head.type == Branch.Type.jump && head.targetFirst == j.line) {
+                  remove_branch(state, head);
+                  repeat = false;
+                }
               }
             }
+            loop = new AlwaysLoop(state.function, loopback, end, repeat);
+            unredirect(state, loopback, end, j.line, loopback);
           }
-          loop = new AlwaysLoop(state.function, loopback, end, repeat);
-          unredirect(state, loopback, end, j.line, loopback);
         }
         remove_branch(state, j);
         blocks.add(loop);

@@ -12,12 +12,18 @@ import unluac.parse.LFunction;
 public class RepeatBlock extends ContainerBlock {
 
   private final Condition cond;
+  private final int scopeEnd;
   
   private Expression condexpr;
   
   public RepeatBlock(LFunction function, Condition cond, int begin, int end) {
+    this(function, cond, begin, end, end - 1);
+  }
+  
+  public RepeatBlock(LFunction function, Condition cond, int begin, int end, int scopeEnd) {
     super(function, begin, end, 0);
     this.cond = cond;
+    this.scopeEnd = scopeEnd;
   }
   
   @Override
@@ -32,6 +38,11 @@ public class RepeatBlock extends ContainerBlock {
       statement.walk(w);
     }
     condexpr.walk(w);
+  }
+  
+  @Override
+  public int scopeEnd() {
+    return scopeEnd;
   }
   
   @Override
