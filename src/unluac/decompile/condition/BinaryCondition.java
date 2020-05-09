@@ -94,7 +94,11 @@ public class BinaryCondition implements Condition {
         int rightIndex = rightExpression.getConstantIndex();
         int leftIndex = leftExpression.getConstantIndex();
         if(rightIndex != -1 && leftIndex != -1) {
-          transpose = rightIndex < leftIndex;
+          if(left.type == OperandType.K && rightIndex == leftIndex) {
+            transpose = true;
+          } else {
+            transpose = rightIndex < leftIndex;
+          }
         }
       }
     }
