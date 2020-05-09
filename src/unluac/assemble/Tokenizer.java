@@ -18,6 +18,7 @@ public class Tokenizer {
     
     boolean inToken = false;
     boolean inString = false;
+    boolean isLPrefix = false;
     
     for(;;) {
       int code = r.read();
@@ -34,8 +35,12 @@ public class Tokenizer {
         b.append(c);
         break;
       } else {
-        if(!inToken && c == '"') {
+        if((!inToken || isLPrefix) && c == '"') {
           inString = true;
+        } else if(!inToken && c == 'L') {
+          isLPrefix = true;
+        } else {
+          isLPrefix = false;
         }
         inToken = true;
         b.append(c);

@@ -5,9 +5,11 @@ import unluac.util.StringUtils;
 public class LString extends LObject {
 
   public final String value;
+  public boolean islong;
   
   public LString(String value) {    
     this.value = value;
+    islong = false;
   }
   
   @Override
@@ -17,14 +19,16 @@ public class LString extends LObject {
   
   @Override
   public String toPrintString() {
-    return StringUtils.toPrintString(value);
+    String prefix = "";
+    if(islong) prefix = "L";
+    return prefix + StringUtils.toPrintString(value);
   }
   
   @Override
   public boolean equals(Object o) {
     if(o instanceof LString) {
       LString os = (LString) o;
-      return os.value.equals(value);
+      return os.value.equals(value) && os.islong == islong;
     }
     return false;
   }

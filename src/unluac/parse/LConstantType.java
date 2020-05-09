@@ -120,8 +120,12 @@ class LConstantType53 extends LConstantType {
       case 0x13:
         return header.linteger.parse(buffer, header);
       case 4:
-      case 0x14:
         return header.string.parse(buffer, header);
+      case 0x14: {
+        LString s = header.string.parse(buffer, header);
+        s.islong = true;
+        return s;
+      }
       default:
         throw new IllegalStateException();
     }
@@ -144,9 +148,9 @@ class LConstantType53 extends LConstantType {
         header.linteger.write(out, header, (LNumber)object);
       }
     } else if(object instanceof LString) {
-      out.write(4);
-      // TODO: long strings?
-      header.string.write(out, header, (LString)object);
+      LString s = (LString) object;
+      out.write(s.islong ? 0x14 : 4);
+      header.string.write(out, header, s);
     } else {
       throw new IllegalStateException();
     }
@@ -171,8 +175,12 @@ class LConstantType54 extends LConstantType {
       case 0x13:
         return header.lfloat.parse(buffer, header);
       case 4:
-      case 0x14:
         return header.string.parse(buffer, header);
+      case 0x14: {
+        LString s = header.string.parse(buffer, header);
+        s.islong = true;
+        return s;
+      }
       default:
         throw new IllegalStateException();
     }
@@ -198,9 +206,9 @@ class LConstantType54 extends LConstantType {
         header.linteger.write(out, header, (LNumber)object);
       }
     } else if(object instanceof LString) {
-      out.write(4);
-      // TODO: long strings?
-      header.string.write(out, header, (LString)object);
+      LString s = (LString) object;
+      out.write(s.islong ? 0x14 : 4);
+      header.string.write(out, header, s);
     } else {
       throw new IllegalStateException();
     }

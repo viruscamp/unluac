@@ -56,6 +56,7 @@ class AssemblerConstant {
     INTEGER,
     FLOAT,
     STRING,
+    LONGSTRING,
   }
   
   public String name;
@@ -240,6 +241,9 @@ class AssemblerFunction {
       } else if(value.startsWith("\"")) {
         constant.type = AssemblerConstant.Type.STRING;
         constant.stringValue = StringUtils.fromPrintString(value);
+      } else if(value.startsWith("L\"")) {
+        constant.type = AssemblerConstant.Type.LONGSTRING;
+        constant.stringValue = StringUtils.fromPrintString(value.substring(1));
       } else {
         try {
           // TODO: better check
@@ -649,6 +653,12 @@ class AssemblerChunk {
       case STRING:
         object = convert_string(header, constant.stringValue);
         break;
+      case LONGSTRING: {
+        LString s = convert_string(header, constant.stringValue);
+        s.islong = true;
+        object = s;
+        break;
+      }
       default:
         throw new IllegalStateException();
       }
