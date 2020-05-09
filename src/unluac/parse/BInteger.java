@@ -75,6 +75,27 @@ public class BInteger extends BObject {
     return array;
   }
   
+  public byte[] compressedBytes() {
+    BigInteger value = big;
+    if(value == null) {
+      value = BigInteger.valueOf(n);
+    }
+    if(value.compareTo(BigInteger.ZERO) == 0) {
+      return new byte[] {0};
+    }
+    ArrayList<Byte> bytes = new ArrayList<Byte>((value.bitCount() + 6) / 7);
+    BigInteger limit = BigInteger.valueOf(0x7F);
+    while(value.compareTo(BigInteger.ZERO) > 0) {
+      bytes.add((byte) value.and(limit).intValue());
+      value = value.shiftRight(7);
+    }
+    byte[] array = new byte[bytes.size()];
+    for(int i = 0; i < bytes.size(); i++) {
+      array[i] = bytes.get(i);
+    }
+    return array;
+  }
+  
   public void iterate(Runnable thunk) {
     if(big == null) {
       int i = n;

@@ -123,7 +123,7 @@ public enum Op {
   TEST54(OperandFormat.AR, OperandFormat.k),
   TESTSET54(OperandFormat.AR, OperandFormat.BR, OperandFormat.k),
   TAILCALL54(OperandFormat.AR, OperandFormat.B),
-  RETURN54(OperandFormat.AR, OperandFormat.B),
+  RETURN54(OperandFormat.AR, OperandFormat.B, OperandFormat.C, OperandFormat.k),
   RETURN0(),
   RETURN1(OperandFormat.AR),
   FORLOOP54(OperandFormat.AR, OperandFormat.BxJn),

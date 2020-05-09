@@ -131,7 +131,14 @@ public class BHeader {
   
   public void write(OutputStream out) throws IOException {
     out.write(signature);
-    out.write(version.getVersionNumber());
+    int versionNumber = version.getVersionNumber();
+    if(versionNumber >= 0x54) {
+      int major = versionNumber >> 4;
+      int minor = versionNumber & 0x0F;
+      BIntegerType.create54().write(out, this, new BInteger(major * 100 + minor));
+    } else {
+      out.write(versionNumber);
+    }
     version.getLHeaderType().write(out, this, lheader);
     if(version.getVersionNumber() >= 0x53) {
       out.write(main.numUpvalues);

@@ -10,7 +10,9 @@ import unluac.Version;
 public abstract class LStringType extends BObjectType<LString> {
 
   public static LStringType get(Version version) {
-    if(version.getVersionNumber() >= 0x53) {
+    if(version.getVersionNumber() >= 0x54) {
+      return getType54(version);
+    } else if(version.getVersionNumber() >= 0x53) {
       return getType53(version);
     } else {
       return getType50(version);
@@ -173,7 +175,10 @@ class LStringType54 extends LStringType {
   
   @Override
   public void write(OutputStream out, BHeader header, LString string) throws IOException {
-    throw new IllegalStateException();
+    header.sizeT.write(out, header, header.sizeT.create(string.value.length() + 1));
+    for(int i = 0; i < string.value.length(); i++) {
+      out.write(string.value.charAt(i));
+    }
   }
 }
 

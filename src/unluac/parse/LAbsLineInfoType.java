@@ -8,10 +8,9 @@ public class LAbsLineInfoType extends BObjectType<LAbsLineInfo> {
 
   @Override
   public LAbsLineInfo parse(ByteBuffer buffer, BHeader header) {
-    // TODO:
-    header.integer.parse(buffer, header);
-    header.integer.parse(buffer, header);
-    return new LAbsLineInfo();
+    int pc = header.integer.parse(buffer, header).asInt();
+    int line = header.integer.parse(buffer, header).asInt();
+    return new LAbsLineInfo(pc, line);
   }
 
   @Override

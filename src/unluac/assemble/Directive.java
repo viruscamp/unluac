@@ -39,6 +39,7 @@ public enum Directive {
   LABEL(".label", DirectiveType.FUNCTION, 1),
   CONSTANT(".constant", DirectiveType.FUNCTION, 2),
   LINE(".line", DirectiveType.FUNCTION, 1),
+  ABSLINEINFO(".abslineinfo", DirectiveType.FUNCTION, 2),
   LOCAL(".local", DirectiveType.FUNCTION, 3),
   UPVALUE(".upvalue", DirectiveType.FUNCTION, 2),
   ;

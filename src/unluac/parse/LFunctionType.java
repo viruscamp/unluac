@@ -24,6 +24,7 @@ abstract public class LFunctionType extends BObjectType<LFunction> {
     case 0x51: return TYPE51;
     case 0x52: return TYPE52;
     case 0x53: return TYPE53;
+    case 0x54: return TYPE54;
     default: throw new IllegalStateException();
     }
   }
@@ -42,6 +43,7 @@ abstract public class LFunctionType extends BObjectType<LFunction> {
     BList<LObject> constants;
     BList<LFunction> functions;
     BList<BInteger> lines;
+    BList<LAbsLineInfo> abslineinfo;
     BList<LLocal> locals;
     LUpvalue upvalues[];
   }
@@ -56,7 +58,11 @@ abstract public class LFunctionType extends BObjectType<LFunction> {
     }
     LFunctionParseState s = new LFunctionParseState();
     parse_main(buffer, header, s);
-    LFunction lfunc = new LFunction(header, s.name, s.lineBegin, s.lineEnd, s.code, s.lines, s.locals.asArray(new LLocal[s.locals.length.asInt()]), s.constants.asArray(new LObject[s.constants.length.asInt()]), s.upvalues, s.functions.asArray(new LFunction[s.functions.length.asInt()]), s.maximumStackSize, s.lenUpvalues, s.lenParameter, s.vararg);
+    LAbsLineInfo[] abslineinfo = null;
+    if(s.abslineinfo != null) {
+      abslineinfo = s.abslineinfo.asArray(new LAbsLineInfo[s.abslineinfo.length.asInt()]);
+    }
+    LFunction lfunc = new LFunction(header, s.name, s.lineBegin, s.lineEnd, s.code, s.lines, abslineinfo, s.locals.asArray(new LLocal[s.locals.length.asInt()]), s.constants.asArray(new LObject[s.constants.length.asInt()]), s.upvalues, s.functions.asArray(new LFunction[s.functions.length.asInt()]), s.maximumStackSize, s.lenUpvalues, s.lenParameter, s.vararg);
     for(LFunction child : lfunc.functions) {
       child.parent = lfunc;
     }
@@ -354,12 +360,31 @@ class LFunctionType54 extends LFunctionType {
   protected void parse_debug(ByteBuffer buffer, BHeader header, LFunctionParseState s) {
     // TODO: process line info correctly
     s.lines = (new BIntegerType50(1)).parseList(buffer, header);
-    header.abslineinfo.parseList(buffer, header);
+    s.abslineinfo = header.abslineinfo.parseList(buffer, header);
     s.locals = header.local.parseList(buffer, header);
     BList<LString> upvalueNames = header.string.parseList(buffer, header);
     for(int i = 0; i < upvalueNames.length.asInt(); i++) {
       s.upvalues[i].bname = upvalueNames.get(i);
       s.upvalues[i].name = s.upvalues[i].bname.deref();
+    }
+  }
+  
+  @Override
+  protected void write_debug(OutputStream out, BHeader header, LFunction object) throws IOException {
+    new BIntegerType50(1).writeList(out, header, object.lines);
+    header.abslineinfo.writeList(out, header, object.abslineinfo);
+    header.local.writeList(out, header, object.locals);
+    int upvalueNameLength = 0;
+    for(LUpvalue upvalue : object.upvalues) {
+      if(upvalue.bname != null) {
+        upvalueNameLength++;
+      } else {
+        break;
+      }
+    }
+    header.integer.write(out, header, new BInteger(upvalueNameLength));
+    for(int i = 0; i < upvalueNameLength; i++) {
+      header.string.write(out, header, object.upvalues[i].bname);
     }
   }
   
@@ -398,10 +423,10 @@ class LFunctionType54 extends LFunctionType {
     out.write(object.vararg);
     out.write(object.maximumStackSize);
     write_code(out, header, object);
-    //TODO: header.constant.writeList(out, header, object.constants);
+    header.constant.writeList(out, header, object.constants);
     write_upvalues(out, header, object);
     header.function.writeList(out, header, object.functions);
-    //TODO: write_debug(out, header, object);
+    write_debug(out, header, object);
   }
   
 }

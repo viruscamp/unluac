@@ -12,12 +12,16 @@ abstract public class BIntegerType extends BObjectType<BInteger> {
     return new BIntegerType50(intSize);
   }
   
+  public static BIntegerType create54() {
+    return new BIntegerType54();
+  }
+  
   public int getSize() {
     throw new IllegalStateException();
   }
   
   public BInteger create(int n) {
-    throw new IllegalStateException();
+    return new BInteger(n);
   }
   
 }
@@ -94,12 +98,7 @@ class BIntegerType50 extends BIntegerType {
   public int getSize() {
     return intSize;
   }
-  
-  @Override
-  public BInteger create(int n) {
-    return new BInteger(n);
-  }
-  
+
 }
 
 class BIntegerType54 extends BIntegerType {
@@ -125,7 +124,11 @@ class BIntegerType54 extends BIntegerType {
   
   @Override
   public void write(OutputStream out, BHeader header, BInteger object) throws IOException {
-    throw new IllegalStateException("TODO");
+    byte[] bytes = object.compressedBytes();
+    for(int i = bytes.length - 1; i >=1; i--) {
+      out.write(bytes[i]);
+    }
+    out.write(bytes[0] | 0x80);
   }
   
 }

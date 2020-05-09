@@ -20,6 +20,7 @@ import unluac.parse.BHeader;
 import unluac.parse.BInteger;
 import unluac.parse.BIntegerType;
 import unluac.parse.BList;
+import unluac.parse.LAbsLineInfo;
 import unluac.parse.LAbsLineInfoType;
 import unluac.parse.LBoolean;
 import unluac.parse.LBooleanType;
@@ -64,6 +65,13 @@ class AssemblerConstant {
   public double numberValue;
   public String stringValue;
   public BigInteger integerValue;
+}
+
+class AssemblerAbsLineInfo {
+  
+  public int pc;
+  public int line;
+  
 }
 
 class AssemblerLocal {
@@ -128,6 +136,7 @@ class AssemblerFunction {
   public List<AssemblerUpvalue> upvalues;
   public List<Integer> code;
   public List<Integer> lines;
+  public List<AssemblerAbsLineInfo> abslineinfo;
   public List<AssemblerLocal> locals;
   
   public List<FunctionFixup> f_fixup;
@@ -151,6 +160,7 @@ class AssemblerFunction {
     upvalues = new ArrayList<AssemblerUpvalue>();
     code = new ArrayList<Integer>();
     lines = new ArrayList<Integer>();
+    abslineinfo = new ArrayList<AssemblerAbsLineInfo>();
     locals = new ArrayList<AssemblerLocal>();
     
     f_fixup = new ArrayList<FunctionFixup>();
@@ -278,7 +288,7 @@ class AssemblerFunction {
   
   public void processOp(Assembler a, CodeExtract extract, Op op, int opcode) throws AssemblerException, IOException {
     if(!hasMaxStackSize) throw new AssemblerException("Expected .maxstacksize before code");
-    if(opcode >= 0 && !extract.op.check(opcode)) throw new IllegalStateException();
+    if(opcode >= 0 && !extract.op.check(opcode)) throw new IllegalStateException("Invalid opcode: " + opcode);
     int codepoint = opcode >= 0 ? extract.op.encode(opcode) : 0;
     for(OperandFormat operand : op.operands) {
       CodeExtract.Field field;
@@ -286,11 +296,13 @@ class AssemblerFunction {
       case A: field = extract.A; break;
       case B: field = extract.B; break;
       case C: field = extract.C; break;
+      case k: field = extract.k; break;
       case Ax: field = extract.Ax; break;
+      case sJ: field = extract.sJ; break;
       case Bx: field = extract.Bx; break;
       case sBx: field = extract.sBx; break;
       case x: field = extract.x; break;
-      default: throw new IllegalStateException();
+      default: throw new IllegalStateException("Unhandled field: " + operand.field);
       }
       int x;
       switch(operand.format) {
@@ -305,7 +317,8 @@ class AssemblerFunction {
         //TODO: stack warning
         break;
       }
-      case CONSTANT: {
+      case CONSTANT:
+      case CONSTANT_STRING: {
         x = a.getConstant();
         break;
       }
@@ -502,7 +515,11 @@ class AssemblerChunk {
       if(processed_directives.contains(Directive.SIZE_OP)) {
         extract = new CodeExtract(version, op_size, a_size, b_size, c_size);
       } else {
-        extract = new CodeExtract(version);
+        if(version.getVersionNumber() >= 0x54) {
+          extract = new CodeExtract();
+        } else {
+          extract = new CodeExtract(version);
+        }
       }
     }
     return extract;
@@ -550,6 +567,11 @@ class AssemblerChunk {
     LFunctionType function = LFunctionType.get(version);
     CodeExtract extract = getCodeExtract();
     
+    if(integer == null) {
+      integer = BIntegerType.create54();
+      sizeT = integer;
+    }
+    
     LHeader lheader = new LHeader(format, endianness, integer, sizeT, bool, number, linteger, lfloat, string, constant, abslineinfo, local, upvalue, function, extract);
     BHeader header = new BHeader(version, lheader);
     LFunction main = convert_function(header, this.main);
@@ -568,6 +590,11 @@ class AssemblerChunk {
     ArrayList<BInteger> lines = new ArrayList<BInteger>(function.lines.size());
     for(int line : function.lines) {
       lines.add(new BInteger(line));
+    }
+    LAbsLineInfo[] abslineinfo = new LAbsLineInfo[function.abslineinfo.size()];
+    i = 0;
+    for(AssemblerAbsLineInfo info : function.abslineinfo) {
+      abslineinfo[i++] = new LAbsLineInfo(info.pc, info.line);
     }
     LLocal[] locals = new LLocal[function.locals.size()];
     i = 0;
@@ -623,6 +650,7 @@ class AssemblerChunk {
       function.lastlinedefined,
       code,
       new BList<BInteger>(new BInteger(function.lines.size()), lines),
+      abslineinfo,
       locals,
       constants,
       upvalues,
