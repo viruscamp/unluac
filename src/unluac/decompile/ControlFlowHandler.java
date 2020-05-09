@@ -234,7 +234,7 @@ public class ControlFlowHandler {
       begin--;
       b = new Branch(line, line, Branch.Type.testset, c, begin, loadboolblock + 2, null);
     } else if(line + 2 == loadboolblock) {
-      b = new Branch(line, line, Branch.Type.finalset, c, begin, loadboolblock + 2, null);
+      b = new Branch(loadboolblock, loadboolblock, Branch.Type.finalset, c, begin, loadboolblock + 2, null);
     } else {
       b = new Branch(line, line, Branch.Type.testset, c, begin, loadboolblock + 2, null);
     }
@@ -284,13 +284,19 @@ public class ControlFlowHandler {
     insert_branch(state, b);
     int final_line = target - 1;
     int loadboolblock = find_loadboolblock(state, target - 2);
-    if(loadboolblock == -1) {
-      FinalSetCondition finalc = new FinalSetCondition(final_line, register);
-      Branch finalb = new Branch(final_line, final_line, Branch.Type.finalset, finalc, final_line, target, finalc);
-      finalb.target = register;
-      insert_branch(state, finalb);
-      b.finalset = finalc;
+    if(loadboolblock != -1) {
+      final_line = loadboolblock;
+      if(loadboolblock - 2 >= 1 && is_jmp(state, loadboolblock - 1) &&
+        (state.code.target(loadboolblock - 1) == target || is_jmp_raw(state, target) && state.code.target(loadboolblock - 1) == state.code.target(target))
+      ) {
+        final_line = loadboolblock - 2;
+      }
     }
+    FinalSetCondition finalc = new FinalSetCondition(final_line, register);
+    Branch finalb = new Branch(final_line, final_line, Branch.Type.finalset, finalc, final_line, target, finalc);
+    finalb.target = register;
+    insert_branch(state, finalb);
+    b.finalset = finalc;
   }
   
   private static void process_condition(State state, boolean[] skip, int line, Condition c, boolean invert) {
