@@ -83,7 +83,7 @@ public class BinaryCondition implements Condition {
     boolean transpose = false;
     Expression leftExpression = left.asExpression(r, line);
     Expression rightExpression = right.asExpression(r, line);
-    if(op != Operator.EQ) {
+    if(op != Operator.EQ || right.type == OperandType.K) {
       if(left.isRegister(r) && right.isRegister(r)) {
         transpose = left.getUpdated(r, line) > right.getUpdated(r, line);
       } else {

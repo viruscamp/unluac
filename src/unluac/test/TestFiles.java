@@ -119,6 +119,7 @@ public class TestFiles {
     "compareorder03",
     "compareorder04",
     "compareorder05",
+    "compareorder06",
     "table01",
     "table02",
     "table03",
