@@ -9,7 +9,9 @@ public class BinaryCondition implements Condition {
   public static enum Operator {
     EQ,
     LT,
-    LE
+    LE,
+    GT,
+    GE
   }
   
   private static String operator_to_string(Operator op, boolean inverted, boolean transposed) {
@@ -17,6 +19,8 @@ public class BinaryCondition implements Condition {
       case EQ: return inverted ? "~=" : "==";
       case LT: return transposed ? ">" : "<";
       case LE: return transposed ? ">=" : "<=";
+      case GT: return transposed ? "<" : ">";
+      case GE: return transposed ? "<=" : ">=";
     }
     throw new IllegalStateException();
   }
@@ -83,11 +87,15 @@ public class BinaryCondition implements Condition {
     boolean transpose = false;
     Expression leftExpression = left.asExpression(r, line);
     Expression rightExpression = right.asExpression(r, line);
-    if(op != Operator.EQ || right.type == OperandType.K) {
+    if(op != Operator.EQ || left.type == OperandType.K) {
       if(left.isRegister(r) && right.isRegister(r)) {
         transpose = left.getUpdated(r, line) > right.getUpdated(r, line);
       } else {
-        transpose = rightExpression.getConstantIndex() < leftExpression.getConstantIndex();
+        int rightIndex = rightExpression.getConstantIndex();
+        int leftIndex = leftExpression.getConstantIndex();
+        if(rightIndex != -1 && leftIndex != -1) {
+          transpose = rightIndex < leftIndex;
+        }
       }
     }
     String opstring = operator_to_string(op, inverted, transpose);

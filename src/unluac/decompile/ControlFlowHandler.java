@@ -353,8 +353,8 @@ public class ControlFlowHandler {
           }
           case EQK: {
             BinaryCondition.Operator op = BinaryCondition.Operator.EQ;
-            Condition.Operand left = new Condition.Operand(Condition.OperandType.R, code.A(line));
-            Condition.Operand right = new Condition.Operand(Condition.OperandType.K, code.B(line));
+            Condition.Operand right = new Condition.Operand(Condition.OperandType.R, code.A(line));
+            Condition.Operand left = new Condition.Operand(Condition.OperandType.K, code.B(line));
             Condition c = new BinaryCondition(op, line, left, right);
             process_condition(state, skip, line, c, code.k(line));
             break;
@@ -363,19 +363,20 @@ public class ControlFlowHandler {
             BinaryCondition.Operator op = BinaryCondition.Operator.EQ;
             if(code.op(line) == Op.LTI) op = BinaryCondition.Operator.LT;
             if(code.op(line) == Op.LEI) op = BinaryCondition.Operator.LE;
-            if(code.op(line) == Op.GTI) op = BinaryCondition.Operator.LT;
-            if(code.op(line) == Op.GEI) op = BinaryCondition.Operator.LE;
-            Condition.Operand left = new Condition.Operand(Condition.OperandType.R, code.A(line));
-            Condition.Operand right;
+            if(code.op(line) == Op.GTI) op = BinaryCondition.Operator.GT;
+            if(code.op(line) == Op.GEI) op = BinaryCondition.Operator.GE;
+            Condition.OperandType operandType;
             if(code.C(line) != 0) {
-              right = new Condition.Operand(Condition.OperandType.F, code.sB(line));
+              operandType = Condition.OperandType.F;
             } else {
-              right = new Condition.Operand(Condition.OperandType.I, code.sB(line));
+              operandType = Condition.OperandType.I;
             }
-            if(code.op(line) == Op.GTI || code.op(line) == Op.GEI) {
-              Condition.Operand swap = left;
+            Condition.Operand left = new Condition.Operand(Condition.OperandType.R, code.A(line));
+            Condition.Operand right = new Condition.Operand(operandType, code.sB(line));
+            if(op == BinaryCondition.Operator.EQ) {
+              Condition.Operand temp = left;
               left = right;
-              right = swap;
+              right = temp;
             }
             Condition c = new BinaryCondition(op, line, left, right);
             process_condition(state, skip, line, c, code.k(line));
