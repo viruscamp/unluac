@@ -74,12 +74,12 @@ public enum Op {
   GETTABLE54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CR),
   GETI(OperandFormat.AR, OperandFormat.BR, OperandFormat.CI),
   GETFIELD(OperandFormat.AR, OperandFormat.BR, OperandFormat.CKS),
-  SETTABUP54(OperandFormat.AU, OperandFormat.BK, OperandFormat.CRK),
-  SETTABLE54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CRK),
-  SETI(OperandFormat.AR, OperandFormat.BI, OperandFormat.CRK),
-  SETFIELD(OperandFormat.AR, OperandFormat.BKS, OperandFormat.CRK),
+  SETTABUP54(OperandFormat.AU, OperandFormat.BK, OperandFormat.CRK54),
+  SETTABLE54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CRK54),
+  SETI(OperandFormat.AR, OperandFormat.BI, OperandFormat.CRK54),
+  SETFIELD(OperandFormat.AR, OperandFormat.BKS, OperandFormat.CRK54),
   NEWTABLE54(OperandFormat.AR, OperandFormat.B, OperandFormat.C, OperandFormat.k),
-  SELF54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CRK),
+  SELF54(OperandFormat.AR, OperandFormat.BR, OperandFormat.CRK54),
   ADDI(OperandFormat.AR, OperandFormat.BR, OperandFormat.CsI),
   ADDK(OperandFormat.AR, OperandFormat.BR, OperandFormat.CK),
   SUBK(OperandFormat.AR, OperandFormat.BR, OperandFormat.CK),
@@ -122,10 +122,10 @@ public enum Op {
   GEI(OperandFormat.AR, OperandFormat.BsI, OperandFormat.k, OperandFormat.C),
   TEST54(OperandFormat.AR, OperandFormat.k),
   TESTSET54(OperandFormat.AR, OperandFormat.BR, OperandFormat.k),
-  TAILCALL54(OperandFormat.AR, OperandFormat.B),
+  TAILCALL54(OperandFormat.AR, OperandFormat.B, OperandFormat.C, OperandFormat.k),
   RETURN54(OperandFormat.AR, OperandFormat.B, OperandFormat.C, OperandFormat.k),
-  RETURN0(),
-  RETURN1(OperandFormat.AR),
+  RETURN0(OperandFormat.AR, OperandFormat.B, OperandFormat.C, OperandFormat.k),
+  RETURN1(OperandFormat.AR, OperandFormat.B, OperandFormat.C, OperandFormat.k),
   FORLOOP54(OperandFormat.AR, OperandFormat.BxJn),
   FORPREP54(OperandFormat.AR, OperandFormat.BxJ),
   TFORPREP54(OperandFormat.AR, OperandFormat.BxJ),
@@ -355,6 +355,13 @@ public enum Op {
       case REGISTER: parameters[i] = registerOperand(x); break;
       case UPVALUE: parameters[i] = upvalueOperand(x); break;
       case REGISTER_K: parameters[i] = rkOperand(x, ex); break;
+      case REGISTER_K54:
+        if(ex.k.extract(codepoint) != 0) {
+          parameters[i] = constantOperand(x);
+        } else {
+          parameters[i] = registerOperand(x);
+        }
+        break;
       case CONSTANT:
       case CONSTANT_INTEGER:
       case CONSTANT_STRING: parameters[i] = constantOperand(x); break;

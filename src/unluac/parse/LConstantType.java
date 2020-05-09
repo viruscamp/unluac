@@ -10,7 +10,9 @@ import unluac.Version;
 public abstract class LConstantType extends BObjectType<LObject> {
   
   public static LConstantType get(Version version) {
-    if(version.getVersionNumber() >= 0x53) {
+    if(version.getVersionNumber() >= 0x54) {
+      return getType54();
+    } else if(version.getVersionNumber() >= 0x53) {
       return getType53();
     } else {
       return getType50();
@@ -194,15 +196,18 @@ class LConstantType54 extends LConstantType {
     if(object instanceof LNil) {
       out.write(0);
     } else if(object instanceof LBoolean) {
-      out.write(1);
-      header.bool.write(out, header, (LBoolean)object);
+      if(((LBoolean) object).value()) {
+        out.write(0x11);
+      } else {
+        out.write(1);
+      }
     } else if(object instanceof LNumber) {
       LNumber n = (LNumber)object;
       if(!n.integralType()) {
-        out.write(3);
+        out.write(0x13);
         header.lfloat.write(out, header, (LNumber)object);
       } else {
-        out.write(0x13);
+        out.write(3);
         header.linteger.write(out, header, (LNumber)object);
       }
     } else if(object instanceof LString) {

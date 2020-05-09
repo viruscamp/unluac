@@ -105,6 +105,7 @@ class AssemblerFunction {
     int code_index;
     String label;
     CodeExtract.Field field;
+    boolean negate;
     
   }
   
@@ -306,7 +307,15 @@ class AssemblerFunction {
       }
       int x;
       switch(operand.format) {
-      case RAW: x = a.getInteger(); break;
+      case RAW:
+      case IMMEDIATE_INTEGER:
+      case IMMEDIATE_FLOAT:
+        x = a.getInteger();
+        break;
+      case IMMEDIATE_SIGNED_INTEGER:
+        x = a.getInteger();
+        x += field.max() / 2;
+        break;
       case REGISTER: {
         x = a.getRegister();
         //TODO: stack warning
@@ -317,7 +326,14 @@ class AssemblerFunction {
         //TODO: stack warning
         break;
       }
+      case REGISTER_K54: {
+        Assembler.RKInfo rk = a.getRegisterK54();
+        codepoint |= extract.k.encode(rk.k);
+        x = rk.r;
+        break;
+      }
       case CONSTANT:
+      case CONSTANT_INTEGER:
       case CONSTANT_STRING: {
         x = a.getConstant();
         break;
@@ -340,6 +356,17 @@ class AssemblerFunction {
         fix.code_index = code.size();
         fix.label = a.getAny();
         fix.field = field;
+        fix.negate = false;
+        j_fixup.add(fix);
+        x = 0;
+        break;
+      }
+      case JUMP_NEGATIVE: {
+        JumpFixup fix = new JumpFixup();
+        fix.code_index = code.size();
+        fix.label = a.getAny();
+        fix.field = field;
+        fix.negate = true;
         j_fixup.add(fix);
         x = 0;
         break;
@@ -347,7 +374,9 @@ class AssemblerFunction {
       default:
         throw new IllegalStateException("Unhandled operand format: " + operand.format);
       }
-      if(!field.check(x)) throw new AssemblerException("Operand " + operand.field + " out of range"); 
+      if(!field.check(x)) {
+        throw new AssemblerException("Operand " + operand.field + " out of range"); 
+      }
       codepoint |= field.encode(x);
     }
     code.add(codepoint);
@@ -379,6 +408,7 @@ class AssemblerFunction {
       for(AssemblerLabel label : labels) {
         if(fix.label.equals(label.name)) {
           x = label.code_index - fix.code_index - 1;
+          if(fix.negate) x = -x;
           found = true;
           break;
         }
@@ -835,7 +865,36 @@ public class Assembler {
         throw new AssemblerException("Excepted constant, got \"" + s + "\"");
       }
     } else {
-      throw new AssemblerException("Excepted register, got \"" + s + "\"");
+      throw new AssemblerException("Excepted register or constant, got \"" + s + "\"");
+    }
+    return rk;
+  }
+  
+  static class RKInfo {
+    int r;
+    int k;
+  }
+  
+  RKInfo getRegisterK54() throws AssemblerException, IOException {
+    String s = t.next();
+    if(s == null) throw new AssemblerException("Unexcepted end of file");
+    RKInfo rk = new RKInfo();
+    if(s.length() >= 2 && s.charAt(0) == 'r') {
+      rk.k = 0;
+      try {
+        rk.r = Integer.parseInt(s.substring(1));
+      } catch(NumberFormatException e) {
+        throw new AssemblerException("Excepted register, got \"" + s + "\"");
+      }
+    } else if(s.length() >= 2 && s.charAt(0) == 'k') {
+      rk.k = 1;
+      try {
+        rk.r = Integer.parseInt(s.substring(1));
+      } catch(NumberFormatException e) {
+        throw new AssemblerException("Excepted constant, got \"" + s + "\"");
+      }
+    } else {
+      throw new AssemblerException("Excepted register or constant, got \"" + s + "\"");
     }
     return rk;
   }
