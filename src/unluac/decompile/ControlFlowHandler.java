@@ -283,6 +283,7 @@ public class ControlFlowHandler {
     skip[line + 1] = true;
     insert_branch(state, b);
     int final_line = target - 1;
+    int branch_line;
     int loadboolblock = find_loadboolblock(state, target - 2);
     if(loadboolblock != -1) {
       final_line = loadboolblock;
@@ -291,9 +292,12 @@ public class ControlFlowHandler {
       ) {
         final_line = loadboolblock - 2;
       }
+      branch_line = final_line;
+    } else {
+      branch_line = Math.max(final_line, line + 2);
     }
     FinalSetCondition finalc = new FinalSetCondition(final_line, register);
-    Branch finalb = new Branch(final_line, final_line, Branch.Type.finalset, finalc, final_line, target, finalc);
+    Branch finalb = new Branch(branch_line, branch_line, Branch.Type.finalset, finalc, final_line, target, finalc);
     finalb.target = register;
     insert_branch(state, finalb);
     b.finalset = finalc;
@@ -587,9 +591,17 @@ public class ControlFlowHandler {
     Branch b = state.begin_branch;
     while(b != null) {
       if(b.line >= begin && b.line < end && b.targetSecond == target) {
-        b.targetSecond = line;
-        if(b.targetFirst == target) {
-          b.targetFirst = line;
+        if(b.type == Branch.Type.finalset) {
+          b.targetFirst = line - 1;
+          b.targetSecond = line;
+          if(b.finalset != null) {
+            b.finalset.line = line - 1;
+          }
+        } else {
+          b.targetSecond = line;
+          if(b.targetFirst == target) {
+            b.targetFirst = line;
+          }
         }
       }
       b = b.next;
