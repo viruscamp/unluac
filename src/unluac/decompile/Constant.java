@@ -9,21 +9,28 @@ import unluac.parse.LString;
 
 public class Constant {
 
-  private final int type;
+  private static enum Type {
+    NIL,
+    BOOLEAN,
+    NUMBER,
+    STRING,
+  }
+  
+  private final Type type;
   
   private final boolean bool;
   private final LNumber number;
   private final String string;
   
   public Constant(int constant) {
-    type = 2;
+    type = Type.NUMBER;
     bool = false;
     number = LNumber.makeInteger(constant);
     string = null;
   }
   
   public Constant(double x) {
-    type = 2;
+    type = Type.NUMBER;
     bool = false;
     number = LNumber.makeDouble(x);
     string = null;
@@ -31,22 +38,22 @@ public class Constant {
   
   public Constant(LObject constant) {
     if(constant instanceof LNil) {
-      type = 0;
+      type = Type.NIL;
       bool = false;
       number = null;
       string = null;
     } else if(constant instanceof LBoolean) {
-      type = 1;
+      type = Type.BOOLEAN;
       bool = constant == LBoolean.LTRUE;
       number = null;
       string = null;
     } else if(constant instanceof LNumber) {
-      type = 2;
+      type = Type.NUMBER;
       bool = false;
       number = (LNumber) constant;
       string = null;
     } else if(constant instanceof LString) {
-      type = 3;
+      type = Type.STRING;
       bool = false;
       number = null;
       string = ((LString) constant).deref();
@@ -57,16 +64,16 @@ public class Constant {
   
   public void print(Decompiler d, Output out, boolean braced) {
     switch(type) {
-      case 0:
+      case NIL:
         out.print("nil");
         break;
-      case 1:
+      case BOOLEAN:
         out.print(bool ? "true" : "false");
         break;
-      case 2:
+      case NUMBER:
         out.print(number.toPrintString());
         break;
-      case 3:
+      case STRING:
         int newlines = 0;
         int unprintable = 0;
         boolean rawstring = d.getConfiguration().rawstring;
@@ -154,15 +161,15 @@ public class Constant {
   }
   
   public boolean isNil() {
-    return type == 0;
+    return type == Type.NIL;
   }
   
   public boolean isBoolean() {
-    return type == 1;
+    return type == Type.BOOLEAN;
   }
   
   public boolean isNumber() {
-    return type == 2;
+    return type == Type.NUMBER;
   }
   
   public boolean isInteger() {
@@ -182,7 +189,7 @@ public class Constant {
   }
   
   public boolean isString() {
-    return type == 3;
+    return type == Type.STRING;
   }
   
   public boolean isIdentifier(Version version) {
@@ -213,7 +220,7 @@ public class Constant {
   }
   
   public String asName() {
-    if(type != 3) {
+    if(type != Type.STRING) {
       throw new IllegalStateException();
     }
     return string;
