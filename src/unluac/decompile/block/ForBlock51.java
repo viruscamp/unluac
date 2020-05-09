@@ -10,6 +10,14 @@ public class ForBlock51 extends ForBlock {
   }
 
   @Override
+  public void resolve(Registers r) {
+    target = r.getTarget(register + 3, begin - 1);
+    start = r.getValue(register, begin - 1);
+    stop = r.getValue(register + 1, begin - 1);
+    step = r.getValue(register + 2, begin - 1);
+  }
+  
+  @Override
   public void handleVariableDeclarations(Registers r) {
     r.setInternalLoopVariable(register, begin - 2, end - 1);
     r.setInternalLoopVariable(register + 1, begin - 2, end - 1);

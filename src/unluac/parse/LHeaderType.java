@@ -7,6 +7,7 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.List;
 
+import unluac.Version;
 import unluac.assemble.Directive;
 import unluac.decompile.CodeExtract;
 
@@ -17,6 +18,17 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
   public static final LHeaderType TYPE52 = new LHeaderType52();
   public static final LHeaderType TYPE53 = new LHeaderType53();
   public static final LHeaderType TYPE54 = new LHeaderType54();
+  
+  public static LHeaderType get(Version.HeaderType type) {
+    switch(type) {
+      case LUA50: return TYPE50;
+      case LUA51: return TYPE51;
+      case LUA52: return TYPE52;
+      case LUA53: return TYPE53;
+      case LUA54: return TYPE54;
+      default: throw new IllegalStateException();
+    }
+  }
   
   private static final byte[] luacTail = {
     0x19, (byte) 0x93, 0x0D, 0x0A, 0x1A, 0x0A,
@@ -32,10 +44,6 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
     LNumberType number;
     LNumberType linteger;
     LNumberType lfloat;
-    LStringType string;
-    LConstantType constant;
-    LFunctionType function;
-    CodeExtract extractor;
     
     int format;
     LHeader.LEndianness endianness;
@@ -45,17 +53,27 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
     
     int lIntegerSize;
     int lFloatSize;
+    
+    int sizeOp;
+    int sizeA;
+    int sizeB;
+    int sizeC;
   }
   
   @Override
   public LHeader parse(ByteBuffer buffer, BHeader header) {
+    Version version = header.version;
     LHeaderParseState s = new LHeaderParseState();
     parse_main(buffer, header, s);
     LBooleanType bool = new LBooleanType();
+    LStringType string = version.getLStringType();
+    LConstantType constant = version.getLConstantType();
     LAbsLineInfoType abslineinfo = new LAbsLineInfoType();
     LLocalType local = new LLocalType();
-    LUpvalueType upvalue = LUpvalueType.get(header.version);
-    return new LHeader(s.format, s.endianness, s.integer, s.sizeT, bool, s.number, s.linteger, s.lfloat, s.string, s.constant, abslineinfo, local, upvalue, s.function, s.extractor);
+    LUpvalueType upvalue = version.getLUpvalueType();
+    LFunctionType function = version.getLFunctionType();
+    CodeExtract extract = new CodeExtract(header.version, s.sizeOp, s.sizeA, s.sizeB, s.sizeC);
+    return new LHeader(s.format, s.endianness, s.integer, s.sizeT, bool, s.number, s.linteger, s.lfloat, string, constant, abslineinfo, local, upvalue, function, extract);
   }
   
   abstract public List<Directive> get_directives();
@@ -225,14 +243,13 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
   }
   
   protected void parse_extractor(ByteBuffer buffer, BHeader header, LHeaderParseState s) {
-    int sizeOp = 0xFF & buffer.get();
-    int sizeA = 0xFF & buffer.get();
-    int sizeB = 0xFF & buffer.get();
-    int sizeC = 0xFF & buffer.get();
+    s.sizeOp = 0xFF & buffer.get();
+    s.sizeA = 0xFF & buffer.get();
+    s.sizeB = 0xFF & buffer.get();
+    s.sizeC = 0xFF & buffer.get();
     if(header.debug) {
-      System.out.println("-- Lua opcode extractor sizeOp: " + sizeOp + ", sizeA: " + sizeA + ", sizeB: " + sizeB + ", sizeC: " + sizeC);
+      System.out.println("-- Lua opcode extractor sizeOp: " + s.sizeOp + ", sizeA: " + s.sizeA + ", sizeB: " + s.sizeB + ", sizeC: " + s.sizeC);
     }
-    s.extractor = new CodeExtract(header.version, sizeOp, sizeA, sizeB, sizeC);
   }
   
   protected void write_extractor(OutputStream out, BHeader header, LHeader object) throws IOException {
@@ -284,9 +301,6 @@ class LHeaderType50 extends LHeaderType {
     } else {
       throw new IllegalStateException("The input chunk is using an unrecognized number format: " + intcheck);
     }
-    s.function = LFunctionType.TYPE50;
-    s.string = LStringType.getType50(header.version);
-    s.constant = LConstantType.getType50();
   }
   
   @Override
@@ -329,10 +343,6 @@ class LHeaderType51 extends LHeaderType {
     parse_number_size(buffer, header, s);
     parse_number_integrality(buffer, header, s);
     s.number = new LNumberType(s.lNumberSize, s.lNumberIntegrality, LNumberType.NumberMode.MODE_NUMBER);
-    s.function = LFunctionType.TYPE51;
-    s.string = LStringType.getType50(header.version);
-    s.constant = LConstantType.getType50();
-    s.extractor = new CodeExtract(header.version);
   }
   
   @Override
@@ -373,10 +383,6 @@ class LHeaderType52 extends LHeaderType {
     parse_number_integrality(buffer, header, s);
     parse_tail(buffer, header, s);
     s.number = new LNumberType(s.lNumberSize, s.lNumberIntegrality, LNumberType.NumberMode.MODE_NUMBER);
-    s.function = LFunctionType.TYPE52;
-    s.string = LStringType.getType50(header.version);
-    s.constant = LConstantType.getType50();
-    s.extractor = new CodeExtract(header.version);
   }
   
   @Override
@@ -417,10 +423,6 @@ class LHeaderType53 extends LHeaderType {
     parse_integer_size(buffer, header, s);
     parse_float_size(buffer, header, s);
     parse_number_format_53(buffer, header, s);
-    s.function = LFunctionType.TYPE53;
-    s.string = LStringType.getType53(header.version);
-    s.constant = LConstantType.getType53();
-    s.extractor = new CodeExtract(header.version);
   }
   
   @Override
@@ -463,10 +465,6 @@ class LHeaderType54 extends LHeaderType {
     parse_number_format_53(buffer, header, s);
     s.integer = new BIntegerType54();
     s.sizeT = new BIntegerType54();
-    s.function = LFunctionType.TYPE54;
-    s.string = LStringType.getType54(header.version);
-    s.constant = LConstantType.getType54();
-    s.extractor = new CodeExtract();
   }
   
   @Override

@@ -29,7 +29,7 @@ public class OuterBlock extends ContainerBlock {
   
   @Override
   public int scopeEnd() {
-    return (end - 1) + function.header.version.getOuterBlockScopeAdjustment();
+    return (end - 1) + function.header.version.outerblockscopeadjustment.get();
   }
   
   @Override

@@ -1,37 +1,41 @@
 package unluac.decompile;
 
+import unluac.Version;
 import unluac.decompile.expression.ConstantExpression;
 import unluac.decompile.expression.GlobalExpression;
 import unluac.parse.LFunction;
 
 public class Function {
 
+  private Version version;
   private Constant[] constants;
-  private final int constantsOffset;
+  private final CodeExtract extract;
   
   public Function(LFunction function) {
+    version = function.header.version;
     constants = new Constant[function.constants.length];
     for(int i = 0; i < constants.length; i++) {
       constants[i] = new Constant(function.constants[i]);
     }
-    constantsOffset = function.header.version.getConstantsOffset();
+    extract = function.header.extractor;
   }
   
   public boolean isConstant(int register) {
-    return register >= constantsOffset;
+    return extract.is_k(register);
   }
 
   public int constantIndex(int register) {
-    return register - constantsOffset;
+    return extract.get_k(register);
   }
 
   public ConstantExpression getGlobalName(int constantIndex) {
-    if(!constants[constantIndex].isIdentifier()) throw new IllegalStateException();
+    if(!constants[constantIndex].isIdentifier(version)) throw new IllegalStateException();
     return getConstantExpression(constantIndex);
   }
   
   public ConstantExpression getConstantExpression(int constantIndex) {
-    return new ConstantExpression(constants[constantIndex], constantIndex);
+    Constant constant = constants[constantIndex];
+    return new ConstantExpression(constant, constant.isIdentifier(version), constantIndex);
   }
   
   public GlobalExpression getGlobalExpression(int constantIndex) {

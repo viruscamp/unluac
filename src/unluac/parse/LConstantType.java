@@ -9,26 +9,13 @@ import unluac.Version;
 
 public abstract class LConstantType extends BObjectType<LObject> {
   
-  public static LConstantType get(Version version) {
-    if(version.getVersionNumber() >= 0x54) {
-      return getType54();
-    } else if(version.getVersionNumber() >= 0x53) {
-      return getType53();
-    } else {
-      return getType50();
+  public static LConstantType get(Version.ConstantType type) {
+    switch(type) {
+      case LUA50: return new LConstantType50();
+      case LUA53: return new LConstantType53();
+      case LUA54: return new LConstantType54();
+      default: throw new IllegalStateException();
     }
-  }
-  
-  public static LConstantType50 getType50() {
-    return new LConstantType50();
-  }
-  
-  public static LConstantType53 getType53() {
-    return new LConstantType53();
-  }
-  
-  public static LConstantType54 getType54() {
-    return new LConstantType54();
   }
   
 }

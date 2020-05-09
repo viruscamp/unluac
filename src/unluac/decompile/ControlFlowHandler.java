@@ -468,8 +468,8 @@ public class ControlFlowHandler {
     List<Block> blocks = state.blocks;
     Registers r = state.r;
     Code code = state.code;
-    Op tforTarget = state.function.header.version.getTForTarget();
-    Op forTarget = state.function.header.version.getForTarget();
+    Op tforTarget = state.function.header.version.tfortarget.get();
+    Op forTarget = state.function.header.version.fortarget.get();
     blocks.add(new OuterBlock(state.function, state.code.length));
     
     boolean[] loop = new boolean[state.code.length + 1];
@@ -632,7 +632,7 @@ public class ControlFlowHandler {
           }
           state.reverse_targets[loopback] = reverse;
         }
-        if(state.function.header.version == Version.LUA50) {
+        if(state.function.header.version.whileformat.get() == Version.WhileFormat.BOTTOM_CONDITION) {
           b = null; // while loop aren't this style
         }
         Block loop;
@@ -655,7 +655,7 @@ public class ControlFlowHandler {
             Branch skip = state.branches[j.line - 2];
             if(skip == null) throw new IllegalStateException();
             int scopeEnd = j.line - 3;
-            if(state.function.header.version.getVersionNumber() == 0x51) {
+            if(state.function.header.version.closeinscope.get()) {
               scopeEnd = j.line - 2;
             }
             loop = new RepeatBlock(state.function, b.cond, j.targetFirst, j.line + 1, scopeEnd);
@@ -663,7 +663,7 @@ public class ControlFlowHandler {
             remove_branch(state, skip);
           } else {
             boolean repeat = false;
-            if(state.function.header.version == Version.LUA50) {
+            if(state.function.header.version.whileformat.get() == Version.WhileFormat.BOTTOM_CONDITION) {
               repeat = true;
               if(loopback - 1 >= 1 && state.branches[loopback - 1] != null) {
                 Branch head = state.branches[loopback - 1];
@@ -691,7 +691,7 @@ public class ControlFlowHandler {
       if(is_conditional(b)) {
         if(b.targetSecond < b.targetFirst) {
           Block block = null;
-          if(state.function.header.version == Version.LUA50) {
+          if(state.function.header.version.whileformat.get() == Version.WhileFormat.BOTTOM_CONDITION) {
             int head = b.targetSecond - 1;
             if(head >= 1 && state.branches[head] != null && state.branches[head].type == Branch.Type.jump) {
               Branch headb = state.branches[head];
@@ -864,7 +864,7 @@ public class ControlFlowHandler {
           unredirect_finalsets(state, b.targetFirst, line, breakable.begin);
           state.blocks.add(block);
           remove_branch(state, b);
-        } else if(state.function.header.version.hasGoto() && breakable != null && !breakable.contains(b.targetFirst) && state.resolved[b.targetFirst] != state.resolved[breakable.end]) {
+        } else if(state.function.header.version.usegoto.get() && breakable != null && !breakable.contains(b.targetFirst) && state.resolved[b.targetFirst] != state.resolved[breakable.end]) {
           Goto block = new Goto(state.function, b.line, b.targetFirst);
           if(!hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst
             && enclosing_block(state, hanging.peek().line) == enclosing
@@ -951,7 +951,7 @@ public class ControlFlowHandler {
             remove_branch(state, b);
             hanging.pop();
           }
-        } else if(state.function.header.version.hasGoto()) {
+        } else if(state.function.header.version.usegoto.get()) {
           Goto block = new Goto(state.function, b.line, b.targetFirst);
           if(!hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst && enclosing_block(state, hanging.peek().line) == enclosing) {
             if(hangingResolver != null && hangingResolver.targetFirst != b.targetFirst) {
@@ -969,7 +969,7 @@ public class ControlFlowHandler {
     resolve_hangers(state, stack, hanging, hangingResolver);
     hangingResolver = null;
     while(!hanging.isEmpty()) {
-      if(state.d.getVersion().usesIfBreakRewrite()) {
+      if(state.function.header.version.useifbreakrewrite.get()) {
         // if break (or if goto)
         Branch top = hanging.pop();
         Block breakable = enclosing_breakable_block(state, top.line);
@@ -977,11 +977,13 @@ public class ControlFlowHandler {
           Block block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1, false);
           block.addStatement(new Break(state.function, top.targetFirst - 1, top.targetSecond));
           state.blocks.add(block);
-        } else {
+        } else if(state.function.header.version.usegoto.get()) {
           Block block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1, false);
           block.addStatement(new Goto(state.function, top.targetFirst - 1, top.targetSecond));
           state.blocks.add(block);
           state.labels[top.targetSecond] = true;
+        } else {
+          throw new IllegalStateException();
         }
         remove_branch(state, top);
       } else {
@@ -1140,7 +1142,7 @@ public class ControlFlowHandler {
     Branch b = state.end_branch;
     while(b != null) {
       Block breakable = enclosing_breakable_block(state, b.line);
-      if(b.line < line && breakable != null && (b.type == Branch.Type.jump || is_conditional(b) && state.function.header.version.usesIfBreakRewrite()) && breakable == enclosing && state.resolved[b.targetSecond] == state.resolved[enclosing.end]) {
+      if(b.line < line && breakable != null && (b.type == Branch.Type.jump || is_conditional(b) && state.function.header.version.useifbreakrewrite.get()) && breakable == enclosing && state.resolved[b.targetSecond] == state.resolved[enclosing.end]) {
         //System.err.println("redirect break " + b.line + " from " + b.targetFirst + " to " + line);
         boolean condsplit = false;
         Branch c = state.begin_branch;
@@ -1603,7 +1605,7 @@ public class ControlFlowHandler {
       BranchResolution r = new BranchResolution();
       rstate.resolution[b.line] = r;
       if(is_break(state, rstate.container, b.targetSecond)) {
-        if(state.function.header.version.usesIfBreakRewrite()) {
+        if(state.function.header.version.useifbreakrewrite.get()) {
           r.type = BranchResolution.Type.IF_BREAK;
           r.line = rstate.container.end;
           resolve(state, declList, rstate, next);
@@ -1791,7 +1793,7 @@ public class ControlFlowHandler {
       if(is_conditional(b)) {
         Block enclosing = enclosing_breakable_block(state, b.line);
         if(enclosing != null && (b.targetSecond >= enclosing.end || b.targetSecond < enclosing.begin)) {
-          if(state.function.header.version.usesIfBreakRewrite()) {
+          if(state.function.header.version.useifbreakrewrite.get()) {
             Block block = new IfThenEndBlock(state.function, state.r, b.cond.inverse(), b.targetFirst - 1, b.targetFirst - 1, false);
             block.addStatement(new Break(state.function, b.targetFirst - 1, b.targetSecond));
             state.blocks.add(block);

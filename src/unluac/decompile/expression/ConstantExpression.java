@@ -4,24 +4,30 @@ import unluac.decompile.Constant;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Walker;
+import unluac.parse.LBoolean;
 import unluac.parse.LNil;
 
 public class ConstantExpression extends Expression {
 
   private final Constant constant;
+  private final boolean identifier;
   private final int index;
   private final int line;
   
   public static ConstantExpression createNil(int line) {
-    return new ConstantExpression(new Constant(LNil.NIL), -1, line);
+    return new ConstantExpression(new Constant(LNil.NIL), false, -1, line);
+  }
+  
+  public static ConstantExpression createBoolean(boolean v) {
+    return new ConstantExpression(new Constant(v ? LBoolean.LTRUE : LBoolean.LFALSE), false, -1);
   }
   
   public static ConstantExpression createInteger(int i) {
-    return new ConstantExpression(new Constant(i), -1);
+    return new ConstantExpression(new Constant(i), false, -1);
   }
   
   public static ConstantExpression createDouble(double x) {
-    return new ConstantExpression(new Constant(x), -1);
+    return new ConstantExpression(new Constant(x), false, -1);
   }
   
   private static int getPrecedence(Constant constant) {
@@ -32,13 +38,14 @@ public class ConstantExpression extends Expression {
     }
   }
   
-  public ConstantExpression(Constant constant, int index) {
-    this(constant, index, -1);
+  public ConstantExpression(Constant constant, boolean identifier, int index) {
+    this(constant, identifier, index, -1);
   }
   
-  private ConstantExpression(Constant constant, int index, int line) {
+  private ConstantExpression(Constant constant, boolean identifier, int index, int line) {
     super(getPrecedence(constant));
     this.constant = constant;
+    this.identifier = identifier;
     this.index = index;
     this.line = line;
   }
@@ -105,7 +112,7 @@ public class ConstantExpression extends Expression {
   
   @Override
   public boolean isIdentifier() {
-    return constant.isIdentifier();
+    return identifier;
   }
     
   @Override

@@ -322,14 +322,18 @@ class AssemblerFunction {
         break;
       }
       case REGISTER_K: {
-        x = a.getRegisterK(extract);
+        Assembler.RKInfo rk = a.getRegisterK54();
+        x = rk.x;
+        if(rk.constant) {
+          x += chunk.version.rkoffset.get();
+        }
         //TODO: stack warning
         break;
       }
       case REGISTER_K54: {
         Assembler.RKInfo rk = a.getRegisterK54();
-        codepoint |= extract.k.encode(rk.k);
-        x = rk.r;
+        codepoint |= extract.k.encode(rk.constant ? 1 : 0);
+        x = rk.x;
         break;
       }
       case CONSTANT:
@@ -541,16 +545,7 @@ class AssemblerChunk {
   
   public CodeExtract getCodeExtract() throws AssemblerException {
     if(extract == null) {
-      // TODO: better checking
-      if(processed_directives.contains(Directive.SIZE_OP)) {
-        extract = new CodeExtract(version, op_size, a_size, b_size, c_size);
-      } else {
-        if(version.getVersionNumber() >= 0x54) {
-          extract = new CodeExtract();
-        } else {
-          extract = new CodeExtract(version);
-        }
-      }
+      extract = new CodeExtract(version, op_size, a_size, b_size, c_size);
     }
     return extract;
   }
@@ -589,12 +584,12 @@ class AssemblerChunk {
   
   public void write(OutputStream out) throws AssemblerException, IOException {
     LBooleanType bool = new LBooleanType();
-    LStringType string = LStringType.get(version);
-    LConstantType constant = LConstantType.get(version);
+    LStringType string = version.getLStringType();
+    LConstantType constant = version.getLConstantType();
     LAbsLineInfoType abslineinfo = new LAbsLineInfoType();
     LLocalType local = new LLocalType();
-    LUpvalueType upvalue = LUpvalueType.get(version);
-    LFunctionType function = LFunctionType.get(version);
+    LUpvalueType upvalue = version.getLUpvalueType();
+    LFunctionType function = version.getLFunctionType();
     CodeExtract extract = getCodeExtract();
     
     if(integer == null) {
@@ -693,7 +688,7 @@ class AssemblerChunk {
   }
   
   private LString convert_string(BHeader header, String string) {
-    return new LString(header.version, string);
+    return new LString(string);
   }
 
 }
@@ -732,14 +727,13 @@ public class Assembler {
       throw new AssemblerException("Unsupported version " + tok);
     }
     
-    int version_number = (major << 4) | minor;
     version = Version.getVersion(major, minor);
     
     if(version == null) {
       throw new AssemblerException("Unsupported version " + tok);
     }
     
-    OpcodeMap opmap = new OpcodeMap(version_number);
+    OpcodeMap opmap = version.getOpcodeMap();
     Map<String, Op> oplookup = new HashMap<String, Op>();
     Map<Op, Integer> opcodelookup = new HashMap<Op, Integer>();
     for(int i = 0; i < opmap.size(); i++) {
@@ -848,31 +842,9 @@ public class Assembler {
     return r;
   }
   
-  int getRegisterK(CodeExtract ex) throws AssemblerException, IOException {
-    String s = t.next();
-    if(s == null) throw new AssemblerException("Unexcepted end of file");
-    int rk;
-    if(s.length() >= 2 && s.charAt(0) == 'r') {
-      try {
-        rk = Integer.parseInt(s.substring(1));
-      } catch(NumberFormatException e) {
-        throw new AssemblerException("Excepted register, got \"" + s + "\"");
-      }
-    } else if(s.length() >= 2 && s.charAt(0) == 'k') {
-      try {
-        rk = ex.encode_k(Integer.parseInt(s.substring(1)));
-      } catch(NumberFormatException e) {
-        throw new AssemblerException("Excepted constant, got \"" + s + "\"");
-      }
-    } else {
-      throw new AssemblerException("Excepted register or constant, got \"" + s + "\"");
-    }
-    return rk;
-  }
-  
   static class RKInfo {
-    int r;
-    int k;
+    int x;
+    boolean constant;
   }
   
   RKInfo getRegisterK54() throws AssemblerException, IOException {
@@ -880,16 +852,16 @@ public class Assembler {
     if(s == null) throw new AssemblerException("Unexcepted end of file");
     RKInfo rk = new RKInfo();
     if(s.length() >= 2 && s.charAt(0) == 'r') {
-      rk.k = 0;
+      rk.constant = false;
       try {
-        rk.r = Integer.parseInt(s.substring(1));
+        rk.x = Integer.parseInt(s.substring(1));
       } catch(NumberFormatException e) {
         throw new AssemblerException("Excepted register, got \"" + s + "\"");
       }
     } else if(s.length() >= 2 && s.charAt(0) == 'k') {
-      rk.k = 1;
+      rk.constant = true;
       try {
-        rk.r = Integer.parseInt(s.substring(1));
+        rk.x = Integer.parseInt(s.substring(1));
       } catch(NumberFormatException e) {
         throw new AssemblerException("Excepted constant, got \"" + s + "\"");
       }

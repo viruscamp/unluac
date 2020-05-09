@@ -36,7 +36,6 @@ import unluac.decompile.target.TableTarget;
 import unluac.decompile.target.Target;
 import unluac.decompile.target.UpvalueTarget;
 import unluac.decompile.target.VariableTarget;
-import unluac.parse.LBoolean;
 import unluac.parse.LFunction;
 import unluac.util.Stack;
 
@@ -178,7 +177,7 @@ public class Decompiler {
   private void handleInitialDeclares(Output out) {
     List<Declaration> initdecls = new ArrayList<Declaration>(declList.length);
     int initdeclcount = params;
-    switch(getVersion().getVarArgType()) {
+    switch(getVersion().varargtype.get()) {
     case ARG:
     case HYBRID:
       initdeclcount += vararg & 1;
@@ -293,14 +292,14 @@ public class Decompiler {
         operations.add(new RegisterSet(line, A, f.getConstantExpression(code.Ax(line + 1))));
         break;
       case LOADBOOL:
-        operations.add(new RegisterSet(line, A, new ConstantExpression(new Constant(B != 0 ? LBoolean.LTRUE : LBoolean.LFALSE), -1)));
+        operations.add(new RegisterSet(line, A, ConstantExpression.createBoolean(B != 0)));
         break;
       case LOADFALSE:
       case LFALSESKIP:
-        operations.add(new RegisterSet(line, A, new ConstantExpression(new Constant(LBoolean.LFALSE), -1)));
+        operations.add(new RegisterSet(line, A, ConstantExpression.createBoolean(false)));
         break;
       case LOADTRUE:
-        operations.add(new RegisterSet(line, A, new ConstantExpression(new Constant(LBoolean.LTRUE), -1)));
+        operations.add(new RegisterSet(line, A, ConstantExpression.createBoolean(true)));
         break;
       case LOADNIL:
         operations.add(new LoadNil(line, A, B));
@@ -685,7 +684,7 @@ public class Decompiler {
       case CLOSURE: {
         LFunction f = functions[Bx];
         operations.add(new RegisterSet(line, A, new ClosureExpression(f, line + 1)));
-        if(function.header.version.usesInlineUpvalueDeclarations()) {
+        if(function.header.version.upvaluedeclarationtype.get() == Version.UpvalueDeclarationType.INLINE) {
           // Skip upvalue declarations
           for(int i = 0; i < f.numUpvalues; i++) {
             skip[line + 1 + i] = true;

@@ -22,7 +22,7 @@ public class WhileBlock extends ContainerBlock {
     super(function, begin, end, -1);
     this.cond = cond;
     this.unprotectedTarget = unprotectedTarget;
-    this.splitable = function.header.version != Version.LUA50;
+    this.splitable = (function.header.version.whileformat.get() == Version.WhileFormat.TOP_CONDITION);
   }
   
   @Override

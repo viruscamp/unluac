@@ -1,5 +1,6 @@
 package unluac.decompile;
 
+import unluac.Version;
 import unluac.parse.LFunction;
 
 public class Code {
@@ -22,7 +23,7 @@ public class Code {
       extraByte[i] = op(line).hasExtraByte(codepoint(line), extractor);
     }
     upvalue = new boolean[length];
-    if(function.header.version.usesInlineUpvalueDeclarations()) {
+    if(function.header.version.upvaluedeclarationtype.get() == Version.UpvalueDeclarationType.INLINE) {
       for(int i = 0; i < length; i++) {
         int line = i + 1;
         if(op(line) == Op.CLOSURE) {

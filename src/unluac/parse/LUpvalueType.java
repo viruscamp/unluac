@@ -8,11 +8,11 @@ import unluac.Version;
 
 public abstract class LUpvalueType extends BObjectType<LUpvalue> {
   
-  public static LUpvalueType get(Version version) {
-    if(version.getVersionNumber() >= 0x54) {
-      return new LUpvalueType54();
-    } else {
-      return new LUpvalueType50();
+  public static LUpvalueType get(Version.UpvalueType type) {
+    switch(type) {
+      case LUA50: return new LUpvalueType50();
+      case LUA54: return new LUpvalueType54();
+      default: throw new IllegalStateException();
     }
   }
   

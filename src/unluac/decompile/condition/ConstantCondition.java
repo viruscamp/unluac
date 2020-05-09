@@ -1,10 +1,8 @@
 package unluac.decompile.condition;
 
-import unluac.decompile.Constant;
 import unluac.decompile.Registers;
 import unluac.decompile.expression.ConstantExpression;
 import unluac.decompile.expression.Expression;
-import unluac.parse.LBoolean;
 
 public class ConstantCondition implements Condition {
 
@@ -53,7 +51,7 @@ public class ConstantCondition implements Condition {
   
   @Override
   public Expression asExpression(Registers r) {
-    return new ConstantExpression(new Constant(value ? LBoolean.LTRUE : LBoolean.LFALSE), -1);
+    return ConstantExpression.createBoolean(value);
   }
 
 }

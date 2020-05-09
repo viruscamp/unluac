@@ -12,20 +12,14 @@ import unluac.assemble.Directive;
 
 abstract public class LFunctionType extends BObjectType<LFunction> {
   
-  public static final LFunctionType TYPE50 = new LFunctionType50();
-  public static final LFunctionType TYPE51 = new LFunctionType51();
-  public static final LFunctionType TYPE52 = new LFunctionType52();
-  public static final LFunctionType TYPE53 = new LFunctionType53();
-  public static final LFunctionType TYPE54 = new LFunctionType54();
-  
-  public static LFunctionType get(Version version) {
-    switch(version.getVersionNumber()) {
-    case 0x50: return TYPE50;
-    case 0x51: return TYPE51;
-    case 0x52: return TYPE52;
-    case 0x53: return TYPE53;
-    case 0x54: return TYPE54;
-    default: throw new IllegalStateException();
+  public static LFunctionType get(Version.FunctionType type) {
+    switch(type) {
+      case LUA50: return new LFunctionType50();
+      case LUA51: return new LFunctionType51();
+      case LUA52: return new LFunctionType52();
+      case LUA53: return new LFunctionType53();
+      case LUA54: return new LFunctionType54();
+      default: throw new IllegalStateException();
     }
   }
   

@@ -27,7 +27,7 @@ public class RunExtendedTests {
     FileSystem fs = FileSystems.getDefault();
     Path luatest = fs.getPath(args[0]);
     TestReport report = new TestReport();
-    for(int version = 0x50; version <= 0x53; version++) {
+    for(int version = 0x50; version <= 0x54; version++) {
       LuaSpec spec = new LuaSpec(version);
       UnluacSpec uspec = new UnluacSpec();
       System.out.println(spec.id());

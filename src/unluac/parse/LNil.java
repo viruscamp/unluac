@@ -9,7 +9,7 @@ public class LNil extends LObject{
   }
  
   @Override
-  public String toString() {
+  public String toPrintString() {
     return "nil";
   }
   

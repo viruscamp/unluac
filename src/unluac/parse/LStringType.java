@@ -9,30 +9,13 @@ import unluac.Version;
 
 public abstract class LStringType extends BObjectType<LString> {
 
-  public static LStringType get(Version version) {
-    if(version.getVersionNumber() >= 0x54) {
-      return getType54(version);
-    } else if(version.getVersionNumber() >= 0x53) {
-      return getType53(version);
-    } else {
-      return getType50(version);
+  public static LStringType get(Version.StringType type) {
+    switch(type) {
+      case LUA50: return new LStringType50();
+      case LUA53: return new LStringType53();
+      case LUA54: return new LStringType54();
+      default: throw new IllegalStateException();
     }
-  }
-  
-  public static LStringType50 getType50(Version version) {
-    return new LStringType50(version);
-  }
-  
-  public static LStringType53 getType53(Version version) {
-    return new LStringType53(version);
-  }
-  
-  public static LStringType54 getType54(Version version) {
-    return new LStringType54(version);
-  }
-  
-  protected LStringType(Version version) {
-    this.version = version;
   }
   
   protected ThreadLocal<StringBuilder> b = new ThreadLocal<StringBuilder>() {
@@ -44,13 +27,9 @@ public abstract class LStringType extends BObjectType<LString> {
 
   };
   
-  protected final Version version;
-  
 }
 
 class LStringType50 extends LStringType {
-  
-  LStringType50(Version version) { super(version); }
   
   @Override
   public LString parse(final ByteBuffer buffer, BHeader header) {
@@ -76,7 +55,7 @@ class LStringType50 extends LStringType {
     if(header.debug) {
       System.out.println("-- parsed <string> \"" + s + "\"");
     }
-    return new LString(version, s);
+    return new LString(s);
   }
   
   @Override
@@ -93,8 +72,6 @@ class LStringType50 extends LStringType {
 }
 
 class LStringType53 extends LStringType {
-  
-  LStringType53(Version version) { super(version); }
   
   @Override
   public LString parse(final ByteBuffer buffer, BHeader header) {
@@ -125,7 +102,7 @@ class LStringType53 extends LStringType {
     if(header.debug) {
       System.out.println("-- parsed <string> \"" + s + "\"");
     }
-    return new LString(version, s);
+    return new LString(s);
   }
   
   @Override
@@ -144,8 +121,6 @@ class LStringType53 extends LStringType {
 }
 
 class LStringType54 extends LStringType {
-  
-  LStringType54(Version version) { super(version); }
   
   @Override
   public LString parse(final ByteBuffer buffer, BHeader header) {
@@ -170,7 +145,7 @@ class LStringType54 extends LStringType {
     if(header.debug) {
       System.out.println("-- parsed <string> \"" + s + "\"");
     }
-    return new LString(version, s);
+    return new LString(s);
   }
   
   @Override

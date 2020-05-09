@@ -1,6 +1,5 @@
 package unluac.decompile.block;
 
-import unluac.Version;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
@@ -16,10 +15,10 @@ abstract public class ForBlock extends ContainerBlock {
   protected final boolean forvarClose;
   protected final boolean innerClose;
   
-  private Target target;
-  private Expression start;
-  private Expression stop;
-  private Expression step;
+  protected Target target;
+  protected Expression start;
+  protected Expression stop;
+  protected Expression step;
   
   public ForBlock(LFunction function, int begin, int end, int register, boolean forvarClose, boolean innerClose) {
     super(function, begin, end, -1);
@@ -29,19 +28,6 @@ abstract public class ForBlock extends ContainerBlock {
   }
 
   abstract public void handleVariableDeclarations(Registers r);
-  
-  @Override
-  public void resolve(Registers r) {
-    if(function.header.version == Version.LUA50) {
-      target = r.getTarget(register, begin - 1);
-      start = r.getValue(register, begin - 2);
-    } else {
-      target = r.getTarget(register + 3, begin - 1);
-      start = r.getValue(register, begin - 1);
-    }
-    stop = r.getValue(register + 1, begin - 1);
-    step = r.getValue(register + 2, begin - 1);
-  }
   
   @Override
   public void walk(Walker w) {

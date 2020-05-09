@@ -104,7 +104,7 @@ public class VariableFinder {
   }
   
   private static boolean isConstantReference(Decompiler d, int value) {
-    return value >= d.getVersion().getConstantsOffset();
+    return d.function.header.extractor.is_k(value);
   }
   
   public static Declaration[] process(Decompiler d, int args, int registers) {
@@ -340,7 +340,7 @@ for(int register = 0; register < registers; register++) {
       }
       boolean is_arg = false;
       if(register == args) {
-        switch(d.getVersion().getVarArgType()) {
+        switch(d.getVersion().varargtype.get()) {
         case ARG:
         case HYBRID:
           if((d.function.vararg & 1) != 0) {
@@ -390,7 +390,7 @@ for(int register = 0; register < registers; register++) {
         } else {
           name = id + register + "_" + lc++;
         }
-        Declaration decl = new Declaration(name, start, code.length() + d.getVersion().getOuterBlockScopeAdjustment());
+        Declaration decl = new Declaration(name, start, code.length() + d.getVersion().outerblockscopeadjustment.get());
         decl.register = register;
         declList.add(decl);
       }

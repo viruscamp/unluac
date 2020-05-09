@@ -1,16 +1,13 @@
 package unluac.parse;
 
-import unluac.Version;
-
+import unluac.util.StringUtils;
 
 public class LString extends LObject {
 
   public final String value;
-  public final boolean reserved;
   
-  public LString(Version version, String value) {    
+  public LString(String value) {    
     this.value = value;
-    this.reserved = version.isReserved(this.value);
   }
   
   @Override
@@ -18,14 +15,9 @@ public class LString extends LObject {
     return value;
   }
   
-  public boolean reserved() {
-    return reserved;
-  }
-  
   @Override
-  public String toString() {
-    // TODO: yikes
-    return "\"" + value + "\"";
+  public String toPrintString() {
+    return StringUtils.toPrintString(value);
   }
   
   @Override

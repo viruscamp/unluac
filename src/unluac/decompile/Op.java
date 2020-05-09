@@ -306,14 +306,6 @@ public enum Op {
     return "f" + field;
   }
   
-  private String rkOperand(int field, CodeExtract ex) {
-    if(ex.is_k(field)) {
-      return constantOperand(ex.get_k(field));
-    } else {
-      return registerOperand(field);
-    }
-  }
-    
   public boolean hasJump() {
     for(int i = 0; i < operands.length; ++i) {
       OperandFormat.Format format = operands[i].format;
@@ -354,7 +346,13 @@ public enum Op {
       case IMMEDIATE_SIGNED_INTEGER: parameters[i] = fixedOperand(x - field.max() / 2); break;
       case REGISTER: parameters[i] = registerOperand(x); break;
       case UPVALUE: parameters[i] = upvalueOperand(x); break;
-      case REGISTER_K: parameters[i] = rkOperand(x, ex); break;
+      case REGISTER_K:
+        if(ex.is_k(x)) {
+          parameters[i] = constantOperand(ex.get_k(x));
+        } else {
+          parameters[i] = registerOperand(x);
+        }
+        break;
       case REGISTER_K54:
         if(ex.k.extract(codepoint) != 0) {
           parameters[i] = constantOperand(x);

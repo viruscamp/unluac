@@ -45,7 +45,7 @@ public class BHeader {
     this.config = null;
     this.version = version;
     this.lheader = lheader;
-    lheader_type = version.getLHeaderType();
+    this.lheader_type = version.getLHeaderType();
     integer = lheader.integer;
     sizeT = lheader.sizeT;
     bool = lheader.bool;
@@ -131,16 +131,16 @@ public class BHeader {
   
   public void write(OutputStream out) throws IOException {
     out.write(signature);
-    int versionNumber = version.getVersionNumber();
-    if(versionNumber >= 0x54) {
-      int major = versionNumber >> 4;
-      int minor = versionNumber & 0x0F;
+    int major = version.getVersionMajor();
+    int minor = version.getVersionMinor();
+    if(major > 5 || major == 5 && minor >= 4) {
       BIntegerType.create54().write(out, this, new BInteger(major * 100 + minor));
     } else {
+      int versionNumber = (major << 4) | minor;
       out.write(versionNumber);
     }
     version.getLHeaderType().write(out, this, lheader);
-    if(version.getVersionNumber() >= 0x53) {
+    if(version.useupvaluecountinheader.get()) {
       out.write(main.numUpvalues);
     }
     function.write(out, this, main);

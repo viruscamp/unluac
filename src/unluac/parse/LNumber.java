@@ -11,7 +11,7 @@ public abstract class LNumber extends LObject {
   }
   
   @Override
-  public abstract String toString();
+  public abstract String toPrintString();
     
   //TODO: problem solution for this issue
   public abstract double value();
@@ -32,7 +32,7 @@ class LFloatNumber extends LNumber {
   }
   
   @Override
-  public String toString() {
+  public String toPrintString() {
     if(mode == LNumberType.NumberMode.MODE_NUMBER && number == (float) Math.round(number)) {
       if(Float.floatToRawIntBits(number) == Float.floatToRawIntBits(-0.0f)) {
         return "-0";
@@ -82,7 +82,7 @@ class LDoubleNumber extends LNumber {
   }
   
   @Override
-  public String toString() {
+  public String toPrintString() {
     if(mode == LNumberType.NumberMode.MODE_NUMBER && number == (double) Math.round(number)) {
       if(Double.doubleToRawLongBits(number) == Double.doubleToRawLongBits(-0.0)) {
         return "-0";
@@ -130,7 +130,7 @@ class LIntNumber extends LNumber {
   }
   
   @Override
-  public String toString() {    
+  public String toPrintString() {    
     return Integer.toString(number);
   }
   
@@ -170,7 +170,7 @@ class LLongNumber extends LNumber {
   }
   
   @Override
-  public String toString() {    
+  public String toPrintString() {    
     return Long.toString(number);
   }
   

@@ -14,14 +14,12 @@ public class Constant {
   private final boolean bool;
   private final LNumber number;
   private final String string;
-  private final boolean reserved;
   
   public Constant(int constant) {
     type = 2;
     bool = false;
     number = LNumber.makeInteger(constant);
     string = null;
-    reserved = false;
   }
   
   public Constant(double x) {
@@ -29,7 +27,6 @@ public class Constant {
     bool = false;
     number = LNumber.makeDouble(x);
     string = null;
-    reserved = false;
   }
   
   public Constant(LObject constant) {
@@ -38,25 +35,21 @@ public class Constant {
       bool = false;
       number = null;
       string = null;
-      reserved = false;
     } else if(constant instanceof LBoolean) {
       type = 1;
       bool = constant == LBoolean.LTRUE;
       number = null;
       string = null;
-      reserved = false;
     } else if(constant instanceof LNumber) {
       type = 2;
       bool = false;
       number = (LNumber) constant;
       string = null;
-      reserved = false;
     } else if(constant instanceof LString) {
       type = 3;
       bool = false;
       number = null;
       string = ((LString) constant).deref();
-      reserved = ((LString) constant).reserved();
     } else {
       throw new IllegalArgumentException("Illegal constant type: " + constant.toString());
     }
@@ -71,7 +64,7 @@ public class Constant {
         out.print(bool ? "true" : "false");
         break;
       case 2:
-        out.print(number.toString());
+        out.print(number.toPrintString());
         break;
       case 3:
         int newlines = 0;
@@ -88,7 +81,7 @@ public class Constant {
         boolean longString = (newlines > 1 || (newlines == 1 && string.indexOf('\n') != string.length() - 1)); // heuristic
         longString = longString && unprintable == 0; // can't escape and for robustness, don't want to allow non-ASCII output
         longString = longString && !string.contains("[["); // triggers compatibility error in 5.1 TODO: avoidable?
-        if(d.function.header.version == Version.LUA50) {
+        if(d.function.header.version.usenestinglongstrings.get()) {
           longString = longString && !string.contains("]]") && !string.endsWith("]"); // no piping TODO: allow proper nesting
         }
         if(longString) {
@@ -192,8 +185,8 @@ public class Constant {
     return type == 3;
   }
   
-  public boolean isIdentifier() {
-    if(!isString() || reserved) {
+  public boolean isIdentifier(Version version) {
+    if(!isString() || version.isReserved(string)) {
       return false;
     }
     if(string.length() == 0) {
