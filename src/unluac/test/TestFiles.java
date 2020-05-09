@@ -13,6 +13,7 @@ public class TestFiles {
     "multiassign03",
     "multiassign04",
     "multiassign05",
+    "multiassign06",
     "expression",
     "expression02",
     "functioncall",

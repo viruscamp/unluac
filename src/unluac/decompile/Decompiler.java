@@ -77,7 +77,7 @@ public class Decompiler {
     } else if(function.locals.length >= function.numParams) {
       declList = new Declaration[function.locals.length];
       for(int i = 0; i < declList.length; i++) {
-        declList[i] = new Declaration(function.locals[i]);
+        declList[i] = new Declaration(function.locals[i], code);
       }
     } else {
       declList = new Declaration[function.numParams];
