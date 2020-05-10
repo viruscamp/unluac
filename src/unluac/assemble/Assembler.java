@@ -269,6 +269,13 @@ class AssemblerFunction {
       lines.add(a.getInteger());
       break;
     }
+    case ABSLINEINFO: {
+      AssemblerAbsLineInfo info = new AssemblerAbsLineInfo();
+      info.pc = a.getInteger();
+      info.line = a.getInteger();
+      abslineinfo.add(info);
+      break;
+    }
     case LOCAL: {
       AssemblerLocal local = new AssemblerLocal();
       local.name = a.getString();

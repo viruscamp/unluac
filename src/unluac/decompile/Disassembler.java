@@ -1,6 +1,7 @@
 package unluac.decompile;
 
 import unluac.assemble.Directive;
+import unluac.parse.LAbsLineInfo;
 import unluac.parse.LFunction;
 import unluac.parse.LLocal;
 import unluac.parse.LUpvalue;
@@ -87,9 +88,15 @@ public class Disassembler {
       }
     }
     
+    int abslineinfoindex = 0;
+    
     for(int line = 1; line <= function.code.length; line++) {
       if(label[line - 1]) {
         out.println(".label\t" + "l" + line);
+      }
+      if(function.abslineinfo != null && abslineinfoindex < function.abslineinfo.length && function.abslineinfo[abslineinfoindex].pc == line - 1) {
+        LAbsLineInfo info = function.abslineinfo[abslineinfoindex++];
+        out.println(".abslineinfo\t" + info.pc + "\t" + info.line);
       }
       if(line <= function.lines.length) {
         out.print(".line\t" + function.lines[line - 1] + "\t");
@@ -106,7 +113,17 @@ public class Disassembler {
       //out.println("\t" + code.opcode(line) + " " + code.A(line) + " " + code.B(line) + " " + code.C(line) + " " + code.Bx(line) + " " + code.sBx(line) + " " + code.codepoint(line));
     }
     for(int line = function.code.length + 1; line <= function.lines.length; line++) {
+      if(function.abslineinfo != null && abslineinfoindex < function.abslineinfo.length && function.abslineinfo[abslineinfoindex].pc == line - 1) {
+        LAbsLineInfo info = function.abslineinfo[abslineinfoindex++];
+        out.println(".abslineinfo\t" + info.pc + "\t" + info.line);
+      }
       out.println(".line\t" + function.lines[line - 1]);
+    }
+    if(function.abslineinfo != null) {
+      while(abslineinfoindex < function.abslineinfo.length) {
+        LAbsLineInfo info = function.abslineinfo[abslineinfoindex++];
+        out.println(".abslineinfo\t" + info.pc + "\t" + info.line);
+      }
     }
     out.println();
     

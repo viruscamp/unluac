@@ -15,8 +15,8 @@ public class LAbsLineInfoType extends BObjectType<LAbsLineInfo> {
 
   @Override
   public void write(OutputStream out, BHeader header, LAbsLineInfo object) throws IOException {
-    // TODO Auto-generated method stub
-    throw new IllegalStateException();
+    header.integer.write(out, header, new BInteger(object.pc));
+    header.integer.write(out, header, new BInteger(object.line));
   }
 
 }
