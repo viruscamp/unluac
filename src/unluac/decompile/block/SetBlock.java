@@ -61,8 +61,7 @@ public class SetBlock extends Block {
       Assignment assignOut = new Assignment(assign.getFirstTarget(), getValue(), assign.getFirstLine());
       assignOut.print(d, out);
     } else {
-      out.print("-- unhandled set block");
-      out.println();
+      throw new IllegalStateException();
     }
   }
   

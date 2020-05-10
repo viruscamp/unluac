@@ -41,6 +41,8 @@ abstract public class Expression {
     BXOR("~", PRECEDENCE_BXOR, ASSOCIATIVITY_LEFT),
     SHL("<<", PRECEDENCE_SHIFT, ASSOCIATIVITY_LEFT),
     SHR(">>", PRECEDENCE_SHIFT, ASSOCIATIVITY_LEFT),
+    OR("or", PRECEDENCE_OR, ASSOCIATIVITY_NONE),
+    AND("and", PRECEDENCE_AND, ASSOCIATIVITY_NONE),
     ;
     
     public final String op;

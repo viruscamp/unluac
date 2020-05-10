@@ -17,11 +17,11 @@ public class Registers {
   
   private final Declaration[][] decls;
   private final Function f;
-  private final boolean isStripped;
+  public final boolean isStrippedDefault;
   private final Expression[][] values;
   private final int[][] updated;
   
-  public Registers(int registers, int length, Declaration[] declList, Function f, boolean isStripped) {
+  public Registers(int registers, int length, Declaration[] declList, Function f, boolean isStrippedDefault) {
     this.registers = registers;
     this.length = length;
     decls = new Declaration[registers][length + 1];
@@ -45,7 +45,7 @@ public class Registers {
     startedLines = new boolean[length + 1];
     Arrays.fill(startedLines, false);
     this.f = f;
-    this.isStripped = isStripped;
+    this.isStrippedDefault = isStrippedDefault;
   }
   
   public Function getFunction() {
@@ -120,7 +120,11 @@ public class Registers {
   }
   
   public Expression getValue(int register, int line) {
-    return values[register][line - 1];
+    if(isStrippedDefault) {
+      return getExpression(register, line);
+    } else {
+      return values[register][line - 1];
+    }
   }
 
   public int getUpdated(int register, int line) {
@@ -145,10 +149,10 @@ public class Registers {
       decl = new Declaration("_FOR_", begin, end);
       decl.register = register;
       newDeclaration(decl, register, begin, end);
-      if(!isStripped) {
+      if(!isStrippedDefault) {
         throw new IllegalStateException("TEMP");
       }
-    } else if(isStripped) {
+    } else if(isStrippedDefault) {
       //
     } else {
       if(decl.begin != begin || decl.end != end) {
@@ -166,10 +170,10 @@ public class Registers {
       decl = new Declaration("_FORV_" + register + "_", begin, end);
       decl.register = register;
       newDeclaration(decl, register, begin, end);
-      if(!isStripped) {
+      if(!isStrippedDefault) {
         throw new IllegalStateException("TEMP");
       }
-    } else if(isStripped) {
+    } else if(isStrippedDefault) {
       
     } else {
       if(decl.begin != begin || decl.end != end) {

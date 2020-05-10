@@ -101,6 +101,17 @@ public class Assignment extends Statement {
     allnil = allnil && value.isNil();
   }
   
+  public Expression getValue(int target) {
+    int index = 0;
+    for(Target t : targets) {
+      if(t.isLocal() && t.getIndex() == target) {
+        return values.get(index);
+      }
+      index++;
+    }
+    throw new IllegalStateException();
+  }
+  
   public void replaceValue(int target, Expression value) {
     int index = 0;
     for(Target t : targets) {

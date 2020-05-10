@@ -72,7 +72,21 @@ public class Decompiler {
     length = function.code.length;
     code = new Code(function);
     if(function.stripped) {
-      declList = VariableFinder.process(this, function.numParams, function.maximumStackSize);
+      if(getConfiguration().variable == Configuration.VariableMode.FINDER) {
+        declList = VariableFinder.process(this, function.numParams, function.maximumStackSize);
+      } else {
+        declList = new Declaration[function.maximumStackSize];
+        int i;
+        for(i = 0; i < Math.min(function.numParams, function.maximumStackSize); i++) {
+          declList[i] = new Declaration("A" + i, 0, length - 1);
+        }
+        if(getVersion().varargtype.get() != Version.VarArgType.ELLIPSIS && (function.vararg & 1) != 0 && i < function.maximumStackSize) {
+          declList[i++] = new Declaration("arg", 0, length - 1);
+        }
+        for(; i < function.maximumStackSize; i++) {
+          declList[i] = new Declaration("L" + i, 0, length - 1);
+        }
+      }
     } else if(function.locals.length >= function.numParams) {
       declList = new Declaration[function.locals.length];
       for(int i = 0; i < declList.length; i++) {
@@ -96,6 +110,10 @@ public class Decompiler {
   
   public Version getVersion() {
     return function.header.version;
+  }
+  
+  public boolean getStrippedDefault() {
+    return function.stripped && function.header.config.variable == Configuration.VariableMode.DEFAULT;
   }
   
   public State decompile() {
@@ -573,9 +591,21 @@ public class Decompiler {
       case EQ: case LT: case LE:
       case EQ54: case LT54: case LE54:
       case EQK: case EQI: case LTI: case LEI: case GTI: case GEI:
-      case TEST50: case TEST: case TEST54: case TESTSET: case TESTSET54:
+      case TEST: case TEST54:
         /* Do nothing ... handled with branches */
         break;
+      case TEST50: {
+        if(getStrippedDefault() && A != B) {
+          operations.add(new RegisterSet(line, A, Expression.make(Expression.BinaryOperation.OR, r.getExpression(B, line - 1), r.getExpression(A, line - 1))));
+        }
+        break;
+      }
+      case TESTSET: case TESTSET54: {
+        if(getStrippedDefault()) {
+          operations.add(new RegisterSet(line, A, Expression.make(Expression.BinaryOperation.OR, r.getExpression(B, line - 1), r.getExpression(A, line - 1))));
+        }
+        break;
+      }
       case CALL: {
         boolean multiple = (C >= 3 || C == 0);
         if(B == 0) B = registers - A;

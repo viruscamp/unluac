@@ -11,6 +11,10 @@ public class BinaryExpression extends Expression {
   private final Expression right;
   private final int associativity;
   
+  public static BinaryExpression replaceRight(BinaryExpression template, Expression replacement) {
+    return new BinaryExpression(template.op, template.left, replacement, template.precedence, template.associativity);
+  }
+  
   public BinaryExpression(String op, Expression left, Expression right, int precedence, int associativity) {
     super(precedence);
     this.op = op;
@@ -54,6 +58,10 @@ public class BinaryExpression extends Expression {
     if(rightGroup) out.print("(");
     right.print(d, out);
     if(rightGroup) out.print(")");
+  }
+  
+  public String getOp() {
+    return op;
   }
   
   private boolean leftGroup() {
