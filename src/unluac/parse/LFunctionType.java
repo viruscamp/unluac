@@ -52,11 +52,15 @@ abstract public class LFunctionType extends BObjectType<LFunction> {
     }
     LFunctionParseState s = new LFunctionParseState();
     parse_main(buffer, header, s);
+    int[] lines = new int[s.lines.length.asInt()];
+    for(int i = 0; i < lines.length; i++) {
+      lines[i] = s.lines.get(i).asInt();
+    }
     LAbsLineInfo[] abslineinfo = null;
     if(s.abslineinfo != null) {
       abslineinfo = s.abslineinfo.asArray(new LAbsLineInfo[s.abslineinfo.length.asInt()]);
     }
-    LFunction lfunc = new LFunction(header, s.name, s.lineBegin, s.lineEnd, s.code, s.lines, abslineinfo, s.locals.asArray(new LLocal[s.locals.length.asInt()]), s.constants.asArray(new LObject[s.constants.length.asInt()]), s.upvalues, s.functions.asArray(new LFunction[s.functions.length.asInt()]), s.maximumStackSize, s.lenUpvalues, s.lenParameter, s.vararg);
+    LFunction lfunc = new LFunction(header, s.name, s.lineBegin, s.lineEnd, s.code, lines, abslineinfo, s.locals.asArray(new LLocal[s.locals.length.asInt()]), s.constants.asArray(new LObject[s.constants.length.asInt()]), s.upvalues, s.functions.asArray(new LFunction[s.functions.length.asInt()]), s.maximumStackSize, s.lenUpvalues, s.lenParameter, s.vararg);
     for(LFunction child : lfunc.functions) {
       child.parent = lfunc;
     }
@@ -155,7 +159,10 @@ abstract public class LFunctionType extends BObjectType<LFunction> {
   }
   
   protected void write_debug(OutputStream out, BHeader header, LFunction object) throws IOException {
-    header.integer.writeList(out, header, object.lines);
+    header.integer.write(out, header, new BInteger(object.lines.length));
+    for(int i = 0; i < object.lines.length; i++) {
+      header.integer.write(out, header, new BInteger(object.lines[i]));
+    }
     header.local.writeList(out, header, object.locals);
     int upvalueNameLength = 0;
     for(LUpvalue upvalue : object.upvalues) {
@@ -365,7 +372,10 @@ class LFunctionType54 extends LFunctionType {
   
   @Override
   protected void write_debug(OutputStream out, BHeader header, LFunction object) throws IOException {
-    new BIntegerType50(1).writeList(out, header, object.lines);
+    header.integer.write(out, header, new BInteger(object.lines.length));
+    for(int i = 0; i < object.lines.length; i++) {
+      out.write(object.lines[i]);
+    }
     header.abslineinfo.writeList(out, header, object.abslineinfo);
     header.local.writeList(out, header, object.locals);
     int upvalueNameLength = 0;

@@ -14,17 +14,28 @@ import unluac.parse.LObject;
 
 public class Compare {
 
+  public static enum Mode {
+    NORMAL,
+    FULL,
+  }
+  
+  private final Mode mode;
+  
+  public Compare(Mode mode) {
+    this.mode = mode;
+  }
+  
   /**
    * Determines if two files of lua bytecode are the same
    * (except possibly for line numbers).
    */
-  public static boolean bytecode_equal(String file1, String file2) {
+  public boolean bytecode_equal(String file1, String file2) {
     LFunction main1 = file_to_function(file1);
     LFunction main2 = file_to_function(file2);
     return function_equal(main1, main2);
   }
 
-  public static boolean function_equal(LFunction f1, LFunction f2) {
+  public boolean function_equal(LFunction f1, LFunction f2) {
     if(f1.maximumStackSize != f2.maximumStackSize) {
       return false;
     }
@@ -77,14 +88,46 @@ public class Compare {
         return false;
       }
     }
+    if(mode == Mode.FULL) {
+      if(!f1.name.equals(f2.name)) {
+        return false;
+      }
+      if(f1.linedefined != f2.linedefined) {
+        return false;
+      }
+      if(f1.lastlinedefined != f2.lastlinedefined) {
+        return false;
+      }
+      if(f1.lines.length != f2.lines.length) {
+        return false;
+      }
+      for(int i = 0; i < f1.lines.length; i++) {
+        if(f1.lines[i] != f2.lines[i]) {
+          return false;
+        }
+      }
+      if((f1.abslineinfo == null) != (f2.abslineinfo == null)) {
+        return false;
+      }
+      if(f1.abslineinfo != null) {
+        if(f1.abslineinfo.length != f2.abslineinfo.length) {
+          return false;
+        }
+        for(int i = 0; i < f1.abslineinfo.length; i++) {
+          if(!f1.abslineinfo[i].equals(f2.abslineinfo[i])) {
+            return false;
+          }
+        }
+      }
+    }
     return true;
   }
   
-  public static boolean object_equal(LObject o1, LObject o2) {
+  public boolean object_equal(LObject o1, LObject o2) {
     return o1.equals(o2);
   }
   
-  public static boolean local_equal(LLocal l1, LLocal l2) {
+  public boolean local_equal(LLocal l1, LLocal l2) {
     if(l1.start != l2.start) {
       return false;
     }
@@ -97,7 +140,7 @@ public class Compare {
     return true;
   }
   
-  public static LFunction file_to_function(String filename) {
+  public LFunction file_to_function(String filename) {
     RandomAccessFile file = null;
     try {
       file = new RandomAccessFile(filename, "r");

@@ -71,7 +71,7 @@ public class Disassembler {
     
     if(function.constants.length > 0) {
       for(int constant = 1; constant <= function.constants.length; constant++) {
-        out.println(".constant\tk" + (constant - 1) + "\t" + function.constants[constant - 1]);
+        out.println(".constant\tk" + (constant - 1) + "\t" + function.constants[constant - 1].toPrintString());
       }
       out.println();
     }
@@ -91,8 +91,8 @@ public class Disassembler {
       if(label[line - 1]) {
         out.println(".label\t" + "l" + line);
       }
-      if(line <= function.lines.length.asInt()) {
-        out.print(".line\t" + function.lines.get(line - 1).asInt() + "\t");
+      if(line <= function.lines.length) {
+        out.print(".line\t" + function.lines[line - 1] + "\t");
       }
       Op op = code.op(line);
       String cpLabel = null;
@@ -105,8 +105,8 @@ public class Disassembler {
       out.println(op.codePointToString(code.codepoint(line), code.getExtractor(), cpLabel));
       //out.println("\t" + code.opcode(line) + " " + code.A(line) + " " + code.B(line) + " " + code.C(line) + " " + code.Bx(line) + " " + code.sBx(line) + " " + code.codepoint(line));
     }
-    for(int line = function.code.length + 1; line <= function.lines.length.asInt(); line++) {
-      out.println(".line\t" + function.lines.get(line - 1).asInt());
+    for(int line = function.code.length + 1; line <= function.lines.length; line++) {
+      out.println(".line\t" + function.lines[line - 1]);
     }
     out.println();
     

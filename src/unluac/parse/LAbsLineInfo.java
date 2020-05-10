@@ -12,8 +12,12 @@ public class LAbsLineInfo extends LObject {
   
   @Override
   public boolean equals(Object o) {
-    // TODO Auto-generated method stub
-    return this == o;
+    if(o instanceof LAbsLineInfo) {
+      LAbsLineInfo other = (LAbsLineInfo) o;
+      return pc == other.pc && line == other.line;
+    } else {
+      return false;
+    }
   }
   
 }

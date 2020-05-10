@@ -19,7 +19,6 @@ import unluac.decompile.OperandFormat;
 import unluac.parse.BHeader;
 import unluac.parse.BInteger;
 import unluac.parse.BIntegerType;
-import unluac.parse.BList;
 import unluac.parse.LAbsLineInfo;
 import unluac.parse.LAbsLineInfoType;
 import unluac.parse.LBoolean;
@@ -616,9 +615,10 @@ class AssemblerChunk {
     for(int codepoint : function.code) {
       code[i++] = codepoint;
     }
-    ArrayList<BInteger> lines = new ArrayList<BInteger>(function.lines.size());
+    int[] lines = new int[function.lines.size()];
+    i = 0;
     for(int line : function.lines) {
-      lines.add(new BInteger(line));
+      lines[i++] = line;
     }
     LAbsLineInfo[] abslineinfo = new LAbsLineInfo[function.abslineinfo.size()];
     i = 0;
@@ -684,7 +684,7 @@ class AssemblerChunk {
       function.linedefined,
       function.lastlinedefined,
       code,
-      new BList<BInteger>(new BInteger(function.lines.size()), lines),
+      lines,
       abslineinfo,
       locals,
       constants,
