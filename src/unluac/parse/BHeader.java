@@ -71,23 +71,9 @@ public class BHeader {
       }
     }
     
-    int versionPos = buffer.position();
-    
-    int major;
-    int minor;
-    
     int versionNumber = 0xFF & buffer.get();
-    major = versionNumber >> 4;
-    minor = versionNumber & 0x0F;
-    
-    if(major >= 1 && major < 5 || major == 5 && minor >= 0 && minor <= 3) {
-      // okay
-    } else {
-      buffer.position(versionPos);
-      versionNumber = new BIntegerType54().parse(buffer, this).asInt();
-      major = versionNumber / 100;
-      minor = versionNumber % 100;
-    }
+    int major = versionNumber >> 4;
+    int minor = versionNumber & 0x0F;
     
     version = Version.getVersion(major, minor);
     if(version == null) {
@@ -133,12 +119,8 @@ public class BHeader {
     out.write(signature);
     int major = version.getVersionMajor();
     int minor = version.getVersionMinor();
-    if(major > 5 || major == 5 && minor >= 4) {
-      BIntegerType.create54().write(out, this, new BInteger(major * 100 + minor));
-    } else {
-      int versionNumber = (major << 4) | minor;
-      out.write(versionNumber);
-    }
+    int versionNumber = (major << 4) | minor;
+    out.write(versionNumber);
     version.getLHeaderType().write(out, this, lheader);
     if(version.useupvaluecountinheader.get()) {
       out.write(main.numUpvalues);
