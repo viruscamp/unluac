@@ -45,7 +45,13 @@ public class TestSuite {
       } else {
         Main.assemble(working_dir + decompiled, working_dir + recompiled);
       }
-      return Compare.bytecode_equal(working_dir + compiled, working_dir + recompiled) ? TestResult.OK : TestResult.FAILED;
+      Compare compare;
+      if(!uspec.disassemble) {
+        compare = new Compare(Compare.Mode.NORMAL);
+      } else {
+        compare = new Compare(Compare.Mode.FULL);
+      }
+      return compare.bytecode_equal(working_dir + compiled, working_dir + recompiled) ? TestResult.OK : TestResult.FAILED;
     } catch (IOException e) {
       return TestResult.FAILED;
     } catch (RuntimeException e) {
