@@ -76,15 +76,16 @@ public class Decompiler {
         declList = VariableFinder.process(this, function.numParams, function.maximumStackSize);
       } else {
         declList = new Declaration[function.maximumStackSize];
+        int scopeEnd = length + function.header.version.outerblockscopeadjustment.get();
         int i;
         for(i = 0; i < Math.min(function.numParams, function.maximumStackSize); i++) {
-          declList[i] = new Declaration("A" + i, 0, length - 1);
+          declList[i] = new Declaration("A" + i, 0, scopeEnd);
         }
         if(getVersion().varargtype.get() != Version.VarArgType.ELLIPSIS && (function.vararg & 1) != 0 && i < function.maximumStackSize) {
-          declList[i++] = new Declaration("arg", 0, length - 1);
+          declList[i++] = new Declaration("arg", 0, scopeEnd);
         }
         for(; i < function.maximumStackSize; i++) {
-          declList[i] = new Declaration("L" + i, 0, length - 1);
+          declList[i] = new Declaration("L" + i, 0, scopeEnd);
         }
       }
     } else if(function.locals.length >= function.numParams) {
