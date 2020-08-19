@@ -53,7 +53,7 @@ public class Registers {
   }
   
   public boolean isAssignable(int register, int line) {
-    return isLocal(register, line) && !decls[register][line].forLoop;
+    return isLocal(register, line) && (!decls[register][line].forLoop || isStrippedDefault);
   }
   
   public boolean isLocal(int register, int line) {
