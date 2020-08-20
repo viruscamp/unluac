@@ -113,6 +113,7 @@ public class BHeader {
     if(main.numUpvalues >= 1 && versionNumber >= 0x52 && (main.upvalues[0].name == null || main.upvalues[0].name.isEmpty())) {
       main.upvalues[0].name = "_ENV";
     }
+    main.setLevel(1);
   }
   
   public void write(OutputStream out) throws IOException {

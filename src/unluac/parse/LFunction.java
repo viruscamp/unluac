@@ -19,6 +19,7 @@ public class LFunction extends BObject {
   public int numParams;
   public int vararg;
   public boolean stripped;
+  public int level;
   
   public LFunction(BHeader header, LString name, int linedefined, int lastlinedefined, int[] code, int[] lines, LAbsLineInfo[] abslineinfo, LLocal[] locals, LObject[] constants, LUpvalue[] upvalues, LFunction[] functions, int maximumStackSize, int numUpValues, int numParams, int vararg) {
     this.header = header;
@@ -37,6 +38,13 @@ public class LFunction extends BObject {
     this.numParams = numParams;
     this.vararg = vararg;
     this.stripped = false;
+  }
+  
+  public void setLevel(int level) {
+    this.level = level;
+    for(LFunction f : functions) {
+      f.setLevel(level + 1);
+    }
   }
   
 }
