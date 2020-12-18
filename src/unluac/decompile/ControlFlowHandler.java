@@ -976,28 +976,34 @@ public class ControlFlowHandler {
     resolve_hangers(state, stack, hanging, hangingResolver);
     hangingResolver = null;
     while(!hanging.isEmpty()) {
-      if(state.function.header.version.useifbreakrewrite.get() || state.r.isStrippedDefault) {
-        // if break (or if goto)
-        Branch top = hanging.pop();
-        Block breakable = enclosing_breakable_block(state, top.line);
-        if(breakable != null && breakable.end == top.targetSecond) {
+      // if break (or if goto)
+      Branch top = hanging.pop();
+      Block breakable = enclosing_breakable_block(state, top.line);
+      if(breakable != null && breakable.end == top.targetSecond) {
+        if(state.function.header.version.useifbreakrewrite.get()) {
           Block block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1, false);
           block.addStatement(new Break(state.function, top.targetFirst - 1, top.targetSecond));
           state.blocks.add(block);
-        } else if(state.function.header.version.usegoto.get() || state.r.isStrippedDefault) {
+        } else if(is_jmp(state, top.targetFirst) && state.code.target(top.targetFirst) == top.targetSecond) {
+          Block block = new IfThenEndBlock(state.function, state.r, top.cond, top.targetFirst - 1, top.targetFirst - 1, false);
+          state.blocks.add(block);
+        } else {
+          throw new IllegalStateException();
+        }
+      } else if(state.function.header.version.usegoto.get() || state.r.isStrippedDefault) {
+        if(state.function.header.version.useifbreakrewrite.get() || state.r.isStrippedDefault) {
           Block block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1, false);
           block.addStatement(new Goto(state.function, top.targetFirst - 1, top.targetSecond));
           state.blocks.add(block);
           state.labels[top.targetSecond] = true;
         } else {
+          // No version supports goto without if break rewrite
           throw new IllegalStateException();
         }
-        remove_branch(state, top);
       } else {
-        Branch top = hanging.pop();
-        remove_branch(state, top);
         throw new IllegalStateException();
       }
+      remove_branch(state, top);
     }
     resolve_if_stack(state, stack, Integer.MAX_VALUE, -1);
   }
