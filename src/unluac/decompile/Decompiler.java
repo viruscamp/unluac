@@ -754,8 +754,9 @@ public class Decompiler {
     Registers r = state.r;
     boolean[] skip = state.skip;
     Assignment assign = null;
-    Statement stmt = operation.process(r, block);
-    if(stmt != null) {
+    List<Statement> stmts = operation.process(r, block);
+    if(stmts.size() == 1) {
+      Statement stmt = stmts.get(0);
       if(stmt instanceof Assignment) {
         assign = (Assignment) stmt;
       }
@@ -786,9 +787,9 @@ public class Decompiler {
           }
         }
       }
-      
+    }
+    for(Statement stmt : stmts) {
       block.addStatement(stmt);
-      
     }
     return assign;
   }

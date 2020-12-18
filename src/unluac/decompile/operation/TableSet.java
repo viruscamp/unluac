@@ -1,5 +1,9 @@
 package unluac.decompile.operation;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import unluac.decompile.Registers;
 import unluac.decompile.block.Block;
 import unluac.decompile.expression.Expression;
@@ -26,13 +30,13 @@ public class TableSet extends Operation {
   }
 
   @Override
-  public Statement process(Registers r, Block block) {
+  public List<Statement> process(Registers r, Block block) {
     // .isTableLiteral() is sufficient when there is debugging info
     if(!r.isStrippedDefault && table.isTableLiteral() && (value.isMultiple() || table.isNewEntryAllowed())) {
       table.addEntry(new TableLiteral.Entry(index, value, !isTable, timestamp));
-      return null;
+      return Collections.emptyList();
     } else {
-      return new Assignment(new TableTarget(table, index), value, line);
+      return Arrays.asList(new Assignment(new TableTarget(table, index), value, line));
     }
   }
 

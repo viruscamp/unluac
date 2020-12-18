@@ -1,5 +1,9 @@
 package unluac.decompile.block;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import unluac.decompile.ControlFlowHandler;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
@@ -101,8 +105,8 @@ public class SetBlock extends Block {
       return new Operation(end - 1) {
         
         @Override
-        public Statement process(Registers r, Block block) {
-          return assign;
+        public List<Statement> process(Registers r, Block block) {
+          return Arrays.asList(assign);
         }
         
       };
@@ -110,13 +114,13 @@ public class SetBlock extends Block {
       return new Operation(end - 1) {
         
         @Override
-        public Statement process(Registers r, Block block) {
+        public List<Statement> process(Registers r, Block block) {
           if(r.isLocal(target, end - 1)) {
-            return new Assignment(r.getTarget(target, end - 1), cond
-                .asExpression(r), end - 1);
+            return Arrays.asList(new Assignment(r.getTarget(target, end - 1), cond
+                .asExpression(r), end - 1));
           }
           r.setValue(target, end - 1, cond.asExpression(r));
-          return null;
+          return Collections.emptyList();
         }
         
       };

@@ -1,5 +1,8 @@
 package unluac.decompile.operation;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import unluac.decompile.Registers;
 import unluac.decompile.block.Block;
 import unluac.decompile.expression.ConstantExpression;
@@ -19,10 +22,10 @@ public class LoadNil extends Operation {
   }
 
   @Override
-  public Statement process(Registers r, Block block) {
-    int count = 0;
-    Assignment assignment = new Assignment();
+  public List<Statement> process(Registers r, Block block) {
+    List<Statement> assignments = new ArrayList<Statement>(registerLast - registerFirst + 1);
     Expression nil = ConstantExpression.createNil(line);
+    Assignment declare = null;
     int scopeEnd = -1;
     for(int register = registerFirst; register <= registerLast; register++) {
       if(r.isAssignable(register, line)) {
@@ -32,15 +35,18 @@ public class LoadNil extends Operation {
     for(int register = registerFirst; register <= registerLast; register++) {
       r.setValue(register, line, nil);
       if(r.isAssignable(register, line) && r.getDeclaration(register, line).end == scopeEnd) {
-        assignment.addLast(r.getTarget(register, line), nil, line);
-        count++;
+        if((r.getDeclaration(register, line).begin == line)) {
+          if(declare == null) {
+            declare = new Assignment();
+            assignments.add(declare);
+          }
+          declare.addLast(r.getTarget(register, line), nil, line);
+        } else {
+          assignments.add(new Assignment(r.getTarget(register, line), nil, line));
+        }
       }
     }
-    if(count > 0) {
-      return assignment;
-    } else {
-      return null;
-    }
+    return assignments;
    }
   
 }

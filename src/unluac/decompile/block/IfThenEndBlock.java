@@ -1,5 +1,9 @@
 package unluac.decompile.block;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
@@ -98,11 +102,13 @@ public class IfThenEndBlock extends ContainerBlock {
         return new Operation(end - 1) {
           
           @Override
-          public Statement process(Registers r, Block block) {
+          public List<Statement> process(Registers r, Block block) {
             if(fassign == null) {
               r.setValue(test, end - 1, fcombined.asExpression(r));
+              return Collections.emptyList();
+            } else {
+              return Arrays.asList(fassign);
             }
-            return fassign;
           }
           
         };

@@ -1,5 +1,8 @@
 package unluac.decompile.operation;
 
+import java.util.Arrays;
+import java.util.List;
+
 import unluac.decompile.Registers;
 import unluac.decompile.block.Block;
 import unluac.decompile.expression.FunctionCall;
@@ -16,8 +19,8 @@ public class CallOperation extends Operation {
   }
 
   @Override
-  public Statement process(Registers r, Block block) {
-    return new FunctionCallStatement(call);
+  public List<Statement> process(Registers r, Block block) {
+    return Arrays.asList(new FunctionCallStatement(call));
   }
   
 }

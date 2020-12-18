@@ -1,5 +1,8 @@
 package unluac.decompile.block;
 
+import java.util.Arrays;
+import java.util.List;
+
 import unluac.decompile.Decompiler;
 import unluac.decompile.Registers;
 import unluac.decompile.operation.Operation;
@@ -103,8 +106,8 @@ abstract public class Block extends Statement implements Comparable<Block> {
     return new Operation(end - 1) {
       
       @Override
-      public Statement process(Registers r, Block block) {
-        return statement;
+      public List<Statement> process(Registers r, Block block) {
+        return Arrays.asList(statement);
       }
       
     };

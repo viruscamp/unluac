@@ -1,5 +1,9 @@
 package unluac.decompile.operation;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import unluac.decompile.Registers;
 import unluac.decompile.block.Block;
 import unluac.decompile.expression.Expression;
@@ -23,7 +27,7 @@ public class RegisterSet extends Operation {
   }
 
   @Override
-  public Statement process(Registers r, Block block) {
+  public List<Statement> process(Registers r, Block block) {
     //System.out.println("-- processing register set " + register + "@" + line);
     r.setValue(register, line, value);
     /*
@@ -33,9 +37,9 @@ public class RegisterSet extends Operation {
     */
     if(r.isAssignable(register, line)) {
       //System.out.println("-- assignment!");
-      return new Assignment(r.getTarget(register, line), value, line);
+      return Arrays.asList(new Assignment(r.getTarget(register, line), value, line));
     } else {
-      return null;
+      return Collections.emptyList();
     }
   }
   

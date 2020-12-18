@@ -1,5 +1,8 @@
 package unluac.decompile.operation;
 
+import java.util.Arrays;
+import java.util.List;
+
 import unluac.decompile.Registers;
 import unluac.decompile.block.Block;
 import unluac.decompile.expression.Expression;
@@ -22,8 +25,8 @@ public class ReturnOperation extends Operation {
   }
 
   @Override
-  public Statement process(Registers r, Block block) {    
-    return new Return(values);
+  public List<Statement> process(Registers r, Block block) {    
+    return Arrays.asList(new Return(values));
   }
   
 }

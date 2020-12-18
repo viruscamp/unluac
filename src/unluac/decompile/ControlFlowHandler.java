@@ -984,7 +984,7 @@ public class ControlFlowHandler {
           Block block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1, false);
           block.addStatement(new Break(state.function, top.targetFirst - 1, top.targetSecond));
           state.blocks.add(block);
-        } else if(is_jmp(state, top.targetFirst) && state.code.target(top.targetFirst) == top.targetSecond) {
+        } else if(is_jmp(state, top.targetFirst) && state.resolved[state.code.target(top.targetFirst)] == state.resolved[top.targetSecond]) {
           Block block = new IfThenEndBlock(state.function, state.r, top.cond, top.targetFirst - 1, top.targetFirst - 1, false);
           state.blocks.add(block);
         } else {

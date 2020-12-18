@@ -1,5 +1,8 @@
 package unluac.decompile.operation;
 
+import java.util.Arrays;
+import java.util.List;
+
 import unluac.decompile.Registers;
 import unluac.decompile.block.Block;
 import unluac.decompile.expression.ConstantExpression;
@@ -20,8 +23,8 @@ public class GlobalSet extends Operation {
   }
 
   @Override
-  public Statement process(Registers r, Block block) {
-    return new Assignment(new GlobalTarget(global), value, line);
+  public List<Statement> process(Registers r, Block block) {
+    return Arrays.asList(new Assignment(new GlobalTarget(global), value, line));
   }
   
 }
