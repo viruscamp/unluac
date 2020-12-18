@@ -834,6 +834,10 @@ public class ControlFlowHandler {
         }
         Block breakable = enclosing_breakable_block(state, b.line);
         if(!stack.isEmpty() && stack.peek().targetSecond < b.targetSecond) {
+          if(hangingResolver != null && hangingResolver.targetFirst <= b.line) {
+            resolve_hangers(state, stack, hanging, hangingResolver);
+            hangingResolver = null;
+          }
           hanging.push(b);
         } else if(breakable != null && b.targetSecond >= breakable.end) {
           resolve_hangers(state, stack, hanging, hangingResolver);
@@ -983,9 +987,6 @@ public class ControlFlowHandler {
         if(state.function.header.version.useifbreakrewrite.get()) {
           Block block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1, false);
           block.addStatement(new Break(state.function, top.targetFirst - 1, top.targetSecond));
-          state.blocks.add(block);
-        } else if(is_jmp(state, top.targetFirst) && state.resolved[state.code.target(top.targetFirst)] == state.resolved[top.targetSecond]) {
-          Block block = new IfThenEndBlock(state.function, state.r, top.cond, top.targetFirst - 1, top.targetFirst - 1, false);
           state.blocks.add(block);
         } else {
           throw new IllegalStateException();
