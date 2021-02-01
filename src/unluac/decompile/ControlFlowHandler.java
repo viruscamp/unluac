@@ -795,6 +795,15 @@ public class ControlFlowHandler {
     
     unredirect_finalsets(state, tailTargetSecond, b.line, top.targetFirst);
     
+    Stack<Branch> restore = new Stack<Branch>();
+    while(!stack.isEmpty() && stack.peek().line > top.line && stack.peek().targetSecond == b.targetSecond) {
+      stack.peek().targetSecond = b.line;
+      restore.push(stack.pop());
+    }
+    while(!restore.isEmpty()) {
+      stack.push(restore.pop());
+    }
+    
     b.targetSecond = tailTargetSecond;
     state.blocks.add(new IfThenElseBlock(state.function, top.cond, top.targetFirst, top.targetSecond, b.targetSecond));
     ElseEndBlock elseBlock = new ElseEndBlock(state.function, top.targetSecond, b.targetSecond);
