@@ -624,9 +624,13 @@ public class ControlFlowHandler {
         int loopback = line;
         int end = j.line + 1;
         Branch b = state.begin_branch;
+        int extent = -1;
         while(b != null) {
-          if(is_conditional(b) && b.line >= loopback && b.line < j.line && state.resolved[b.targetSecond] == state.resolved[end]) {
+          if(is_conditional(b) && b.line >= loopback && b.line < j.line && state.resolved[b.targetSecond] == state.resolved[end] && extent <= b.line) {
             break;
+          }
+          if(b.line >= loopback) {
+            extent = Math.max(extent, b.targetSecond);
           }
           b = b.next;
         }
