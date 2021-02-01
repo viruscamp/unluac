@@ -32,7 +32,7 @@ public class TestSuite {
     }
   }
   
-  private TestResult test(LuaSpec spec, UnluacSpec uspec, String file) throws IOException {
+  private TestResult test(LuaSpec spec, UnluacSpec uspec, String file) {
     try {
       LuaC.compile(spec, file, working_dir + compiled);
     } catch (IOException e) {
@@ -58,6 +58,20 @@ public class TestSuite {
       e.printStackTrace();
       return TestResult.FAILED;
     } catch (AssemblerException e) {
+      e.printStackTrace();
+      return TestResult.FAILED;
+    }
+  }
+  
+  private TestResult testc(LuaSpec spec, UnluacSpec uspec, String file) {
+    try {
+      uspec.run(file, working_dir + decompiled);
+      LuaC.compile(spec, working_dir + decompiled, working_dir + recompiled);
+      Compare compare = new Compare(Compare.Mode.NORMAL);
+      return compare.bytecode_equal(file, working_dir + recompiled) ? TestResult.OK : TestResult.FAILED;
+    } catch(IOException e) {
+      return TestResult.FAILED;
+    } catch(RuntimeException e) {
       e.printStackTrace();
       return TestResult.FAILED;
     }
@@ -89,7 +103,7 @@ public class TestSuite {
     return failed == 0;
   }
   
-  public boolean run(LuaSpec spec, UnluacSpec uspec, String file) throws IOException {
+  public boolean run(LuaSpec spec, UnluacSpec uspec, String file, boolean compiled) throws IOException {
     int passed = 0;
     int skipped = 0;
     int failed = 0;
@@ -99,7 +113,19 @@ public class TestSuite {
     }
     {
       String name = file;
-      switch (test(spec, uspec, path + name + ext)) {
+      String full;
+      if(!file.contains("/")) {
+        full = path + name + ext;
+      } else {
+        full = name;
+      }
+      TestResult result;
+      if(!compiled) {
+        result = test(spec, uspec, full);
+      } else {
+        result = testc(spec, uspec, full);
+      }
+      switch(result) {
         case OK:
           System.out.println("Passed: " + name);
           passed++;
