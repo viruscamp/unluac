@@ -29,6 +29,7 @@ import unluac.decompile.condition.BinaryCondition;
 import unluac.decompile.condition.Condition;
 import unluac.decompile.condition.ConstantCondition;
 import unluac.decompile.condition.FinalSetCondition;
+import unluac.decompile.condition.FixedCondition;
 import unluac.decompile.condition.OrCondition;
 import unluac.decompile.condition.TestCondition;
 import unluac.parse.LFunction;
@@ -1169,10 +1170,23 @@ public class ControlFlowHandler {
           if(breakable != null) {
             begin = Math.max(breakable.begin, begin);
           }
-          state.blocks.add(new OnceLoop(state.function, begin, end));
-          Break breakStatement = new Break(state.function, b.line, b.targetFirst);
-          state.blocks.add(breakStatement);
-          breakStatement.comment = "pseudo-goto";
+          boolean containsBreak = false;
+          OnceLoop loop = new OnceLoop(state.function, begin, end);
+          for(Block block : state.blocks) {
+            if(loop.contains(block) && block instanceof Break) {
+              containsBreak = true;
+              break;
+            }
+          }
+          if(containsBreak) {
+            state.blocks.add(new IfThenElseBlock(state.function, FixedCondition.TRUE, begin, b.line + 1, end));
+            state.blocks.add(new ElseEndBlock(state.function, b.line + 1, end));
+          } else {
+            state.blocks.add(loop);
+            Break breakStatement = new Break(state.function, b.line, b.targetFirst);
+            state.blocks.add(breakStatement);
+            breakStatement.comment = "pseudo-goto";
+          }
           remove_branch(state, b);
         }
       }
