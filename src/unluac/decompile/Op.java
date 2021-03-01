@@ -368,7 +368,7 @@ public enum Op {
         if(label != null) {
           parameters[i] = label;
         } else {
-          parameters[i] = fixedOperand(x) + operands[i].offset;
+          parameters[i] = fixedOperand(x + operands[i].offset);
         }
         break;
       case JUMP_NEGATIVE:
