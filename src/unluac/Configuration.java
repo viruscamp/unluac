@@ -9,6 +9,7 @@ public class Configuration {
   }
   
   public enum VariableMode {
+    NODEBUG,
     DEFAULT,
     FINDER,
   }

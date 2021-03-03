@@ -66,7 +66,7 @@ public class IfThenEndBlock extends ContainerBlock {
   public Operation process(Decompiler d) {
     final int test = cond.register();
     //System.err.println(cond);
-    if(!scopeUsed && !redirected && test >= 0 && r.getUpdated(test, end - 1) >= begin && !d.getStrippedDefault()) {
+    if(!scopeUsed && !redirected && test >= 0 && r.getUpdated(test, end - 1) >= begin && !d.getNoDebug()) {
       // Check for a single assignment
       Assignment assign = null;
       if(statements.size() == 1) {

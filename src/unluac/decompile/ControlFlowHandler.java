@@ -275,7 +275,7 @@ public class ControlFlowHandler {
   }
   
   private static void handle_testset(State state, boolean[] skip, int line, Condition c, int target, int register, boolean invert) {
-    if(state.r.isStrippedDefault && find_loadboolblock(state, target) == -1) {
+    if(state.r.isNoDebug && find_loadboolblock(state, target) == -1) {
       if(invert) c = c.inverse();
       Branch b = new Branch(line, line, Branch.Type.test, c, line + 2, target, null);
       b.target = state.code.A(line);
@@ -983,7 +983,7 @@ public class ControlFlowHandler {
             remove_branch(state, b);
             hanging.pop();
           }
-        } else if(state.function.header.version.usegoto.get() || state.r.isStrippedDefault) {
+        } else if(state.function.header.version.usegoto.get() || state.r.isNoDebug) {
           Goto block = new Goto(state.function, b.line, b.targetFirst);
           if(!hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst && enclosing_block(state, hanging.peek().line) == enclosing) {
             while(!hangingResolver.isEmpty() && hangingResolver.peek().targetFirst != b.targetFirst) {
@@ -1013,8 +1013,8 @@ public class ControlFlowHandler {
         } else {
           throw new IllegalStateException();
         }
-      } else if(state.function.header.version.usegoto.get() || state.r.isStrippedDefault) {
-        if(state.function.header.version.useifbreakrewrite.get() || state.r.isStrippedDefault) {
+      } else if(state.function.header.version.usegoto.get() || state.r.isNoDebug) {
+        if(state.function.header.version.useifbreakrewrite.get() || state.r.isNoDebug) {
           Block block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1, false);
           block.addStatement(new Goto(state.function, top.targetFirst - 1, top.targetSecond));
           state.blocks.add(block);

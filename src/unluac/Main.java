@@ -35,6 +35,8 @@ public class Main {
         // option
         if(arg.equals("--rawstring")) {
           config.rawstring = true;
+        } else if(arg.equals("--nodebug")) {
+          config.variable = Configuration.VariableMode.NODEBUG;
         } else if(arg.equals("--disassemble")) {
           config.mode = Mode.DISASSEMBLE;
         } else if(arg.equals("--assemble")) {

@@ -71,7 +71,7 @@ public class Decompiler {
     registers = function.maximumStackSize;
     length = function.code.length;
     code = new Code(function);
-    if(function.stripped) {
+    if(function.stripped || getConfiguration().variable == Configuration.VariableMode.NODEBUG) {
       if(getConfiguration().variable == Configuration.VariableMode.FINDER) {
         declList = VariableFinder.process(this, function.numParams, function.maximumStackSize);
       } else {
@@ -113,13 +113,14 @@ public class Decompiler {
     return function.header.version;
   }
   
-  public boolean getStrippedDefault() {
-    return function.stripped && function.header.config.variable == Configuration.VariableMode.DEFAULT;
+  public boolean getNoDebug() {
+    return function.header.config.variable == Configuration.VariableMode.NODEBUG || 
+        function.stripped && function.header.config.variable == Configuration.VariableMode.DEFAULT;
   }
   
   public State decompile() {
     State state = new State();
-    state.r = new Registers(registers, length, declList, f, function.stripped);
+    state.r = new Registers(registers, length, declList, f, getNoDebug());
     ControlFlowHandler.Result result = ControlFlowHandler.process(this, state.r);
     List<Block> blocks = result.blocks;
     state.outer = blocks.get(0);
@@ -596,13 +597,13 @@ public class Decompiler {
         /* Do nothing ... handled with branches */
         break;
       case TEST50: {
-        if(getStrippedDefault() && A != B) {
+        if(getNoDebug() && A != B) {
           operations.add(new RegisterSet(line, A, Expression.make(Expression.BinaryOperation.OR, r.getExpression(B, line - 1), r.getExpression(A, line - 1))));
         }
         break;
       }
       case TESTSET: case TESTSET54: {
-        if(getStrippedDefault()) {
+        if(getNoDebug()) {
           operations.add(new RegisterSet(line, A, Expression.make(Expression.BinaryOperation.OR, r.getExpression(B, line - 1), r.getExpression(A, line - 1))));
         }
         break;
@@ -797,7 +798,7 @@ public class Decompiler {
   public boolean hasStatement(int begin, int end) {
     if(begin <= end) {
       State state = new State();
-      state.r = new Registers(registers, length, declList, f, function.stripped);
+      state.r = new Registers(registers, length, declList, f, getNoDebug());
       state.outer = new DoEndBlock(function, begin, end + 1);
       state.labels = new boolean[code.length + 1];
       List<Block> blocks = Arrays.asList(state.outer);
