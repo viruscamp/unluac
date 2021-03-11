@@ -598,13 +598,13 @@ public class Decompiler {
         break;
       case TEST50: {
         if(getNoDebug() && A != B) {
-          operations.add(new RegisterSet(line, A, Expression.make(Expression.BinaryOperation.OR, r.getExpression(B, line - 1), r.getExpression(A, line - 1))));
+          operations.add(new RegisterSet(line, A, Expression.make(Expression.BinaryOperation.OR, r.getExpression(B, line), initialExpression(state, A, line))));
         }
         break;
       }
       case TESTSET: case TESTSET54: {
         if(getNoDebug()) {
-          operations.add(new RegisterSet(line, A, Expression.make(Expression.BinaryOperation.OR, r.getExpression(B, line - 1), r.getExpression(A, line - 1))));
+          operations.add(new RegisterSet(line, A, Expression.make(Expression.BinaryOperation.OR, r.getExpression(B, line), initialExpression(state, A, line))));
         }
         break;
       }
@@ -749,6 +749,15 @@ public class Decompiler {
         break;
     }
     return operations;
+  }
+  
+  private Expression initialExpression(State state, int register, int line) {
+    if(line == 1) {
+      if(register < function.numParams) throw new IllegalStateException();
+      return ConstantExpression.createNil(line);
+    } else {
+      return state.r.getExpression(register, line - 1);
+    }
   }
   
   private Assignment processOperation(State state, Operation operation, int line, int nextLine, Block block) {
