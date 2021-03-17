@@ -929,7 +929,8 @@ public class ControlFlowHandler {
         } else if(
           breakable != null
           && !hanging.isEmpty() && state.resolved[hanging.peek().targetSecond] == state.resolved[breakable.end]
-          && line + 1 < state.branches.length && state.branches[line + 1].type == Branch.Type.jump
+          && line + 1 < state.branches.length && state.branches[line + 1] != null
+          && state.branches[line + 1].type == Branch.Type.jump
           && state.branches[line + 1].targetFirst == hanging.peek().targetSecond
         ) {
           // else break
@@ -942,7 +943,8 @@ public class ControlFlowHandler {
         } else if(
           breakable != null && breakable.isSplitable()
           && state.resolved[b.targetFirst] == breakable.getUnprotectedTarget()
-          && line + 1 < state.branches.length && state.branches[line + 1].type == Branch.Type.jump
+          && line + 1 < state.branches.length && state.branches[line + 1] != null
+          && state.branches[line + 1].type == Branch.Type.jump
           && state.resolved[state.branches[line + 1].targetFirst] == state.resolved[breakable.end]
         ) {
           // split while condition (else break)
@@ -968,7 +970,8 @@ public class ControlFlowHandler {
           }
         } else if(
           !hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst
-          && line + 1 < state.branches.length && state.branches[line + 1].type == Branch.Type.jump
+          && line + 1 < state.branches.length && state.branches[line + 1] != null
+          && state.branches[line + 1].type == Branch.Type.jump
           && state.branches[line + 1].targetFirst == b.targetFirst
         ) {
           // empty else (redirected)
