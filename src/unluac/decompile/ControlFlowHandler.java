@@ -1064,6 +1064,12 @@ public class ControlFlowHandler {
               b.targetFirst = c.line;
             }
           }
+          while(state.code.isUpvalueDeclaration(c.line)) {
+            c.line--;
+            if(b.targetFirst == c.line + 1) {
+              b.targetFirst = c.line;
+            }
+          }
           
           if(is_jmp_raw(state, c.line)) {
             c.type = FinalSetCondition.Type.REGISTER;
