@@ -27,9 +27,14 @@ public class Code {
       for(int i = 0; i < length; i++) {
         int line = i + 1;
         if(op(line) == Op.CLOSURE) {
-          int nups = function.functions[Bx(line)].numUpvalues;
-          for(int j = 1; j <= nups; j++) {
-            upvalue[i + j] = true;
+          int f = Bx(line);
+          if(f < function.functions.length) {
+            int nups = function.functions[f].numUpvalues;
+            for(int j = 1; j <= nups; j++) {
+              if(i + j < length) {
+                upvalue[i + j] = true;
+              }
+            }
           }
         }
       }
