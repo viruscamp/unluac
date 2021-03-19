@@ -97,7 +97,7 @@ public class Assignment extends Statement {
     }
     targets.add(target);
     values.add(value);
-    lines.add(0, line);
+    lines.add(line);
     allnil = allnil && value.isNil();
   }
   
