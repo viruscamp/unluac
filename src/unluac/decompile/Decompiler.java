@@ -37,6 +37,7 @@ import unluac.decompile.target.Target;
 import unluac.decompile.target.UpvalueTarget;
 import unluac.decompile.target.VariableTarget;
 import unluac.parse.LFunction;
+import unluac.parse.LUpvalue;
 import unluac.util.Stack;
 
 public class Decompiler {
@@ -717,8 +718,20 @@ public class Decompiler {
         LFunction f = functions[Bx];
         operations.add(new RegisterSet(line, A, new ClosureExpression(f, line + 1)));
         if(function.header.version.upvaluedeclarationtype.get() == Version.UpvalueDeclarationType.INLINE) {
-          // Skip upvalue declarations
+          // Handle upvalue declarations
           for(int i = 0; i < f.numUpvalues; i++) {
+            LUpvalue upvalue = f.upvalues[i];
+            switch(code.op(line + 1 + i)) {
+              case MOVE:
+                upvalue.instack = true;
+                break;
+              case GETUPVAL:
+                upvalue.instack = false;
+                break;
+              default:
+                throw new IllegalStateException();
+            }
+            upvalue.idx = code.B(line + 1 + i);
             skip[line + 1 + i] = true;
           }
         }
