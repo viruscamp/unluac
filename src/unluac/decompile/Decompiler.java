@@ -789,7 +789,7 @@ public class Decompiler {
             assign.addFirst(target, value, nextLine);
             skip[nextLine] = true;
             nextLine++;
-          } else if(op == Op.MMBIN || op == Op.MMBINI || op == Op.MMBINK) {
+          } else if(op == Op.MMBIN || op == Op.MMBINI || op == Op.MMBINK || code.isUpvalueDeclaration(nextLine)) {
             // skip
             nextLine++;
           } else {
@@ -945,6 +945,7 @@ public class Decompiler {
   }
   
   private boolean isMoveIntoTarget(Registers r, int line) {
+    if(code.isUpvalueDeclaration(line)) return false;
     switch(code.op(line)) {
       case MOVE:
         return r.isAssignable(code.A(line), line) && !r.isLocal(code.B(line), line);
