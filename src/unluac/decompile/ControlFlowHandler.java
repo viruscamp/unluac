@@ -1009,7 +1009,7 @@ public class ControlFlowHandler {
       Branch top = hanging.pop();
       Block breakable = enclosing_breakable_block(state, top.line);
       if(breakable != null && breakable.end == top.targetSecond) {
-        if(state.function.header.version.useifbreakrewrite.get()) {
+        if(state.function.header.version.useifbreakrewrite.get() || state.r.isNoDebug) {
           Block block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1, false);
           block.addStatement(new Break(state.function, top.targetFirst - 1, top.targetSecond));
           state.blocks.add(block);
