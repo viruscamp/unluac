@@ -135,6 +135,7 @@ public class TestFiles {
     "table03",
     "table06",
     "table07",
+    "table08",
     "localfunction01",
     "localfunction02",
     "localfunction03",

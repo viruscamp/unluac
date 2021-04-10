@@ -48,10 +48,17 @@ public class TableLiteral extends Expression {
 
   @Override
   public void walk(Walker w) {
+    Collections.sort(entries);
     w.visitExpression(this);
+    boolean lastEntry = false;
     for(Entry entry : entries) {
       entry.key.walk(w);
-      entry.value.walk(w);
+      if(!lastEntry) {
+        entry.value.walk(w);
+        if(entry.value.isMultiple()) {
+          lastEntry = true;
+        }
+      }
     }
   }
   
@@ -67,7 +74,6 @@ public class TableLiteral extends Expression {
   
   @Override
   public void print(Decompiler d, Output out) {
-    Collections.sort(entries);
     listLength = 1;
     if(entries.isEmpty()) {
       out.print("{}");
