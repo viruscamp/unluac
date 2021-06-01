@@ -44,28 +44,32 @@ class LStringType50 extends LStringType {
       }
       
     });
-    if(b.length() > 0) {
+    if(b.length() == 0) {
+      return LString.NULL;
+    } else {
       char last = b.charAt(b.length() - 1);
       if(last != '\0') {
         throw new IllegalStateException("String value does not have a null terminator");
       }
       b.delete(b.length() - 1, b.length());
+      String s = b.toString();
+      if(header.debug) {
+        System.out.println("-- parsed <string> \"" + s + "\"");
+      }
+      return new LString(s);
     }
-    String s = b.toString();
-    if(header.debug) {
-      System.out.println("-- parsed <string> \"" + s + "\"");
-    }
-    return new LString(s);
   }
   
   @Override
   public void write(OutputStream out, BHeader header, LString string) throws IOException {
     int len = string.value.length();
-    header.sizeT.write(out, header, header.sizeT.create(len == 0 ? 0 : len + 1));
-    for(int i = 0; i < len; i++) {
-      out.write(string.value.charAt(i));
-    }
-    if(len > 0) {
+    if(string == LString.NULL) {
+      header.sizeT.write(out, header, header.sizeT.create(0));
+    } else {
+      header.sizeT.write(out, header, header.sizeT.create(len + 1));
+      for(int i = 0; i < len; i++) {
+        out.write(string.value.charAt(i));
+      }
       out.write(0);
     }
   }

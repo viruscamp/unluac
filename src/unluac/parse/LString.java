@@ -4,12 +4,18 @@ import unluac.util.StringUtils;
 
 public class LString extends LObject {
 
+  public static final LString NULL = new LString("");
+  
   public final String value;
   public boolean islong;
   
   public LString(String value) {    
+    this(value, false);
+  }
+  
+  public LString(String value, boolean islong) {
     this.value = value;
-    islong = false;
+    this.islong = islong;
   }
   
   @Override
@@ -19,14 +25,20 @@ public class LString extends LObject {
   
   @Override
   public String toPrintString() {
-    String prefix = "";
-    if(islong) prefix = "L";
-    return prefix + StringUtils.toPrintString(value);
+    if(this == NULL) {
+      return "null";
+    } else {
+      String prefix = "";
+      if(islong) prefix = "L";
+      return prefix + StringUtils.toPrintString(value);
+    }
   }
   
   @Override
   public boolean equals(Object o) {
-    if(o instanceof LString) {
+    if(this == NULL || o == NULL) {
+      return this == o;
+    } else if(o instanceof LString) {
       LString os = (LString) o;
       return os.value.equals(value) && os.islong == islong;
     }

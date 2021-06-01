@@ -3,7 +3,7 @@ package unluac.util;
 public class StringUtils {
 
   public static String toPrintString(String s) {
-    if(s == null) return "\"\"";
+    if(s == null) return "null";
     StringBuilder b = new StringBuilder();
     b.append('"');
     for(int i = 0; i < s.length(); i++) {
@@ -38,6 +38,7 @@ public class StringUtils {
   }
   
   public static String fromPrintString(String s) {
+    if(s.equals("null")) return null;
     if(s.charAt(0) != '"') throw new IllegalStateException("Bad string " + s);
     if(s.charAt(s.length() - 1) != '"') throw new IllegalStateException("Bad string " + s);
     StringBuilder b = new StringBuilder();

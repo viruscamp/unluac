@@ -7,7 +7,6 @@ import unluac.decompile.Output;
 import unluac.parse.BHeader;
 import unluac.parse.LFunction;
 import unluac.parse.LHeader;
-import unluac.util.StringUtils;
 
 enum DirectiveType {
   HEADER,
@@ -82,7 +81,7 @@ public enum Directive {
   public void disassemble(Output out, BHeader chunk, LFunction function) {
     out.print(this.token + "\t");
     switch(this) {
-    case SOURCE: out.println(StringUtils.toPrintString(function.name.deref())); break;
+    case SOURCE: out.println(function.name.toPrintString()); break;
     case LINEDEFINED: out.println(String.valueOf(function.linedefined)); break;
     case LASTLINEDEFINED: out.println(String.valueOf(function.lastlinedefined)); break;
     case NUMPARAMS: out.println(String.valueOf(function.numParams)); break;

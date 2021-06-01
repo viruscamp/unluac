@@ -57,7 +57,7 @@ public class Disassembler {
     if(function.locals.length > 0) {
       for(int local = 1; local <= function.locals.length; local++) {
         LLocal l = function.locals[local - 1];
-        out.println(".local\t" + StringUtils.toPrintString(l.name.deref()) + "\t" + l.start + "\t" + l.end);
+        out.println(".local\t" + l.name.toPrintString() + "\t" + l.start + "\t" + l.end);
       }
       out.println();
     }

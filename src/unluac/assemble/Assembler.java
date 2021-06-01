@@ -243,6 +243,9 @@ class AssemblerFunction {
       } else if(value.startsWith("L\"")) {
         constant.type = AssemblerConstant.Type.LONGSTRING;
         constant.stringValue = StringUtils.fromPrintString(value.substring(1));
+      } else if(value.equals("null")) {
+        constant.type = AssemblerConstant.Type.STRING;
+        constant.stringValue = null;
       } else {
         try {
           // TODO: better check
@@ -660,12 +663,9 @@ class AssemblerChunk {
       case STRING:
         object = convert_string(header, constant.stringValue);
         break;
-      case LONGSTRING: {
-        LString s = convert_string(header, constant.stringValue);
-        s.islong = true;
-        object = s;
+      case LONGSTRING:
+        object = convert_long_string(header, constant.stringValue);
         break;
-      }
       default:
         throw new IllegalStateException();
       }
@@ -705,7 +705,15 @@ class AssemblerChunk {
   }
   
   private LString convert_string(BHeader header, String string) {
-    return new LString(string);
+    if(string == null) {
+      return LString.NULL;
+    } else {
+      return new LString(string);
+    }
+  }
+  
+  private LString convert_long_string(BHeader header, String string) {
+    return new LString(string, true);
   }
 
 }
