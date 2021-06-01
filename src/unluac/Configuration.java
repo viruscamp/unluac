@@ -17,5 +17,6 @@ public class Configuration {
   public boolean rawstring = false;
   public Mode mode = Mode.DECOMPILE;
   public VariableMode variable = VariableMode.DEFAULT;
+  public String output = null;
   
 }

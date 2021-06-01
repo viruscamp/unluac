@@ -25,12 +25,13 @@ import unluac.parse.LFunction;
 
 public class Main {
 
-  public static String version = "1.2.3.446";
+  public static String version = "1.2.3.449";
   
   public static void main(String[] args) {
     String fn = null;
     Configuration config = new Configuration();
-    for(String arg : args) {
+    for(int i = 0; i < args.length; i++) {
+      String arg = args[i];
       if(arg.startsWith("-")) {
         // option
         if(arg.equals("--rawstring")) {
@@ -41,6 +42,13 @@ public class Main {
           config.mode = Mode.DISASSEMBLE;
         } else if(arg.equals("--assemble")) {
           config.mode = Mode.ASSEMBLE;
+        } else if(arg.equals("--output") || arg.equals("-o")) {
+          if(i + 1 < args.length) {
+            config.output = args[i + 1];
+            i++;
+          } else {
+            error("option \"" + arg + "\" doesn't have an argument", true);
+          }
         } else {
           error("unrecognized option: " + arg, true);
         }
@@ -78,13 +86,20 @@ public class Main {
         break;
       }
       case ASSEMBLE: {
-        try {
-          Assembler a = new Assembler(new BufferedReader(new FileReader(new File(fn))), null);
-          a.assemble();
-        } catch(IOException e) {
-          error(e.getMessage(), false);
-        } catch(AssemblerException e) {
-          error(e.getMessage(), false);
+        if(config.output == null) {
+          error("assembler mode requires an output file", true);
+        } else {
+          try {
+            Assembler a = new Assembler(
+              new BufferedReader(new FileReader(new File(fn))),
+              new FileOutputStream(config.output)
+            );
+            a.assemble();
+          } catch(IOException e) {
+            error(e.getMessage(), false);
+          } catch(AssemblerException e) {
+            error(e.getMessage(), false);
+          }
         }
         break;
       }
