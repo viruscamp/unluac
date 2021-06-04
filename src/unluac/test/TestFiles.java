@@ -99,6 +99,7 @@ public class TestFiles {
     "booleanexpression08",
     "booleanexpression09",
     "booleanexpression10",
+    "booleanexpression11",
     "booleanmultiassign01",
     "booleanmultiassign02",
     "compareassign01",

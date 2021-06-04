@@ -292,7 +292,7 @@ public class ControlFlowHandler {
     int final_line = target - 1;
     int branch_line;
     int loadboolblock = find_loadboolblock(state, target - 2);
-    if(loadboolblock != -1) {
+    if(loadboolblock != -1 && state.code.A(loadboolblock) == register) {
       final_line = loadboolblock;
       if(loadboolblock - 2 >= 1 && is_jmp(state, loadboolblock - 1) &&
         (state.code.target(loadboolblock - 1) == target || is_jmp_raw(state, target) && state.code.target(loadboolblock - 1) == state.code.target(target))
