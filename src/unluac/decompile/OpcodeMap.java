@@ -1,10 +1,27 @@
 package unluac.decompile;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import unluac.Version;
 
 public class OpcodeMap {
 
   private Op[] map;
+  private Map<String, Op> lookup;
+  
+  public OpcodeMap(Map<Integer, Op> useropmap) {
+    int max = -1;
+    for(int opcode : useropmap.keySet()) {
+      max = Math.max(opcode, max);
+    }
+    map = new Op[max + 1];
+    for(Entry<Integer, Op> entry : useropmap.entrySet()) {
+      map[entry.getKey()] = entry.getValue();
+    }
+    setup_lookup(false);
+  }
   
   public OpcodeMap(Version.OpcodeMapType type) {
     switch(type) {
@@ -269,6 +286,7 @@ public class OpcodeMap {
       default:
         throw new IllegalStateException();
     }
+    setup_lookup(true);
   }
   
   public Op get(int opNumber) {
@@ -279,8 +297,28 @@ public class OpcodeMap {
     }
   }
   
+  public Op get(String name) {
+    return lookup.get(name);
+  }
+  
   public int size() {
     return map.length;
+  }
+  
+  private void setup_lookup(boolean validate) {
+    lookup = new HashMap<String, Op>();
+    for(int i = 0; i < map.length; i++) {
+      if(map[i] != null) {
+        String name = map[i].name;
+        if(!lookup.containsKey(name)) {
+          lookup.put(name, map[i]);
+        } else if(validate) {
+          throw new IllegalStateException(name);
+        }
+      } else if(validate) {
+        throw new IllegalStateException();
+      }
+    }
   }
   
 }

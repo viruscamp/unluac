@@ -38,6 +38,17 @@ public class Disassembler {
         directive.disassemble(out, function.header, function.header.lheader);
       }
       out.println();
+      
+      if(function.header.opmap != function.header.version.getOpcodeMap()) {
+        OpcodeMap opmap = function.header.opmap;
+        for(int opcode = 0; opcode < opmap.size(); opcode++) {
+          Op op = opmap.get(opcode);
+          if(op != null) {
+            out.println(Directive.OP.token + "\t" + opcode + "\t" + op.name);
+          }
+        }
+        out.println();
+      }
     }
     
     String fullname;

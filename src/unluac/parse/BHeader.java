@@ -1,12 +1,21 @@
 package unluac.parse;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 import unluac.Configuration;
 import unluac.Version;
+import unluac.assemble.AssemblerException;
+import unluac.assemble.Tokenizer;
 import unluac.decompile.CodeExtract;
+import unluac.decompile.Op;
+import unluac.decompile.OpcodeMap;
 
 
 public class BHeader {
@@ -34,6 +43,7 @@ public class BHeader {
   public final LUpvalueType upvalue;
   public final LFunctionType function;
   public final CodeExtract extractor;
+  public final OpcodeMap opmap;
   
   public final LFunction main;
   
@@ -59,6 +69,7 @@ public class BHeader {
     upvalue = lheader.upvalue;
     function = lheader.function;
     extractor = lheader.extractor;
+    opmap = version.getOpcodeMap();
     this.main = main;
   }
   
@@ -95,6 +106,38 @@ public class BHeader {
     upvalue = lheader.upvalue;
     function = lheader.function;
     extractor = lheader.extractor;
+    
+    if(config.opmap != null) {
+      try {
+        Tokenizer t = new Tokenizer(new BufferedReader(new FileReader(new File(config.opmap))));
+        String tok;
+        Map<Integer, Op> useropmap = new HashMap<Integer, Op>();
+        while((tok = t.next()) != null) {
+          if(tok.equals(".op")) {
+            tok = t.next();
+            if(tok == null) throw new IllegalStateException("Unexpected end of opmap file.");
+            int opcode;
+            try {
+              opcode = Integer.parseInt(tok);
+            } catch(NumberFormatException e) {
+              throw new IllegalStateException("Excepted number in opmap file, got \"" + tok + "\".");
+            }
+            tok = t.next();
+            if(tok == null) throw new IllegalStateException("Unexpected end of opmap file.");
+            Op op = version.getOpcodeMap().get(tok);
+            if(op == null) throw new IllegalStateException("Unknown op name \"" + tok + "\" in opmap file.");
+            useropmap.put(opcode, op);
+          } else {
+            throw new IllegalStateException("Unexpected token \"" + tok + "\" + in opmap file.");
+          }
+        }
+        opmap = new OpcodeMap(useropmap);
+      } catch(IOException e) {
+        throw new IllegalStateException(e.getMessage());
+      }
+    } else {
+      opmap = version.getOpcodeMap();
+    }
     
     int upvalues = -1;
     if(versionNumber >= 0x53) {

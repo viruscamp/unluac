@@ -28,6 +28,7 @@ public enum Directive {
   NUMBER_FORMAT(".number_format", DirectiveType.HEADER, 2),
   INTEGER_FORMAT(".integer_format", DirectiveType.HEADER, 1),
   FLOAT_FORMAT(".float_format", DirectiveType.HEADER, 1),
+  OP(".op", DirectiveType.HEADER, 2),
   FUNCTION(".function", DirectiveType.NEWFUNCTION, 1),
   SOURCE(".source", DirectiveType.FUNCTION, 1),
   LINEDEFINED(".linedefined", DirectiveType.FUNCTION, 1),

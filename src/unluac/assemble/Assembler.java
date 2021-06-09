@@ -465,6 +465,8 @@ class AssemblerChunk {
   public int b_size;
   public int c_size;
   
+  public Map<Integer, Op> useropmap;
+  
   public boolean number_integral;
   public int number_size;
   public LNumberType number;
@@ -489,7 +491,7 @@ class AssemblerChunk {
   }
   
   public void processHeaderDirective(Assembler a, Directive d) throws AssemblerException, IOException {
-    if(processed_directives.contains(d)) {
+    if(d != Directive.OP && processed_directives.contains(d)) {
       throw new AssemblerException("Duplicate " + d.name() + " directive");
     }
     processed_directives.add(d);
@@ -551,6 +553,19 @@ class AssemblerChunk {
     case FLOAT_FORMAT:
       lfloat = new LNumberType(a.getInteger(), false, NumberMode.MODE_FLOAT);
       break;
+    case OP: {
+      if(useropmap == null) {
+        useropmap = new HashMap<Integer, Op>();
+      }
+      int opcode = a.getInteger();
+      String name = a.getName();
+      Op op = version.getOpcodeMap().get(name);
+      if(op == null) {
+        throw new AssemblerException("Unknown op name \"" + name + "\"");
+      }
+      useropmap.put(opcode, op);
+      break;
+    }
     default:
       throw new IllegalStateException("Unhandled directive: " + d);
     }
@@ -758,19 +773,11 @@ public class Assembler {
       throw new AssemblerException("Unsupported version " + tok);
     }
     
-    OpcodeMap opmap = version.getOpcodeMap();
-    Map<String, Op> oplookup = new HashMap<String, Op>();
-    Map<Op, Integer> opcodelookup = new HashMap<Op, Integer>();
-    for(int i = 0; i < opmap.size(); i++) {
-      Op op = opmap.get(i);
-      oplookup.put(op.name().toLowerCase(), op);
-      opcodelookup.put(op, i);
-    }
-    
-    oplookup.put(Op.EXTRABYTE.name().toLowerCase(), Op.EXTRABYTE);
-    opcodelookup.put(Op.EXTRABYTE, -1);
+    Map<String, Op> oplookup = null;
+    Map<Op, Integer> opcodelookup = null;
     
     AssemblerChunk chunk = new AssemblerChunk(version);
+    boolean opinit = false;
     
     while((tok = t.next()) != null) {
       Directive d = Directive.lookup.get(tok);
@@ -780,6 +787,28 @@ public class Assembler {
           chunk.processHeaderDirective(this, d);
           break;
         case NEWFUNCTION:
+          if(!opinit) {
+            opinit = true;
+            OpcodeMap opmap;
+            if(chunk.useropmap != null) {
+              opmap = new OpcodeMap(chunk.useropmap);
+            } else {
+              opmap = version.getOpcodeMap();
+            }
+            oplookup = new HashMap<String, Op>();
+            opcodelookup = new HashMap<Op, Integer>();
+            for(int i = 0; i < opmap.size(); i++) {
+              Op op = opmap.get(i);
+              if(op != null) {
+                oplookup.put(op.name, op);
+                opcodelookup.put(op, i);
+              }
+            }
+            
+            oplookup.put(Op.EXTRABYTE.name, Op.EXTRABYTE);
+            opcodelookup.put(Op.EXTRABYTE, -1);
+          }
+          
           chunk.processNewFunction(this);
           break;
         case FUNCTION:

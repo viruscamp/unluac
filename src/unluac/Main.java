@@ -49,6 +49,13 @@ public class Main {
           } else {
             error("option \"" + arg + "\" doesn't have an argument", true);
           }
+        } else if(arg.equals("--opmap")) {
+          if(i + 1 < args.length) {
+            config.opmap = args[i + 1];
+            i++;
+          } else {
+            error("option \"" + arg + "\" doesn't have an argument", true);
+          }
         } else {
           error("unrecognized option: " + arg, true);
         }

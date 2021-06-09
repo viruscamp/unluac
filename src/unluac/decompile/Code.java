@@ -15,7 +15,7 @@ public class Code {
   public Code(LFunction function) {
     this.code = function.code;
     this.length = code.length;
-    map = function.header.version.getOpcodeMap();
+    map = function.header.opmap;
     extractor = function.header.extractor;
     extraByte = new boolean[length];
     for(int i = 0; i < length; i++) {
