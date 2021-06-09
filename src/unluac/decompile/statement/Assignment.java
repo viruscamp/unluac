@@ -226,7 +226,7 @@ public class Assignment extends Statement {
             }
           }
           
-          Expression.printSequence(d, out, expressions, false, true);
+          Expression.printSequence(d, out, expressions, false, targets.size() > expressions.size());
         }
       } else {
         values.get(0).printClosure(d, out, targets.get(0));
