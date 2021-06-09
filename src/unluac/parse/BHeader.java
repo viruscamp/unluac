@@ -11,7 +11,6 @@ import java.util.Map;
 
 import unluac.Configuration;
 import unluac.Version;
-import unluac.assemble.AssemblerException;
 import unluac.assemble.Tokenizer;
 import unluac.decompile.CodeExtract;
 import unluac.decompile.Op;

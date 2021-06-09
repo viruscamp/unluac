@@ -760,6 +760,9 @@ public class Decompiler {
       case EXTRABYTE:
         /* Do nothing ... handled by previous instruction */
         break;
+      case DEFAULT:
+      case DEFAULT54:
+        throw new IllegalStateException();
     }
     return operations;
   }

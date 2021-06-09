@@ -1,5 +1,7 @@
 package unluac.decompile;
 
+import unluac.Version;
+
 class OpV {
   public static final int LUA50 = 1;
   public static final int LUA51 = 2;
@@ -143,7 +145,9 @@ public enum Op {
   VARARG54("vararg", OpV.LUA54, OperandFormat.AR, OperandFormat.C),
   VARARGPREP("varargprep", OpV.LUA54, OperandFormat.A),
   // Special
-  EXTRABYTE("extrabyte", OpV.LUA50 | OpV.LUA51 | OpV.LUA52 | OpV.LUA53 | OpV.LUA54, OperandFormat.x);
+  EXTRABYTE("extrabyte", OpV.LUA50 | OpV.LUA51 | OpV.LUA52 | OpV.LUA53 | OpV.LUA54, OperandFormat.x),
+  DEFAULT("default", 0, OperandFormat.AR, OperandFormat.BRK, OperandFormat.CRK),
+  DEFAULT54("default", 0, OperandFormat.AR, OperandFormat.BR, OperandFormat.C, OperandFormat.k);
   
   public final String name;
   public final int versions;
@@ -302,27 +306,30 @@ public enum Op {
       }
       case EXTRABYTE:
         return -1;
+      case DEFAULT:
+      case DEFAULT54:
+        throw new IllegalStateException();
     }
     throw new IllegalStateException(this.name());
   }
   
-  private String fixedOperand(int field) {
+  private static String fixedOperand(int field) {
     return Integer.toString(field);
   }
   
-  private String registerOperand(int field) {
+  private static String registerOperand(int field) {
     return "r" + field;
   }
   
-  private String upvalueOperand(int field) {
+  private static String upvalueOperand(int field) {
     return "u" + field;
   }
   
-  private String constantOperand(int field) {
+  private static String constantOperand(int field) {
     return "k" + field;
   }
   
-  private String functionOperand(int field) {
+  private static String functionOperand(int field) {
     return "f" + field;
   }
   
@@ -337,10 +344,18 @@ public enum Op {
   }
   
   public String codePointToString(int codepoint, CodeExtract ex, String label) {
+    return toStringHelper(name, operands, codepoint, ex, label);
+  }
+  
+  public static String defaultToString(int codepoint, Version version, CodeExtract ex) {
+    return toStringHelper(String.format("op%02d", ex.op.extract(codepoint)), version.getDefaultOp().operands, codepoint, ex, null);
+  }
+  
+  private static String toStringHelper(String name, OperandFormat[] operands, int codepoint, CodeExtract ex, String label) {
     int width = 10;
     StringBuilder b = new StringBuilder();
-    b.append(this.name);
-    for(int i = 0; i < width - name().length(); i++) {
+    b.append(name);
+    for(int i = 0; i < width - name.length(); i++) {
       b.append(' ');
     }
     String[] parameters = new String[operands.length];

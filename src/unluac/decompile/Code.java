@@ -20,7 +20,8 @@ public class Code {
     extraByte = new boolean[length];
     for(int i = 0; i < length; i++) {
       int line = i + 1;
-      extraByte[i] = op(line).hasExtraByte(codepoint(line), extractor);
+      Op op = op(line);
+      extraByte[i] = op != null && op.hasExtraByte(codepoint(line), extractor);
     }
     upvalue = new boolean[length];
     if(function.header.version.upvaluedeclarationtype.get() == Version.UpvalueDeclarationType.INLINE) {

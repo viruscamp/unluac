@@ -120,6 +120,7 @@ public class Version {
   private final LUpvalueType lupvaluetype;
   private final LFunctionType lfunctiontype;
   private final OpcodeMap opcodemap;
+  private final Op defaultop;
   
   private Version(int major, int minor) {
     HeaderType headertype;
@@ -142,6 +143,7 @@ public class Version {
           upvaluetype = UpvalueType.LUA50;
           functiontype = FunctionType.LUA50;
           opcodemap = OpcodeMapType.LUA50;
+          defaultop = Op.DEFAULT;
           instructionformat = new Setting<>(InstructionFormat.LUA50);
           outerblockscopeadjustment = new Setting<>(-1);
           closeinscope = new Setting<Boolean>(true);
@@ -165,6 +167,7 @@ public class Version {
           upvaluetype = UpvalueType.LUA50;
           functiontype = FunctionType.LUA51;
           opcodemap = OpcodeMapType.LUA51;
+          defaultop = Op.DEFAULT;
           instructionformat = new Setting<>(InstructionFormat.LUA51);
           outerblockscopeadjustment = new Setting<>(-1);
           closeinscope = new Setting<Boolean>(true);
@@ -188,6 +191,7 @@ public class Version {
           upvaluetype = UpvalueType.LUA50;
           functiontype = FunctionType.LUA52;
           opcodemap = OpcodeMapType.LUA52;
+          defaultop = Op.DEFAULT;
           instructionformat = new Setting<>(InstructionFormat.LUA51);
           outerblockscopeadjustment = new Setting<>(0);
           closeinscope = new Setting<Boolean>(null);
@@ -211,6 +215,7 @@ public class Version {
           upvaluetype = UpvalueType.LUA50;
           functiontype = FunctionType.LUA53;
           opcodemap = OpcodeMapType.LUA53;
+          defaultop = Op.DEFAULT;
           instructionformat = new Setting<>(InstructionFormat.LUA51);
           outerblockscopeadjustment = new Setting<>(0);
           closeinscope = new Setting<Boolean>(null);
@@ -234,6 +239,7 @@ public class Version {
           upvaluetype = UpvalueType.LUA54;
           functiontype = FunctionType.LUA54;
           opcodemap = OpcodeMapType.LUA54;
+          defaultop = Op.DEFAULT54;
           instructionformat = new Setting<>(InstructionFormat.LUA54);
           outerblockscopeadjustment = new Setting<>(0);
           closeinscope = new Setting<Boolean>(false);
@@ -335,6 +341,10 @@ public class Version {
   
   public OpcodeMap getOpcodeMap() {
     return opcodemap;
+  }
+  
+  public Op getDefaultOp() {
+    return defaultop;
   }
   
 }

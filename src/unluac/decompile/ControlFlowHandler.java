@@ -1726,6 +1726,8 @@ public class ControlFlowHandler {
       case SETI: case SETFIELD:
         // special case -- this is actually ambiguous and must be resolved by the decompiler check
         return false;
+      case DEFAULT: case DEFAULT54:
+        throw new IllegalStateException();
     }
     throw new IllegalStateException("Illegal opcode: " + code.op(line));
   }

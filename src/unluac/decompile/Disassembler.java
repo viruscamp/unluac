@@ -91,7 +91,7 @@ public class Disassembler {
     boolean[] label = new boolean[function.code.length];
     for(int line = 1; line <= function.code.length; line++) {
       Op op = code.op(line);
-      if(op.hasJump()) {
+      if(op != null && op.hasJump()) {
         int target = code.target(line);
         if(target >= 1 && target <= label.length) {
           label[target - 1] = true;
@@ -114,13 +114,17 @@ public class Disassembler {
       }
       Op op = code.op(line);
       String cpLabel = null;
-      if(op.hasJump()) {
+      if(op != null && op.hasJump()) {
         int target = code.target(line);
         if(target >= 1 && target <= code.length) {
           cpLabel = "l" + target;
         }
       }
-      out.println(op.codePointToString(code.codepoint(line), code.getExtractor(), cpLabel));
+      if(op == null) {
+        out.println(Op.defaultToString(code.codepoint(line), function.header.version, code.getExtractor()));
+      } else {
+        out.println(op.codePointToString(code.codepoint(line), code.getExtractor(), cpLabel));
+      }
       //out.println("\t" + code.opcode(line) + " " + code.A(line) + " " + code.B(line) + " " + code.C(line) + " " + code.Bx(line) + " " + code.sBx(line) + " " + code.codepoint(line));
     }
     for(int line = function.code.length + 1; line <= function.lines.length; line++) {
