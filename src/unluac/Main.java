@@ -18,6 +18,7 @@ import unluac.assemble.Assembler;
 import unluac.assemble.AssemblerException;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Disassembler;
+import unluac.decompile.FileOutputProvider;
 import unluac.decompile.Output;
 import unluac.decompile.OutputProvider;
 import unluac.parse.BHeader;
@@ -25,7 +26,7 @@ import unluac.parse.LFunction;
 
 public class Main {
 
-  public static String version = "1.2.3.451";
+  public static String version = "1.2.3.455";
   
   public static void main(String[] args) {
     String fn = null;
@@ -78,7 +79,18 @@ public class Main {
         }
         Decompiler d = new Decompiler(lmain);
         Decompiler.State result = d.decompile();
-        d.print(result);
+        Output out;
+        if(config.output != null) {
+          try {
+            out = new Output(new FileOutputProvider(new FileOutputStream(config.output)));
+          } catch(IOException e) {
+            out = null;
+            error(e.getMessage(), false);
+          }
+        } else {
+          out = new Output();
+        }
+        d.print(result, out);
         break;
       }
       case DISASSEMBLE: {
