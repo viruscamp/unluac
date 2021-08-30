@@ -19,21 +19,28 @@ public class Tokenizer {
     boolean inToken = false;
     boolean inString = false;
     boolean isLPrefix = false;
+    boolean inEscape = false;
     
     for(;;) {
       int code = r.read();
       if(code == -1) break;
       char c = (char)code;
       //if(c == '\n') System.out.println("line"); 
-      if(Character.isWhitespace(c)) {
-        if(inToken && !inString) {
+      if(inString) {
+        if(c == '\\' && !inEscape) {
+          inEscape = true;
+          b.append(c);
+        } else if(c == '"' && !inEscape) {
+          b.append(c);
           break;
-        } else if(inString) {
+        } else {
+          inEscape = false;
           b.append(c);
         }
-      } else if(inString && c == '"') {
-        b.append(c);
-        break;
+      } else if(Character.isWhitespace(c)) {
+        if(inToken) {
+          break;
+        }
       } else {
         if((!inToken || isLPrefix) && c == '"') {
           inString = true;
