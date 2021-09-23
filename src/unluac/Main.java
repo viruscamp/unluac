@@ -172,7 +172,7 @@ public class Main {
       
       @Override
       public void print(byte b) {
-        pout.print(b);
+        pout.write(b);
       }
 
       @Override
