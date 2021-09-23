@@ -192,11 +192,22 @@ public class Constant {
     return type == Type.STRING;
   }
   
-  public boolean isIdentifier(Version version) {
+  public boolean isIdentifierPermissive(Version version) {
     if(!isString() || version.isReserved(string)) {
       return false;
     }
     if(string.length() == 0) {
+      return false;
+    }
+    char start = string.charAt(0);
+    if(Character.isDigit(start) && start != ' ' && !Character.isLetter(start)) {
+      return false;
+    }
+    return true;
+  }
+  
+  public boolean isIdentifier(Version version) {
+    if(!isIdentifierPermissive(version)) {
       return false;
     }
     char start = string.charAt(0);

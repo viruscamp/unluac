@@ -29,8 +29,9 @@ public class Function {
   }
 
   public ConstantExpression getGlobalName(int constantIndex) {
-    if(!constants[constantIndex].isIdentifier(version)) throw new IllegalStateException();
-    return getConstantExpression(constantIndex);
+    Constant constant = constants[constantIndex];
+    if(!constant.isIdentifierPermissive(version)) throw new IllegalStateException();
+    return new ConstantExpression(constant, true, constantIndex);
   }
   
   public ConstantExpression getConstantExpression(int constantIndex) {
