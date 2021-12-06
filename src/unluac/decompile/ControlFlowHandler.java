@@ -253,19 +253,19 @@ public class ControlFlowHandler {
     }
   }
   
-  private static void handle_test(State state, boolean[] skip, int line, Condition c, int target, boolean constant, boolean invert) {
+  private static void handle_test(State state, boolean[] skip, int line, Condition c, int target, boolean invert) {
     Code code = state.code;
     int loadboolblock = find_loadboolblock(state, target);
     if(loadboolblock >= 1) {
-      if(!constant && invert) c = c.inverse();
+      if(invert) c = c.inverse();
       handle_loadboolblock(state, skip, loadboolblock, c, line, target);
     } else {
-      int ploadboolblock = !constant && target - 2 >= 1 ? find_loadboolblock(state, target - 2) : -1;
+      int ploadboolblock = target - 2 >= 1 ? find_loadboolblock(state, target - 2) : -1;
       if(ploadboolblock != -1 && ploadboolblock == target - 2 && code.A(target - 2) == c.register() && !has_statement(state, line + 2, target - 3)) {
         handle_testset(state, skip, line, c, target, c.register(), invert);
       } else {
-        if(!constant && invert) c = c.inverse();
-        Branch b = new Branch(line, line, constant ? Branch.Type.testset : Branch.Type.test, c, line + 2, target, null);
+        if(invert) c = c.inverse();
+        Branch b = new Branch(line, line, Branch.Type.test, c, line + 2, target, null);
         b.target = code.A(line);
         if(invert) b.inverseValue = true;
         insert_branch(state, b);
@@ -393,7 +393,7 @@ public class ControlFlowHandler {
             Condition c = new TestCondition(line, code.B(line));
             int target = code.target(line + 1);
             if(code.A(line) == code.B(line)) {
-              handle_test(state, skip, line, c, target, false, code.C(line) != 0);
+              handle_test(state, skip, line, c, target, code.C(line) != 0);
             } else {
               handle_testset(state, skip, line, c, target, code.A(line), code.C(line) != 0);
             }
@@ -401,28 +401,16 @@ public class ControlFlowHandler {
           }
           case TEST: {
             Condition c;
-            boolean constant = false;
             int target = code.target(line + 1);
-            if(line - 1 >= 1 && code.op(line - 1) == Op.LOADBOOL && code.A(line - 1) == code.A(line) && code.C(line - 1) == 0) {
-              if(target <= code.length && target - 2 >= 1 && code.op(target - 2) == Op.LOADBOOL && code.C(target - 2) != 0) {
-                constant = true;
-              }
-            }
             c = new TestCondition(line, code.A(line));
-            handle_test(state, skip, line, c, target, constant, code.C(line) != 0);
+            handle_test(state, skip, line, c, target, code.C(line) != 0);
             break;
           }
           case TEST54: {
             Condition c;
-            boolean constant = false;
             int target = code.target(line + 1);
-            if(line - 1 >= 1 && code.op(line - 1) == Op.LOADTRUE && code.A(line - 1) == code.A(line)) {
-              if(target <= code.length && target - 2 >= 1 && code.op(target - 2) == Op.LFALSESKIP) {
-                constant = true;
-              }
-            }
             c = new TestCondition(line, code.A(line));
-            handle_test(state, skip, line, c, target, constant, code.k(line));
+            handle_test(state, skip, line, c, target, code.k(line));
             break;
           }
           case TESTSET: {
