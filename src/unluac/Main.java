@@ -16,7 +16,6 @@ import unluac.assemble.Assembler;
 import unluac.assemble.AssemblerException;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Disassembler;
-import unluac.decompile.FileOutputProvider;
 import unluac.decompile.Output;
 import unluac.decompile.OutputProvider;
 import unluac.parse.BHeader;
@@ -78,18 +77,7 @@ public class Main {
         }
         Decompiler d = new Decompiler(lmain);
         Decompiler.State result = d.decompile();
-        Output out;
-        if(config.output != null) {
-          try {
-            out = new Output(new FileOutputProvider(new FileOutputStream(config.output)));
-          } catch(IOException e) {
-            out = null;
-            error(e.getMessage(), false);
-          }
-        } else {
-          out = new Output();
-        }
-        d.print(result, out);
+        d.print(result, config.getOutput());
         break;
       }
       case DISASSEMBLE: {
@@ -100,7 +88,7 @@ public class Main {
           error(e.getMessage(), false);
         }
         Disassembler d = new Disassembler(lmain);
-        d.disassemble(new Output());
+        d.disassemble(config.getOutput());
         break;
       }
       case ASSEMBLE: {
@@ -128,7 +116,7 @@ public class Main {
     }
   }
   
-  private static void error(String err, boolean usage) {
+  public static void error(String err, boolean usage) {
     System.err.println("unluac v" + version);
     System.err.print("  error: ");
     System.err.println(err);
