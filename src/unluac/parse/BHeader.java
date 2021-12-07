@@ -1,8 +1,7 @@
 package unluac.parse;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -108,7 +107,7 @@ public class BHeader {
     
     if(config.opmap != null) {
       try {
-        Tokenizer t = new Tokenizer(new BufferedReader(new FileReader(new File(config.opmap))));
+        Tokenizer t = new Tokenizer(new FileInputStream(new File(config.opmap)));
         String tok;
         Map<Integer, Op> useropmap = new HashMap<Integer, Op>();
         while((tok = t.next()) != null) {

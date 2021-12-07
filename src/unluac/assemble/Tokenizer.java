@@ -1,15 +1,15 @@
 package unluac.assemble;
 
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStream;
 
 public class Tokenizer {
 
   private StringBuilder b;
-  private Reader r;
+  private InputStream in;
   
-  public Tokenizer(Reader r) {
-    this.r = r;
+  public Tokenizer(InputStream in) {
+    this.in = in;
     b = new StringBuilder();
   }
   
@@ -22,7 +22,7 @@ public class Tokenizer {
     boolean inEscape = false;
     
     for(;;) {
-      int code = r.read();
+      int code = in.read();
       if(code == -1) break;
       char c = (char)code;
       //if(c == '\n') System.out.println("line"); 

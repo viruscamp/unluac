@@ -2,7 +2,7 @@ package unluac.assemble;
 
 import java.io.OutputStream;
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -739,8 +739,8 @@ public class Assembler {
   private OutputStream out;
   private Version version;
   
-  public Assembler(Reader r, OutputStream out) {
-    t = new Tokenizer(r);
+  public Assembler(InputStream in, OutputStream out) {
+    t = new Tokenizer(in);
     this.out = out;
   }
   

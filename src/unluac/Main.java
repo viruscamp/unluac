@@ -1,10 +1,8 @@
 package unluac;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -23,6 +21,7 @@ import unluac.decompile.Output;
 import unluac.decompile.OutputProvider;
 import unluac.parse.BHeader;
 import unluac.parse.LFunction;
+import unluac.util.FileUtils;
 
 public class Main {
 
@@ -110,7 +109,7 @@ public class Main {
         } else {
           try {
             Assembler a = new Assembler(
-              new BufferedReader(new FileReader(new File(fn))),
+              FileUtils.createSmartTextFileReader(new File(fn)),
               new FileOutputStream(config.output)
             );
             a.assemble();
@@ -187,7 +186,7 @@ public class Main {
   
   public static void assemble(String in, String out) throws IOException, AssemblerException {
     OutputStream outstream = new BufferedOutputStream(new FileOutputStream(new File(out)));
-    Assembler a = new Assembler(new BufferedReader(new FileReader(new File(in))), outstream);
+    Assembler a = new Assembler(FileUtils.createSmartTextFileReader(new File(in)), outstream);
     a.assemble();
     outstream.flush();
     outstream.close();
