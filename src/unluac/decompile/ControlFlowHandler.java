@@ -634,23 +634,23 @@ public class ControlFlowHandler {
         if(state.function.header.version.whileformat.get() == Version.WhileFormat.BOTTOM_CONDITION) {
           b = null; // while loop aren't this style
         }
-        Block loop;
+        Block loop = null;
         if(b != null) {
           b.targetSecond = end;
           remove_branch(state, b);
           //System.err.println("while " + b.targetFirst + " " + b.targetSecond);
           loop = new WhileBlock(state.function, b.cond, b.targetFirst, b.targetSecond, loopback);
           unredirect(state, loopback, end, j.line, loopback);
-        } else {
-          if(j.line - 5 >= 1 && state.code.op(j.line - 3) == Op.CLOSE
-            && is_jmp_raw(state, j.line - 2) && state.code.target(j.line - 2) == end
-            && state.code.op(j.line - 1) == Op.CLOSE
-          ) {
-            b = j.previous;
-            while(b != null && !(is_conditional(b) && b.line2 == j.line - 5)) {
-              b = b.previous;
-            }
-            if(b == null) throw new IllegalStateException();
+        }
+        if(loop == null && j.line - 5 >= 1 && state.code.op(j.line - 3) == Op.CLOSE
+          && is_jmp_raw(state, j.line - 2) && state.code.target(j.line - 2) == end
+          && state.code.op(j.line - 1) == Op.CLOSE
+        ) {
+          b = j.previous;
+          while(b != null && !(is_conditional(b) && b.line2 == j.line - 5)) {
+            b = b.previous;
+          }
+          if(b != null) {
             Branch skip = state.branches[j.line - 2];
             if(skip == null) throw new IllegalStateException();
             int scopeEnd = j.line - 3;
@@ -660,21 +660,22 @@ public class ControlFlowHandler {
             loop = new RepeatBlock(state.function, b.cond, j.targetFirst, j.line + 1, scopeEnd);
             remove_branch(state, b);
             remove_branch(state, skip);
-          } else {
-            boolean repeat = false;
-            if(state.function.header.version.whileformat.get() == Version.WhileFormat.BOTTOM_CONDITION) {
-              repeat = true;
-              if(loopback - 1 >= 1 && state.branches[loopback - 1] != null) {
-                Branch head = state.branches[loopback - 1];
-                if(head.type == Branch.Type.jump && head.targetFirst == j.line) {
-                  remove_branch(state, head);
-                  repeat = false;
-                }
+          }
+        }
+        if(loop == null) {
+          boolean repeat = false;
+          if(state.function.header.version.whileformat.get() == Version.WhileFormat.BOTTOM_CONDITION) {
+            repeat = true;
+            if(loopback - 1 >= 1 && state.branches[loopback - 1] != null) {
+              Branch head = state.branches[loopback - 1];
+              if(head.type == Branch.Type.jump && head.targetFirst == j.line) {
+                remove_branch(state, head);
+                repeat = false;
               }
             }
-            loop = new AlwaysLoop(state.function, loopback, end, repeat);
-            unredirect(state, loopback, end, j.line, loopback);
           }
+          loop = new AlwaysLoop(state.function, loopback, end, repeat);
+          unredirect(state, loopback, end, j.line, loopback);
         }
         remove_branch(state, j);
         blocks.add(loop);
