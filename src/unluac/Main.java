@@ -145,8 +145,8 @@ public class Main {
     }
   }
   
-  public static void decompile(String in, String out) throws IOException {
-    LFunction lmain = file_to_function(in, new Configuration());
+  public static void decompile(String in, String out, Configuration config) throws IOException {
+    LFunction lmain = file_to_function(in, config);
     Decompiler d = new Decompiler(lmain);
     Decompiler.State result = d.decompile();
     final PrintStream pout = new PrintStream(out);

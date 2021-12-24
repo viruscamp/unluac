@@ -11,10 +11,10 @@ import java.util.List;
 
 public class RunExtendedTests {
 
-  private static void gatherTests(Path base, Path folder, List<String> files) throws IOException {
+  private static void gatherTests(Path base, Path folder, List<TestFile> files) throws IOException {
     for(Path file : Files.newDirectoryStream(folder, "*.lua")) {
       String relative = base.relativize(file).toString();
-      files.add(relative.substring(0, relative.length() - 4));
+      files.add(new TestFile(relative.substring(0, relative.length() - 4)));
     }
     for(Path dir : Files.newDirectoryStream(folder)) {
       if(Files.isDirectory(dir)) {
@@ -33,9 +33,9 @@ public class RunExtendedTests {
       System.out.println(spec.id());
       for(Path subfolder : Files.newDirectoryStream(luatest)) {
         if(Files.isDirectory(subfolder) && spec.compatible(subfolder.getFileName().toString())) {
-          List<String> files = new ArrayList<String>();
+          List<TestFile> files = new ArrayList<TestFile>();
           gatherTests(subfolder, subfolder, files);
-          TestSuite suite = new TestSuite(subfolder.getFileName().toString(), subfolder.toString() + File.separator, files.toArray(new String[files.size()]));
+          TestSuite suite = new TestSuite(subfolder.getFileName().toString(), subfolder.toString() + File.separator, files.toArray(new TestFile[files.size()]));
           System.out.print("\t" + subfolder.getFileName().toString());
           suite.run(spec, uspec, report);
           System.out.println();

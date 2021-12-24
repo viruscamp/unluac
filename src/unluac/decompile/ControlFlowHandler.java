@@ -1212,6 +1212,9 @@ public class ControlFlowHandler {
           // create another do..end block later that would eliminate the
           // need for this one. But order of decls should fix this.
           state.blocks.add(new DoEndBlock(state.function, begin, decl.end + 1));
+          if(state.function.header.config.strict_scope) {
+            throw new RuntimeException("Violation of strict scope rule");
+          }
         }
       }
     }
