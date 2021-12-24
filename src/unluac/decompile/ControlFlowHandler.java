@@ -1168,13 +1168,23 @@ public class ControlFlowHandler {
           if(containsBreak) {
             state.blocks.add(new IfThenElseBlock(state.function, FixedCondition.TRUE, begin, b.line + 1, end));
             state.blocks.add(new ElseEndBlock(state.function, b.line + 1, end));
+            remove_branch(state, b);
           } else {
             state.blocks.add(loop);
-            Break breakStatement = new Break(state.function, b.line, b.targetFirst);
-            state.blocks.add(breakStatement);
-            breakStatement.comment = "pseudo-goto";
+            Branch b2 = b;
+            while(b2 != null) {
+              if(b2.type == Branch.Type.jump && b2.targetFirst > b2.line && b2.targetFirst == b.targetFirst) {
+                Break breakStatement = new Break(state.function, b2.line, b2.targetFirst);
+                state.blocks.add(breakStatement);
+                breakStatement.comment = "pseudo-goto";
+                remove_branch(state, b2);
+                if(b.next == b2) {
+                  b = b2;
+                }
+              }
+              b2 = b2.next;
+            }
           }
-          remove_branch(state, b);
         }
       }
       b = b.next;
