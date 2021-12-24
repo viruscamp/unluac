@@ -32,7 +32,7 @@ public class TForBlock extends ContainerBlock {
   private Expression[] values;
   
   public static TForBlock make50(LFunction function, int begin, int end, int register, int length, boolean innerClose) {
-    int innerScopeEnd = end - 1;
+    int innerScopeEnd = end - 3;
     if(innerClose) {
       innerScopeEnd--;
     }
