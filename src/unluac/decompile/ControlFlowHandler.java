@@ -710,7 +710,15 @@ public class ControlFlowHandler {
             }
           }
           if(block == null) {
-            block = new RepeatBlock(state.function, b.cond, b.targetSecond, b.targetFirst);
+            if(state.function.header.version.extendedrepeatscope.get()) {
+              int statementLine = b.line - 1;
+              while(statementLine >= 1 && !is_statement(state, statementLine)) {
+                statementLine--;
+              }
+              block = new RepeatBlock(state.function, b.cond, b.targetSecond, b.targetFirst, statementLine);
+            } else {
+              block = new RepeatBlock(state.function, b.cond, b.targetSecond, b.targetFirst);
+            }
           }
           remove_branch(state, b);
           blocks.add(block);

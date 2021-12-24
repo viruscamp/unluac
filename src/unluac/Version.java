@@ -98,6 +98,7 @@ public class Version {
   public final Setting<Boolean> useupvaluecountinheader;
   public final Setting<InstructionFormat> instructionformat;
   public final Setting<Integer> outerblockscopeadjustment;
+  public final Setting<Boolean> extendedrepeatscope;
   public final Setting<Boolean> closeinscope;
   public final Setting<UpvalueDeclarationType> upvaluedeclarationtype;
   public final Setting<Op> fortarget;
@@ -146,6 +147,7 @@ public class Version {
           defaultop = Op.DEFAULT;
           instructionformat = new Setting<>(InstructionFormat.LUA50);
           outerblockscopeadjustment = new Setting<>(-1);
+          extendedrepeatscope = new Setting<Boolean>(true);
           closeinscope = new Setting<Boolean>(true);
           upvaluedeclarationtype = new Setting<>(UpvalueDeclarationType.INLINE);
           fortarget = new Setting<>(Op.FORLOOP);
@@ -170,6 +172,7 @@ public class Version {
           defaultop = Op.DEFAULT;
           instructionformat = new Setting<>(InstructionFormat.LUA51);
           outerblockscopeadjustment = new Setting<>(-1);
+          extendedrepeatscope = new Setting<Boolean>(false);
           closeinscope = new Setting<Boolean>(true);
           upvaluedeclarationtype = new Setting<>(UpvalueDeclarationType.INLINE);
           fortarget = new Setting<>(null);
@@ -194,6 +197,7 @@ public class Version {
           defaultop = Op.DEFAULT;
           instructionformat = new Setting<>(InstructionFormat.LUA51);
           outerblockscopeadjustment = new Setting<>(0);
+          extendedrepeatscope = new Setting<Boolean>(false);
           closeinscope = new Setting<Boolean>(null);
           upvaluedeclarationtype = new Setting<>(UpvalueDeclarationType.HEADER);
           fortarget = new Setting<>(null);
@@ -218,6 +222,7 @@ public class Version {
           defaultop = Op.DEFAULT;
           instructionformat = new Setting<>(InstructionFormat.LUA51);
           outerblockscopeadjustment = new Setting<>(0);
+          extendedrepeatscope = new Setting<Boolean>(false);
           closeinscope = new Setting<Boolean>(null);
           upvaluedeclarationtype = new Setting<>(UpvalueDeclarationType.HEADER);
           fortarget = new Setting<>(null);
@@ -242,6 +247,7 @@ public class Version {
           defaultop = Op.DEFAULT54;
           instructionformat = new Setting<>(InstructionFormat.LUA54);
           outerblockscopeadjustment = new Setting<>(0);
+          extendedrepeatscope = new Setting<Boolean>(false);
           closeinscope = new Setting<Boolean>(false);
           upvaluedeclarationtype = new Setting<>(UpvalueDeclarationType.HEADER);
           fortarget = new Setting<>(null);
