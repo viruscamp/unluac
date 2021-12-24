@@ -22,6 +22,8 @@ import unluac.decompile.block.OnceLoop;
 import unluac.decompile.block.RepeatBlock;
 import unluac.decompile.block.SetBlock;
 import unluac.decompile.block.WhileBlock;
+import unluac.decompile.block.WhileBlock50;
+import unluac.decompile.block.WhileBlock51;
 import unluac.decompile.block.OuterBlock;
 import unluac.decompile.block.TForBlock;
 import unluac.decompile.condition.AndCondition;
@@ -639,7 +641,7 @@ public class ControlFlowHandler {
           b.targetSecond = end;
           remove_branch(state, b);
           //System.err.println("while " + b.targetFirst + " " + b.targetSecond);
-          loop = new WhileBlock(state.function, b.cond, b.targetFirst, b.targetSecond, loopback);
+          loop = new WhileBlock51(state.function, b.cond, b.targetFirst, b.targetSecond, loopback);
           unredirect(state, loopback, end, j.line, loopback);
         }
         if(loop == null && j.line - 5 >= 1 && state.code.op(j.line - 3) == Op.CLOSE
@@ -700,7 +702,7 @@ public class ControlFlowHandler {
                   headb = null;
                 }
                 if(headb != null) {
-                  block = new WhileBlock(state.function, b.cond.inverse(), head + 1, b.targetFirst, -1);
+                  block = new WhileBlock50(state.function, b.cond.inverse(), head + 1, b.targetFirst, headb.targetFirst);
                   remove_branch(state, headb);
                   unredirect(state, 1, headb.line, headb.line, headb.targetSecond);
                 }

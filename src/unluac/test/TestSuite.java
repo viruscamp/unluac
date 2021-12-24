@@ -2,8 +2,6 @@ package unluac.test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
 import unluac.Configuration;
 import unluac.Main;
@@ -110,7 +108,7 @@ public class TestSuite {
     return failed == 0;
   }
   
-  public boolean run(LuaSpec spec, UnluacSpec uspec, String file, boolean compiled) throws IOException {
+  public boolean run(LuaSpec spec, UnluacSpec uspec, String file, boolean compiled, Configuration config) throws IOException {
     int passed = 0;
     int skipped = 0;
     int failed = 0;
@@ -118,7 +116,6 @@ public class TestSuite {
     if(!working.exists()) {
       working.mkdir();
     }
-    Configuration config = new Configuration();
     {
       String name = file;
       String full;
