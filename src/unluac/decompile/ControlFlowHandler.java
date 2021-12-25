@@ -754,16 +754,8 @@ public class ControlFlowHandler {
     Block block = null;
     if(!stack.isEmpty() && stack_reach(state, stack) <= line) {
       Branch top = stack.pop();
-      Block breakable = enclosing_breakable_block(state, top.line);
-      if(breakable != null && breakable.end == top.targetSecond) {
-        // 5.2-style if-break
-        block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1, false);
-        block.addStatement(new Break(state.function, top.targetFirst - 1, top.targetSecond));
-        throw new IllegalStateException();
-      } else {
-        int literalEnd = state.code.target(top.targetFirst - 1);
-        block = new IfThenEndBlock(state.function, state.r, top.cond, top.targetFirst, top.targetSecond, literalEnd != top.targetSecond);
-      }
+      int literalEnd = state.code.target(top.targetFirst - 1);
+      block = new IfThenEndBlock(state.function, state.r, top.cond, top.targetFirst, top.targetSecond, literalEnd != top.targetSecond);
       state.blocks.add(block);
       remove_branch(state, top);
     }
