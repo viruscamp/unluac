@@ -1,5 +1,6 @@
 package unluac.decompile.block;
 
+import unluac.decompile.CloseType;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
@@ -18,7 +19,7 @@ public class IfThenElseBlock extends ContainerBlock {
   private Expression condexpr;
   
   public IfThenElseBlock(LFunction function, Condition cond, int begin, int end, int elseTarget) {
-    super(function, begin, end, -1);
+    super(function, begin, end, CloseType.NONE, -1, -1);
     this.cond = cond;
     this.elseTarget = elseTarget;
   }

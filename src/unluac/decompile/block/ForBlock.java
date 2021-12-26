@@ -1,5 +1,6 @@
 package unluac.decompile.block;
 
+import unluac.decompile.CloseType;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
@@ -13,18 +14,16 @@ abstract public class ForBlock extends ContainerBlock {
 
   protected final int register;
   protected final boolean forvarClose;
-  protected final boolean innerClose;
   
   protected Target target;
   protected Expression start;
   protected Expression stop;
   protected Expression step;
   
-  public ForBlock(LFunction function, int begin, int end, int register, boolean forvarClose, boolean innerClose) {
-    super(function, begin, end, -1);
+  public ForBlock(LFunction function, int begin, int end, int register, CloseType closeType, int closeLine, boolean forvarClose) {
+    super(function, begin, end, closeType, closeLine, -1);
     this.register = register;
     this.forvarClose = forvarClose;
-    this.innerClose = innerClose;
   }
 
   abstract public void handleVariableDeclarations(Registers r);
@@ -44,7 +43,7 @@ abstract public class ForBlock extends ContainerBlock {
   public int scopeEnd() {
     int scopeEnd = end - 2;
     if(forvarClose) scopeEnd--;
-    if(innerClose) scopeEnd--;
+    if(usingClose && (closeType == CloseType.CLOSE || closeType == CloseType.JMP)) scopeEnd--;
     return scopeEnd;
   }
   

@@ -1,5 +1,6 @@
 package unluac.decompile.block;
 
+import unluac.decompile.CloseType;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Function;
 import unluac.decompile.Output;
@@ -13,15 +14,15 @@ public class AlwaysLoop extends ContainerBlock {
   
   private ConstantExpression condition;
   
-  public AlwaysLoop(LFunction function, int begin, int end, boolean repeat) {
-    super(function, begin, end, 0);
+  public AlwaysLoop(LFunction function, int begin, int end, CloseType closeType, int closeLine, boolean repeat) {
+    super(function, begin, end, closeType, closeLine, 0);
     this.repeat = repeat;
     condition = null;
   }
   
   @Override
   public int scopeEnd() {
-    return end - 2;
+    return usingClose && closeType == CloseType.CLOSE ? closeLine - 1 : end - 2;
   }
   
   @Override

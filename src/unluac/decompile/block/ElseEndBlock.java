@@ -1,5 +1,6 @@
 package unluac.decompile.block;
 
+import unluac.decompile.CloseType;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.statement.Statement;
@@ -10,7 +11,7 @@ public class ElseEndBlock extends ContainerBlock {
   public IfThenElseBlock partner;
   
   public ElseEndBlock(LFunction function, int begin, int end) {
-    super(function, begin, end, -1);
+    super(function, begin, end, CloseType.NONE, -1, -1);
   }
   
   @Override

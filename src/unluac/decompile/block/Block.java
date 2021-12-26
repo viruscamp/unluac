@@ -45,6 +45,18 @@ abstract public class Block extends Statement implements Comparable<Block> {
     scopeUsed = true;
   }
   
+  public boolean hasCloseLine() {
+    return false;
+  }
+  
+  public int getCloseLine() {
+    throw new IllegalStateException();
+  }
+  
+  public void useClose() {
+    throw new IllegalStateException();
+  }
+  
   /**
    * An unprotected block is one that ends in a JMP instruction.
    * If this is the case, any inner statement that tries to jump

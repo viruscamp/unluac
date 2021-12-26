@@ -3,6 +3,7 @@ package unluac.decompile.block;
 import java.util.ArrayList;
 import java.util.List;
 
+import unluac.decompile.CloseType;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
@@ -64,13 +65,17 @@ public class TForBlock extends ContainerBlock {
     );
   }
   
-  public static TForBlock make54(LFunction function, int begin, int end, int register, int length) {
+  public static TForBlock make54(LFunction function, int begin, int end, int register, int length, boolean forvarClose) {
+    int innerScopeEnd = end - 3;
+    if(forvarClose) {
+      innerScopeEnd--;
+    }
     return new TForBlock(
       function, begin, end,
       register, register + 3, register + 4, register + 3 + length,
       begin - 2, end,
       begin - 1, end - 3,
-      end - 3
+      innerScopeEnd
     );
   }
   
@@ -81,7 +86,7 @@ public class TForBlock extends ContainerBlock {
     int explicitScopeBegin, int explicitScopeEnd,
     int innerScopeEnd
   ) {
-    super(function, begin, end, -1);
+    super(function, begin, end, CloseType.NONE, -1, -1);
     this.internalRegisterFirst = internalRegisterFirst;
     this.internalRegisterLast = internalRegisterLast;
     this.explicitRegisterFirst = explicitRegisterFirst;

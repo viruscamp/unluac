@@ -43,4 +43,8 @@ public class Function {
     return new GlobalExpression(getGlobalName(constantIndex), constantIndex);
   }
   
+  public Version getVersion() {
+    return version;
+  }
+  
 }

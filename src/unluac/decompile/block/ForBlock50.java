@@ -1,12 +1,13 @@
 package unluac.decompile.block;
 
+import unluac.decompile.CloseType;
 import unluac.decompile.Registers;
 import unluac.parse.LFunction;
 
 public class ForBlock50 extends ForBlock {
   
-  public ForBlock50(LFunction function, int begin, int end, int register, boolean innerClose) {
-    super(function, begin, end, register, false, innerClose);
+  public ForBlock50(LFunction function, int begin, int end, int register, CloseType closeType, int closeLine) {
+    super(function, begin, end, register, closeType, closeLine, false);
   }
   
   @Override

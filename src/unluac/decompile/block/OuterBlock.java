@@ -1,5 +1,6 @@
 package unluac.decompile.block;
 
+import unluac.decompile.CloseType;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.statement.Return;
@@ -9,7 +10,7 @@ import unluac.parse.LFunction;
 public class OuterBlock extends ContainerBlock {
 
   public OuterBlock(LFunction function, int length) {
-    super(function, 0, length + 1, -2);
+    super(function, 0, length + 1, CloseType.NONE, -1, -2);
   }
   
   @Override

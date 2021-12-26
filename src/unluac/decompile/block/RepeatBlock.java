@@ -1,5 +1,6 @@
 package unluac.decompile.block;
 
+import unluac.decompile.CloseType;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
@@ -12,17 +13,15 @@ import unluac.parse.LFunction;
 public class RepeatBlock extends ContainerBlock {
 
   private final Condition cond;
+  private final boolean extendedRepeatScope;
   private final int scopeEnd;
   
   private Expression condexpr;
   
-  public RepeatBlock(LFunction function, Condition cond, int begin, int end) {
-    this(function, cond, begin, end, end - 1);
-  }
-  
-  public RepeatBlock(LFunction function, Condition cond, int begin, int end, int scopeEnd) {
-    super(function, begin, end, 0);
+  public RepeatBlock(LFunction function, Condition cond, int begin, int end, CloseType closeType, int closeLine, boolean extendedRepeatScope, int scopeEnd) {
+    super(function, begin, end, closeType, closeLine, 0);
     this.cond = cond;
+    this.extendedRepeatScope = extendedRepeatScope;
     this.scopeEnd = scopeEnd;
   }
   
@@ -42,7 +41,11 @@ public class RepeatBlock extends ContainerBlock {
   
   @Override
   public int scopeEnd() {
-    return scopeEnd;
+    if(extendedRepeatScope) {
+      return usingClose && closeType != CloseType.NONE ? closeLine - 1 : scopeEnd;
+    } else {
+      return usingClose && closeType != CloseType.NONE ? closeLine : super.scopeEnd();
+    }
   }
   
   @Override

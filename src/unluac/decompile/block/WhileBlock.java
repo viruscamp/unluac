@@ -1,5 +1,6 @@
 package unluac.decompile.block;
 
+import unluac.decompile.CloseType;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
@@ -15,8 +16,8 @@ abstract public class WhileBlock extends ContainerBlock {
   
   private Expression condexpr;
   
-  public WhileBlock(LFunction function, Condition cond, int begin, int end) {
-    super(function, begin, end, -1);
+  public WhileBlock(LFunction function, Condition cond, int begin, int end, int closeLine) {
+    super(function, begin, end, CloseType.NONE, closeLine, -1);
     this.cond = cond;
   }
   

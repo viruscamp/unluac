@@ -214,7 +214,7 @@ public class TestFiles {
     new TestFile("always02"),
     new TestFile("always03"),
     new TestFile("always04"),
-    new TestFile("once01"),
+    new TestFile("once01", TestFile.DEFAULT_VERSION, TestFile.RELAXED_SCOPE), //TODO: maybe should enforce not using goto here?
     new TestFile("once02"),
     new TestFile("once03"),
     new TestFile("once04"),

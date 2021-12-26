@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import unluac.Version;
 import unluac.decompile.expression.ConstantExpression;
 import unluac.decompile.expression.Expression;
 import unluac.decompile.expression.LocalVariable;
@@ -189,6 +190,10 @@ public class Registers {
     for(int line = begin; line <= end; line++) {
       decls[register][line] = decl;
     }
+  }
+  
+  public Version getVersion() {
+    return f.getVersion();
   }
   
 }

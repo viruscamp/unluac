@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import unluac.decompile.CloseType;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
 import unluac.decompile.Registers;
@@ -26,11 +27,20 @@ public class IfThenEndBlock extends ContainerBlock {
   
   private Expression condexpr;
   
-  public IfThenEndBlock(LFunction function, Registers r, Condition cond, int begin, int end, boolean redirected) {
-    super(function, begin == end ? begin - 1 : begin, end, -1);
+  public IfThenEndBlock(LFunction function, Registers r, Condition cond, int begin, int end) {
+    this(function, r, cond, begin, end, CloseType.NONE, -1, false);
+  }
+  
+  public IfThenEndBlock(LFunction function, Registers r, Condition cond, int begin, int end, CloseType closeType, int closeLine, boolean redirected) {
+    super(function, begin == end ? begin - 1 : begin, end, closeType, closeLine, -1);
     this.r = r;
     this.cond = cond;
     this.redirected = redirected;
+  }
+  
+  @Override
+  public int scopeEnd() {
+    return usingClose && closeType == CloseType.CLOSE ? closeLine - 1 : super.scopeEnd();
   }
   
   @Override

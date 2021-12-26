@@ -8,7 +8,7 @@ public class WhileBlock51 extends WhileBlock {
   private final int unprotectedTarget;
   
   public WhileBlock51(LFunction function, Condition cond, int begin, int end, int unprotectedTarget) {
-    super(function, cond, begin, end);
+    super(function, cond, begin, end, -1);
     this.unprotectedTarget = unprotectedTarget;
   }
   
