@@ -18,8 +18,8 @@ public class IfThenElseBlock extends ContainerBlock {
   
   private Expression condexpr;
   
-  public IfThenElseBlock(LFunction function, Condition cond, int begin, int end, int elseTarget) {
-    super(function, begin, end, CloseType.NONE, -1, -1);
+  public IfThenElseBlock(LFunction function, Condition cond, int begin, int end, int elseTarget, CloseType closeType, int closeLine) {
+    super(function, begin, end, closeType, closeLine, -1);
     this.cond = cond;
     this.elseTarget = elseTarget;
   }
@@ -59,7 +59,7 @@ public class IfThenElseBlock extends ContainerBlock {
   
   @Override
   public int scopeEnd() {
-    return end - 2;
+    return usingClose && closeType == CloseType.CLOSE ? closeLine - 1 : end - 2;
   }
   
   @Override

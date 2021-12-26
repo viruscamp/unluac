@@ -815,8 +815,14 @@ public class ControlFlowHandler {
     }
     
     b.targetSecond = tailTargetSecond;
-    state.blocks.add(new IfThenElseBlock(state.function, top.cond, top.targetFirst, top.targetSecond, b.targetSecond));
-    ElseEndBlock elseBlock = new ElseEndBlock(state.function, top.targetSecond, b.targetSecond);
+    state.blocks.add(new IfThenElseBlock(
+      state.function, top.cond, top.targetFirst, top.targetSecond, b.targetSecond,
+      get_close_type(state, top.targetSecond - 2), top.targetSecond - 2
+    ));
+    ElseEndBlock elseBlock = new ElseEndBlock(
+      state.function, top.targetSecond, b.targetSecond,
+      get_close_type(state, b.targetSecond - 1), b.targetSecond - 1
+    );
     state.blocks.add(elseBlock);
     elseStack.push(elseBlock);
     remove_branch(state, b);
@@ -923,7 +929,10 @@ public class ControlFlowHandler {
             } else if(!splits_decl(top.targetFirst, top.targetSecond - 1, declList)) {
               // "empty else" case
               b.targetSecond = tailTargetSecond;
-              state.blocks.add(new IfThenElseBlock(state.function, top.cond, top.targetFirst, top.targetSecond, b.targetSecond));
+              state.blocks.add(new IfThenElseBlock(
+                state.function, top.cond, top.targetFirst, top.targetSecond, b.targetSecond,
+                get_close_type(state, top.targetSecond - 2), top.targetSecond - 2
+              ));
               remove_branch(state, b);
               stack.pop();
             }
@@ -950,7 +959,7 @@ public class ControlFlowHandler {
           && state.resolved[state.branches[line + 1].targetFirst] == state.resolved[breakable.end]
         ) {
           // split while condition (else break)
-          Block[] split = breakable.split(b.line);
+          Block[] split = breakable.split(b.line, get_close_type(state, b.line - 1));
           for(Block block : split) {
             state.blocks.add(block);
           }
@@ -966,7 +975,10 @@ public class ControlFlowHandler {
           if(!splits_decl(top.targetFirst, b.line, declList)) {
             top.targetSecond = line + 1;
             b.targetSecond = line + 1;
-            state.blocks.add(new IfThenElseBlock(state.function, top.cond, top.targetFirst, top.targetSecond, b.targetSecond));
+            state.blocks.add(new IfThenElseBlock(
+              state.function, top.cond, top.targetFirst, top.targetSecond, b.targetSecond,
+              get_close_type(state, line - 1), line - 1
+            ));
             remove_branch(state, b);
             stack.pop();
           }
@@ -984,7 +996,10 @@ public class ControlFlowHandler {
             }
             top.targetSecond = line + 1;
             b.targetSecond = line + 1;
-            state.blocks.add(new IfThenElseBlock(state.function, top.cond, top.targetFirst, top.targetSecond, b.targetSecond));
+            state.blocks.add(new IfThenElseBlock(
+              state.function, top.cond, top.targetFirst, top.targetSecond, b.targetSecond,
+              get_close_type(state, line - 1), line - 1
+            ));
             remove_branch(state, b);
             hanging.pop();
           }
@@ -1187,8 +1202,9 @@ public class ControlFlowHandler {
             }
           }
           if(containsBreak) {
-            state.blocks.add(new IfThenElseBlock(state.function, FixedCondition.TRUE, begin, b.line + 1, end));
-            state.blocks.add(new ElseEndBlock(state.function, b.line + 1, end));
+            // TODO: close type
+            state.blocks.add(new IfThenElseBlock(state.function, FixedCondition.TRUE, begin, b.line + 1, end, CloseType.NONE, -1));
+            state.blocks.add(new ElseEndBlock(state.function, b.line + 1, end, CloseType.NONE, -1));
             remove_branch(state, b);
           } else {
             state.blocks.add(loop);

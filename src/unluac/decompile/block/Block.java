@@ -3,6 +3,7 @@ package unluac.decompile.block;
 import java.util.Arrays;
 import java.util.List;
 
+import unluac.decompile.CloseType;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Registers;
 import unluac.decompile.operation.Operation;
@@ -92,7 +93,7 @@ abstract public class Block extends Statement implements Comparable<Block> {
     return false;
   }
   
-  public Block[] split(int line) {
+  public Block[] split(int line, CloseType closeType) {
     throw new IllegalStateException();
   }
   

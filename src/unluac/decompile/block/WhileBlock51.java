@@ -1,5 +1,6 @@
 package unluac.decompile.block;
 
+import unluac.decompile.CloseType;
 import unluac.decompile.condition.Condition;
 import unluac.parse.LFunction;
 
@@ -38,12 +39,12 @@ public class WhileBlock51 extends WhileBlock {
   }
   
   @Override
-  public Block[] split(int line) {
+  public Block[] split(int line, CloseType closeType) {
     Condition[] conds = cond.split();
     cond = conds[0];
     return new Block[] {
-      new IfThenElseBlock(function, conds[1], begin, line + 1, end - 1),
-      new ElseEndBlock(function, line + 1, end - 1),
+      new IfThenElseBlock(function, conds[1], begin, line + 1, end - 1, closeType, line - 1),
+      new ElseEndBlock(function, line + 1, end - 1, CloseType.NONE, -1),
     };
   }
   

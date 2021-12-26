@@ -210,6 +210,8 @@ public class TestFiles {
     new TestFile("close03"),
     new TestFile("close04"),
     new TestFile("close05"),
+    new TestFile("close06"),
+    new TestFile("close07"),
     new TestFile("always01"),
     new TestFile("always02"),
     new TestFile("always03"),

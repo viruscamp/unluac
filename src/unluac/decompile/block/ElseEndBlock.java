@@ -10,8 +10,8 @@ public class ElseEndBlock extends ContainerBlock {
 
   public IfThenElseBlock partner;
   
-  public ElseEndBlock(LFunction function, int begin, int end) {
-    super(function, begin, end, CloseType.NONE, -1, -1);
+  public ElseEndBlock(LFunction function, int begin, int end, CloseType closeType, int closeLine) {
+    super(function, begin, end, closeType, closeLine, -1);
   }
   
   @Override
@@ -27,6 +27,11 @@ public class ElseEndBlock extends ContainerBlock {
   @Override
   public boolean breakable() {
     return false;
+  }
+  
+  @Override
+  public int scopeEnd() {
+    return usingClose && closeType == CloseType.CLOSE ? closeLine - 1 : super.scopeEnd();
   }
   
   @Override
