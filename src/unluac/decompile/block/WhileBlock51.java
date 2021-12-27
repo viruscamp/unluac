@@ -8,14 +8,14 @@ public class WhileBlock51 extends WhileBlock {
 
   private final int unprotectedTarget;
   
-  public WhileBlock51(LFunction function, Condition cond, int begin, int end, int unprotectedTarget) {
-    super(function, cond, begin, end, -1);
+  public WhileBlock51(LFunction function, Condition cond, int begin, int end, int unprotectedTarget, CloseType closeType, int closeLine) {
+    super(function, cond, begin, end, closeType, closeLine);
     this.unprotectedTarget = unprotectedTarget;
   }
   
   @Override
   public int scopeEnd() {
-    return end - 2;
+    return usingClose && closeType == CloseType.CLOSE ? end - 3 : end - 2;
   }
   
   @Override

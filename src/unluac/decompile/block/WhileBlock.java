@@ -16,8 +16,8 @@ abstract public class WhileBlock extends ContainerBlock {
   
   private Expression condexpr;
   
-  public WhileBlock(LFunction function, Condition cond, int begin, int end, int closeLine) {
-    super(function, begin, end, CloseType.NONE, closeLine, -1);
+  public WhileBlock(LFunction function, Condition cond, int begin, int end, CloseType closeType, int closeLine) {
+    super(function, begin, end, closeType, closeLine, -1);
     this.cond = cond;
   }
   

@@ -637,7 +637,10 @@ public class ControlFlowHandler {
           b.targetSecond = end;
           remove_branch(state, b);
           //System.err.println("while " + b.targetFirst + " " + b.targetSecond);
-          loop = new WhileBlock51(state.function, b.cond, b.targetFirst, b.targetSecond, loopback);
+          loop = new WhileBlock51(
+            state.function, b.cond, b.targetFirst, b.targetSecond, loopback,
+            get_close_type(state, end - 2), end - 2
+          );
           unredirect(state, loopback, end, j.line, loopback);
         }
         if(loop == null && j.line - 5 >= 1 && state.code.op(j.line - 3) == Op.CLOSE
@@ -703,7 +706,10 @@ public class ControlFlowHandler {
                   headb = null;
                 }
                 if(headb != null) {
-                  block = new WhileBlock50(state.function, b.cond.inverse(), head + 1, b.targetFirst, headb.targetFirst);
+                  block = new WhileBlock50(
+                    state.function, b.cond.inverse(), head + 1, b.targetFirst, headb.targetFirst,
+                    get_close_type(state, headb.targetFirst - 1), headb.targetFirst - 1
+                  );
                   remove_branch(state, headb);
                   unredirect(state, 1, headb.line, headb.line, headb.targetSecond);
                 }
