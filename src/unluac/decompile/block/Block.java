@@ -15,6 +15,7 @@ abstract public class Block extends Statement implements Comparable<Block> {
   protected final LFunction function;
   public int begin;
   public int end;
+  public int closeRegister;
   private final int priority;
   public boolean loopRedirectAdjustment = false;
   protected boolean scopeUsed = false;
@@ -23,6 +24,7 @@ abstract public class Block extends Statement implements Comparable<Block> {
     this.function = function;
     this.begin = begin;
     this.end = end;
+    this.closeRegister = -1;
     this.priority = priority;
   }
   

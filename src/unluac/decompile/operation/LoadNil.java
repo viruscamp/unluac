@@ -34,7 +34,7 @@ public class LoadNil extends Operation {
     }
     for(int register = registerFirst; register <= registerLast; register++) {
       r.setValue(register, line, nil);
-      if(r.isAssignable(register, line) && r.getDeclaration(register, line).end == scopeEnd) {
+      if(r.isAssignable(register, line) && r.getDeclaration(register, line).end == scopeEnd && register >= block.closeRegister) {
         if((r.getDeclaration(register, line).begin == line)) {
           if(declare == null) {
             declare = new Assignment();

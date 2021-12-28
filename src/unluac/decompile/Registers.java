@@ -66,10 +66,15 @@ public class Registers {
     Declaration decl = decls[register][line];
     return decl != null && decl.begin == line && !decl.forLoop && !decl.forLoopExplicit;
   }
-    
+  
   public List<Declaration> getNewLocals(int line) {
-    ArrayList<Declaration> locals = new ArrayList<Declaration>(registers);
-    for(int register = 0; register < registers; register++) {
+    return getNewLocals(line, 0);
+  }
+  
+  public List<Declaration> getNewLocals(int line, int first) {
+    first = Math.max(0, first);
+    ArrayList<Declaration> locals = new ArrayList<Declaration>(Math.max(registers - first, 0));
+    for(int register = first; register < registers; register++) {
       if(isNewLocal(register, line)) {
         locals.add(getDeclaration(register, line));
       }

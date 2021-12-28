@@ -1235,15 +1235,36 @@ public class ControlFlowHandler {
   }
   
   private static void find_do_blocks(State state, Declaration[] declList) {
+    List<Block> newBlocks = new ArrayList<Block>();
     for(Block block : state.blocks) {
       if(block.hasCloseLine() && block.getCloseLine() >= 1) {
         int closeLine = block.getCloseLine();
         Block enclosing = enclosing_block(state, closeLine);
         if((enclosing == block || enclosing.contains(block)) && is_close(state, closeLine)) {
-          block.useClose();
+          int register = get_close_value(state, closeLine);
+          boolean close = true;
+          Declaration closeDecl = null;
+          for(Declaration decl : declList) {
+            if(!decl.forLoop && !decl.forLoopExplicit && block.contains(decl.begin)) {
+              if(decl.register < register) {
+                close = false;
+              } else if(decl.register == register) {
+                closeDecl = decl;
+              }
+            }
+          }
+          if(close) {
+            block.useClose();
+          } else if(closeDecl != null) {
+            Block inner = new DoEndBlock(state.function, closeDecl.begin, closeDecl.end + 1);
+            inner.closeRegister = register;
+            newBlocks.add(inner);
+            strictScopeCheck(state);
+          }
         }
       }
     }
+    state.blocks.addAll(newBlocks);
     
     for(Declaration decl : declList) {
       int begin = decl.begin;
@@ -1265,11 +1286,15 @@ public class ControlFlowHandler {
           // create another do..end block later that would eliminate the
           // need for this one. But order of decls should fix this.
           state.blocks.add(new DoEndBlock(state.function, begin, decl.end + 1));
-          if(state.function.header.config.strict_scope) {
-            throw new RuntimeException("Violation of strict scope rule");
-          }
+          strictScopeCheck(state);
         }
       }
+    }
+  }
+  
+  private static void strictScopeCheck(State state) {
+    if(state.function.header.config.strict_scope) {
+      throw new RuntimeException("Violation of strict scope rule");
     }
   }
   
@@ -1621,6 +1646,18 @@ public class ControlFlowHandler {
       }
     } else {
       return false;
+    }
+  }
+  
+  private static int get_close_value(State state, int line) {
+    Code code = state.code;
+    Op op = code.op(line);
+    if(op == Op.CLOSE) {
+      return code.A(line);
+    } else if(op == Op.JMP52) {
+      return code.A(line) - 1;
+    } else {
+      throw new IllegalStateException();
     }
   }
   

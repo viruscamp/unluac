@@ -789,7 +789,7 @@ public class Decompiler {
       //System.out.println("-- added statemtent @" + line);
       if(assign != null) {
         boolean declare = false;
-        for(Declaration newLocal : r.getNewLocals(line)) {
+        for(Declaration newLocal : r.getNewLocals(line, block.closeRegister)) {
           if(assign.getFirstTarget().isDeclaration(newLocal)) {
             declare = true;
             break;
@@ -875,14 +875,16 @@ public class Decompiler {
           labels_handled[line] = true;
         }
         
-        List<Declaration> locals = r.getNewLocals(line);
+        List<Declaration> locals = r.getNewLocals(line, blockStack.peek().closeRegister);
         while(blockContainerIndex < blockContainers.size() && blockContainers.get(blockContainerIndex).begin <= line) {
           Block next = blockContainers.get(blockContainerIndex++);
-          if(!locals.isEmpty() && next.allowsPreDeclare() && locals.get(0).end > next.scopeEnd()) {
+          if(!locals.isEmpty() && next.allowsPreDeclare() &&
+            (locals.get(0).end > next.scopeEnd() || locals.get(0).register < next.closeRegister)
+          ) {
             Assignment declaration = new Assignment();
             int declareEnd = locals.get(0).end;
             declaration.declare(locals.get(0).begin);
-            while(!locals.isEmpty() && locals.get(0).end == declareEnd) {
+            while(!locals.isEmpty() && locals.get(0).end == declareEnd && (next.closeRegister == -1 || locals.get(0).register < next.closeRegister)) {
               Declaration decl = locals.get(0);
               declaration.addLast(new VariableTarget(decl), ConstantExpression.createNil(line), line);
               locals.remove(0);
@@ -912,7 +914,7 @@ public class Decompiler {
             operations = Collections.emptyList();
           }
           if(line >= begin && line <= end) {
-            newLocals = r.getNewLocals(line);
+            newLocals = r.getNewLocals(line, block.closeRegister);
           }
         }
       }
@@ -950,7 +952,7 @@ public class Decompiler {
           
         assignment.declare(locals.get(0).begin);
         for(Declaration decl : locals) {
-          if(scopeEnd == -1 || decl.end == scopeEnd) {
+          if((scopeEnd == -1 || decl.end == scopeEnd) && decl.register >= block.closeRegister) {
             assignment.addLast(new VariableTarget(decl), r.getValue(decl.register, line + 1), r.getUpdated(decl.register, line - 1));
           }
         }

@@ -185,6 +185,7 @@ public class TestFiles {
     new TestFile("upvalue03"),
     new TestFile("upvalue04"),
     new TestFile("upvalue05"),
+    new TestFile("upvalue06", TestFile.DEFAULT_VERSION, TestFile.RELAXED_SCOPE),
     new TestFile("break01"),
     new TestFile("break02"),
     new TestFile("break03"),
