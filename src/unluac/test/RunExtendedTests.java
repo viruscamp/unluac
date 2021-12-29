@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import unluac.Configuration;
+
 public class RunExtendedTests {
 
   private static void gatherTests(Path base, Path folder, List<TestFile> files) throws IOException {
@@ -27,6 +29,7 @@ public class RunExtendedTests {
     FileSystem fs = FileSystems.getDefault();
     Path luatest = fs.getPath(args[0]);
     TestReport report = new TestReport();
+    Configuration config = new Configuration();
     for(int version = 0x50; version <= 0x54; version++) {
       LuaSpec spec = new LuaSpec(version);
       UnluacSpec uspec = new UnluacSpec();
@@ -37,7 +40,7 @@ public class RunExtendedTests {
           gatherTests(subfolder, subfolder, files);
           TestSuite suite = new TestSuite(subfolder.getFileName().toString(), subfolder.toString() + File.separator, files.toArray(new TestFile[files.size()]));
           System.out.print("\t" + subfolder.getFileName().toString());
-          suite.run(spec, uspec, report);
+          suite.run(spec, uspec, report, config);
           System.out.println();
         }
       }

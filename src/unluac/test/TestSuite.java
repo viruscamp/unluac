@@ -78,14 +78,12 @@ public class TestSuite {
     }
   }
   
-  public boolean run(LuaSpec spec, UnluacSpec uspec, TestReport report) throws IOException {
+  public boolean run(LuaSpec spec, UnluacSpec uspec, TestReport report, Configuration base) throws IOException {
     int failed = 0;
     File working = new File(working_dir);
     if(!working.exists()) {
       working.mkdir();
     }
-    Configuration base = new Configuration();
-    base.strict_scope = true;
     for(TestFile testfile : files) {
       String name = testfile.name;
       if(spec.compatible(name)) {
