@@ -834,10 +834,14 @@ public class ControlFlowHandler {
     remove_branch(state, b);
   }
   
-  private static void resolve_hangers(State state, Stack<Branch> stack, Stack<Branch> hanging, Branch b) {
+  private static void resolve_hangers(State state, Declaration[] declList, Stack<Branch> stack, Stack<Branch> hanging, Branch b) {
     if(b != null) {
       Block enclosing = enclosing_block(state, b.line);
-      while(!hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst && enclosing_block(state, hanging.peek().line) == enclosing) {
+      while(
+        !hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst
+        && enclosing_block(state, hanging.peek().line) == enclosing
+        && !splits_decl(hanging.peek().line, b.line, declList)
+      ) {
         Branch hanger = hanging.pop();
         hanger.targetSecond = b.line;
         stack.push(hanger);
@@ -862,7 +866,7 @@ public class ControlFlowHandler {
       }
       
       while(!hangingResolver.isEmpty() && !enclosing_block(state, hangingResolver.peek().line).contains(b.line)) {
-        resolve_hangers(state, stack, hanging, hangingResolver.pop());
+        resolve_hangers(state, declList, stack, hanging, hangingResolver.pop());
       }
       
       if(is_conditional(b)) {
@@ -949,6 +953,7 @@ public class ControlFlowHandler {
           && line + 1 < state.branches.length && state.branches[line + 1] != null
           && state.branches[line + 1].type == Branch.Type.jump
           && state.branches[line + 1].targetFirst == hanging.peek().targetSecond
+          && !splits_decl(hanging.peek().line, b.line, declList)
         ) {
           // else break
           Branch top = hanging.pop();
@@ -1022,7 +1027,7 @@ public class ControlFlowHandler {
       b = b.next;
     }
     while(!hangingResolver.isEmpty()) {
-      resolve_hangers(state, stack, hanging, hangingResolver.pop());
+      resolve_hangers(state, declList, stack, hanging, hangingResolver.pop());
     }
     while(!hanging.isEmpty()) {
       // if break (or if goto)

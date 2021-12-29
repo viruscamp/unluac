@@ -206,6 +206,7 @@ public class TestFiles {
     new TestFile("break19"),
     new TestFile("break20"),
     new TestFile("break21"),
+    new TestFile("break22", TestFile.DEFAULT_VERSION, TestFile.RELAXED_SCOPE), //TODO: relaxed scope is maybe not necessary if scopes inform hanger resolution?
     new TestFile("close01"),
     new TestFile("close02"),
     new TestFile("close03"),
