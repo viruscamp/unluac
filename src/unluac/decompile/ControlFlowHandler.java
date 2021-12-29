@@ -841,6 +841,11 @@ public class ControlFlowHandler {
         !hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst
         && enclosing_block(state, hanging.peek().line) == enclosing
         && !splits_decl(hanging.peek().line, b.line, declList)
+        && !(
+          state.function.header.version.useifbreakrewrite.get()
+          && hanging.peek().targetFirst == b.line - 1
+          && is_jmp(state, b.line - 1)
+        )        
       ) {
         Branch hanger = hanging.pop();
         hanger.targetSecond = b.line;
