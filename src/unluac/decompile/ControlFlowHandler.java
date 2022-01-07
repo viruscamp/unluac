@@ -749,9 +749,9 @@ public class ControlFlowHandler {
     }
   }
   
-  private static boolean splits_decl(int begin, int end, Declaration[] declList) {
+  private static boolean splits_decl(int line, int begin, int end, Declaration[] declList) {
     for(Declaration decl : declList) {
-      if(decl.isSplitBy(begin, end)) {
+      if(decl.isSplitBy(line, begin, end)) {
         return true;
       }
     }
@@ -834,25 +834,41 @@ public class ControlFlowHandler {
     remove_branch(state, b);
   }
   
-  private static void resolve_hangers(State state, Declaration[] declList, Stack<Branch> stack, Stack<Branch> hanging, Branch b) {
-    if(b != null) {
-      Block enclosing = enclosing_block(state, b.line);
-      while(
-        !hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst
-        && enclosing_block(state, hanging.peek().line) == enclosing
-        && !splits_decl(hanging.peek().line, b.line, declList)
-        && !(
-          state.function.header.version.useifbreakrewrite.get()
-          && hanging.peek().targetFirst == b.line - 1
-          && is_jmp(state, b.line - 1)
-        )        
-      ) {
-        Branch hanger = hanging.pop();
-        hanger.targetSecond = b.line;
-        stack.push(hanger);
-        Block if_block = resolve_if_stack(state, stack, b.line);
-        if(if_block == null) throw new IllegalStateException();
+  private static boolean is_hanger_resolvable(State state, Declaration[] declList, Branch hanging, Branch resolver) {
+    if(
+      hanging.targetSecond == resolver.targetFirst
+      && enclosing_block(state, hanging.line) == enclosing_block(state, resolver.line)
+      && !splits_decl(hanging.line, hanging.targetFirst, resolver.line, declList)
+      && !(
+        state.function.header.version.useifbreakrewrite.get()
+        && hanging.targetFirst == resolver.line - 1
+        && is_jmp(state, resolver.line - 1)
+      )
+    ) {
+      return true;
+    }
+    return false;
+  }
+  
+  private static boolean is_hanger_resolvable(State state, Declaration[] declList, Branch hanging, Stack<Branch> resolvers) {
+    for(int i = 0; i < resolvers.size(); i++) {
+      if(is_hanger_resolvable(state, declList, hanging, resolvers.peek(i))) {
+        return true;
       }
+    }
+    return false;
+  }
+  
+  private static void resolve_hanger(State state, Declaration[] declList, Stack<Branch> stack, Branch hanger, Branch b) {
+    hanger.targetSecond = b.line;
+    stack.push(hanger);
+    Block if_block = resolve_if_stack(state, stack, b.line);
+    if(if_block == null) throw new IllegalStateException();
+  }
+  
+  private static void resolve_hangers(State state, Declaration[] declList, Stack<Branch> stack, Stack<Branch> hanging, Branch b) {
+    while(!hanging.isEmpty() && is_hanger_resolvable(state, declList, hanging.peek(), b)) {
+      resolve_hanger(state, declList, stack, hanging.pop(), b);
     }
   }
   
@@ -904,6 +920,8 @@ public class ControlFlowHandler {
           }             
         }
         
+        boolean handled = false;
+        
         Block breakable = enclosing_breakable_block(state, line);
         if(breakable != null && (b.targetFirst == breakable.end || b.targetFirst == state.resolved[breakable.end])) {
           Break block = new Break(state.function, b.line, b.targetFirst);
@@ -918,7 +936,10 @@ public class ControlFlowHandler {
           unredirect_finalsets(state, b.targetFirst, line, breakable.begin);
           state.blocks.add(block);
           remove_branch(state, b);
-        } else if(state.function.header.version.usegoto.get() && breakable != null && !breakable.contains(b.targetFirst) && state.resolved[b.targetFirst] != state.resolved[breakable.end]) {
+          handled = true;
+        }
+        
+        if(!handled && state.function.header.version.usegoto.get() && breakable != null && !breakable.contains(b.targetFirst) && state.resolved[b.targetFirst] != state.resolved[breakable.end]) {
           Goto block = new Goto(state.function, b.line, b.targetFirst);
           if(!hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst
             && enclosing_block(state, hanging.peek().line) == enclosing
@@ -930,9 +951,12 @@ public class ControlFlowHandler {
           state.blocks.add(block);
           state.labels[b.targetFirst] = true;
           remove_branch(state, b);
-        } else if(!stack.isEmpty() && stack.peek().targetSecond - 1 == b.line) {
+          handled = true;
+        }
+        
+        if(!handled && !stack.isEmpty() && stack.peek().targetSecond - 1 == b.line) {
           Branch top = stack.peek();
-          while(top != null && top.targetSecond - 1 == b.line && splits_decl(top.targetFirst, top.targetSecond, declList)) {
+          while(top != null && top.targetSecond - 1 == b.line && splits_decl(top.line, top.targetFirst, top.targetSecond, declList)) {
             Block if_block = resolve_if_stack(state, stack, top.targetSecond);
             if(if_block == null) throw new IllegalStateException();
             top = stack.isEmpty() ? null : stack.peek();
@@ -941,7 +965,7 @@ public class ControlFlowHandler {
             if(top.targetSecond != b.targetSecond) {
               resolve_else(state, stack, hanging, elseStack, top, b, tailTargetSecond);
               stack.pop();
-            } else if(!splits_decl(top.targetFirst, top.targetSecond - 1, declList)) {
+            } else if(!splits_decl(top.line, top.targetFirst, top.targetSecond - 1, declList)) {
               // "empty else" case
               b.targetSecond = tailTargetSecond;
               state.blocks.add(new IfThenElseBlock(
@@ -952,23 +976,49 @@ public class ControlFlowHandler {
               stack.pop();
             }
           }
-        } else if(
-          breakable != null
-          && !hanging.isEmpty() && state.resolved[hanging.peek().targetSecond] == state.resolved[breakable.end]
+          handled = true; // TODO: should this always count as handled?
+        }
+        
+        if(
+          !handled
+          && breakable != null
           && line + 1 < state.branches.length && state.branches[line + 1] != null
           && state.branches[line + 1].type == Branch.Type.jump
-          && state.branches[line + 1].targetFirst == hanging.peek().targetSecond
-          && !splits_decl(hanging.peek().line, b.line, declList)
         ) {
-          // else break
-          Branch top = hanging.pop();
-          if(!hangingResolver.isEmpty() && hangingResolver.peek().targetFirst == top.targetSecond) {
-            hangingResolver.pop();
+          for(int i = 0; i < hanging.size(); i++) {
+            Branch hanger = hanging.peek(i);
+            if(
+              state.resolved[hanger.targetSecond] == state.resolved[breakable.end]
+              && line + 1 < state.branches.length && state.branches[line + 1] != null
+              && state.branches[line + 1].targetFirst == hanger.targetSecond
+              && !splits_decl(hanger.line, hanger.targetFirst, b.line, declList)
+            ) {
+              // resolve intervening hangers
+              for(int j = i; j > 0; j--) {
+                while(!is_hanger_resolvable(state, declList, hanging.peek(), hangingResolver.peek())) {
+                  hangingResolver.pop();
+                }
+                resolve_hanger(state, declList, stack, hanging.pop(), hangingResolver.peek());
+              }
+              
+              // else break
+              Branch top = hanging.pop();
+              if(!hangingResolver.isEmpty() && hangingResolver.peek().targetFirst == top.targetSecond) {
+                hangingResolver.pop();
+              }
+              top.targetSecond = line + 1;
+              resolve_else(state, stack, hanging, elseStack, top, b, tailTargetSecond);
+              handled = true;
+              break;
+            } else if(!is_hanger_resolvable(state, declList, hanger, hangingResolver)) {
+              break;
+            }
           }
-          top.targetSecond = line + 1;
-          resolve_else(state, stack, hanging, elseStack, top, b, tailTargetSecond);
-        } else if(
-          breakable != null && breakable.isSplitable()
+        }
+        
+        if(
+          !handled
+          && breakable != null && breakable.isSplitable()
           && state.resolved[b.targetFirst] == breakable.getUnprotectedTarget()
           && line + 1 < state.branches.length && state.branches[line + 1] != null
           && state.branches[line + 1].type == Branch.Type.jump
@@ -980,15 +1030,19 @@ public class ControlFlowHandler {
             state.blocks.add(block);
           }
           remove_branch(state, b);
-        } else if(
-          !stack.isEmpty() && stack.peek().targetSecond == b.targetFirst
+          handled = true;
+        }
+        
+        if(
+          !handled
+          && !stack.isEmpty() && stack.peek().targetSecond == b.targetFirst
           && line + 1 < state.branches.length && state.branches[line + 1] != null
           && state.branches[line + 1].type == Branch.Type.jump
           && state.branches[line + 1].targetFirst == b.targetFirst
         ) {
           // empty else (redirected)
           Branch top = stack.peek();
-          if(!splits_decl(top.targetFirst, b.line, declList)) {
+          if(!splits_decl(top.line, top.targetFirst, b.line, declList)) {
             top.targetSecond = line + 1;
             b.targetSecond = line + 1;
             state.blocks.add(new IfThenElseBlock(
@@ -998,15 +1052,19 @@ public class ControlFlowHandler {
             remove_branch(state, b);
             stack.pop();
           }
-        } else if(
-          !hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst
+          handled = true; // TODO:
+        }
+        
+        if(
+          !handled
+          && !hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst
           && line + 1 < state.branches.length && state.branches[line + 1] != null
           && state.branches[line + 1].type == Branch.Type.jump
           && state.branches[line + 1].targetFirst == b.targetFirst
         ) {
           // empty else (redirected)
           Branch top = hanging.peek();
-          if(!splits_decl(top.targetFirst, b.line, declList)) {
+          if(!splits_decl(top.line, top.targetFirst, b.line, declList)) {
             if(!hangingResolver.isEmpty() && hangingResolver.peek().targetFirst == top.targetSecond) {
               hangingResolver.pop();
             }
@@ -1019,7 +1077,10 @@ public class ControlFlowHandler {
             remove_branch(state, b);
             hanging.pop();
           }
-        } else if(state.function.header.version.usegoto.get() || state.r.isNoDebug) {
+          handled = true; // TODO:
+        }
+        
+        if(!handled && (state.function.header.version.usegoto.get() || state.r.isNoDebug)) {
           Goto block = new Goto(state.function, b.line, b.targetFirst);
           if(!hanging.isEmpty() && hanging.peek().targetSecond == b.targetFirst && enclosing_block(state, hanging.peek().line) == enclosing) {
             hangingResolver.push(b);
@@ -1027,6 +1088,7 @@ public class ControlFlowHandler {
           state.blocks.add(block);
           state.labels[b.targetFirst] = true;
           remove_branch(state, b);
+          handled = true;
         }
       }
       b = b.next;
