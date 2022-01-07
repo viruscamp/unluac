@@ -991,7 +991,9 @@ public class ControlFlowHandler {
               state.resolved[hanger.targetSecond] == state.resolved[breakable.end]
               && line + 1 < state.branches.length && state.branches[line + 1] != null
               && state.branches[line + 1].targetFirst == hanger.targetSecond
-              && !splits_decl(hanger.line, hanger.targetFirst, b.line, declList)
+              && !splits_decl(hanger.line, hanger.targetFirst, b.line, declList) // if else
+              && !splits_decl(b.line, b.line + 1, b.line + 2, declList) // else break
+              && !splits_decl(hanger.line, hanger.targetFirst, b.line + 2, declList) // full
             ) {
               // resolve intervening hangers
               for(int j = i; j > 0; j--) {
