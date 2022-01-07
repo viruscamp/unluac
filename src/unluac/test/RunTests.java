@@ -11,10 +11,16 @@ public class RunTests {
     TestReport report = new TestReport();
     Configuration config = new Configuration();
     config.strict_scope = true;
-    for(int version = 0x50; version <= 0x54; version++) {
-      LuaSpec spec = new LuaSpec(version);
+    for(LuaSpec spec : new LuaSpec[] {
+      new LuaSpec(0x50),
+      new LuaSpec(0x51),
+      new LuaSpec(0x51, 4),
+      new LuaSpec(0x52),
+      new LuaSpec(0x53),
+      new LuaSpec(0x54),
+    }) {
       UnluacSpec uspec = new UnluacSpec();
-      System.out.print("lua" + Integer.toHexString(version));
+      System.out.print(spec.id());
       result = result & TestFiles.suite.run(spec, uspec, report, config);
       System.out.println();
     }

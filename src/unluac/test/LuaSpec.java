@@ -17,8 +17,13 @@ public class LuaSpec {
   }
   
   public LuaSpec(int version) {
+    this(version, -1);
+  }
+  
+  public LuaSpec(int version, int minorVersion) {
     this.isDefault = false;
     this.version = version;
+    this.minorVersion = minorVersion;
     this.numberFormat = NumberFormat.DEFAULT;
     this.strip = false;
   }
@@ -26,6 +31,7 @@ public class LuaSpec {
   public String id() {
     String id = "lua";
     id += Integer.toHexString(version);
+    id += getMinorVersionString();
     return id;
   }
   
@@ -38,7 +44,7 @@ public class LuaSpec {
   }
   
   public String getLuaCName() {
-    return "luac" + getVersionString() + getNumberFormatString();
+    return "luac" + getVersionString() + getMinorVersionString() + getNumberFormatString();
   }
   
   public String[] getArgs() {
@@ -69,6 +75,14 @@ public class LuaSpec {
     }
   }
   
+  private String getMinorVersionString() {
+    if(minorVersion >= 0) {
+      return Integer.toString(minorVersion);
+    } else {
+      return "";
+    }
+  }
+  
   private String getNumberFormatString() {
     switch(numberFormat) {
       case DEFAULT:
@@ -86,6 +100,7 @@ public class LuaSpec {
   
   private boolean isDefault;
   private int version;
+  private int minorVersion;
   private NumberFormat numberFormat;
   private boolean strip;
 }
