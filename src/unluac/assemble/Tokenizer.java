@@ -18,6 +18,7 @@ public class Tokenizer {
     
     boolean inToken = false;
     boolean inString = false;
+    boolean inComment = false;
     boolean isLPrefix = false;
     boolean inEscape = false;
     
@@ -37,6 +38,15 @@ public class Tokenizer {
           inEscape = false;
           b.append(c);
         }
+      } else if(inComment) {
+        if(c == '\n' || c == '\r') {
+          inComment = false;
+          if(inToken) {
+            break;
+          }
+        }
+      } else if(c == ';') {
+        inComment = true;
       } else if(Character.isWhitespace(c)) {
         if(inToken) {
           break;
