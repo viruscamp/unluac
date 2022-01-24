@@ -1413,7 +1413,10 @@ public class ControlFlowHandler {
   private static Branch combine_conditional(State state, Branch branch1) {
     Branch branch0 = branch1.previous;
     Branch branchn = branch1;
-    while(branch0 != null && branchn == branch1) {
+    while(branch0 != null && branch0.line > branch1.line) {
+      branch0 = branch0.previous;
+    }
+    while(branch0 != null && branchn == branch1 && adjacent(state, branch0, branch1)) {
       branchn = combine_conditional_helper(state, branch0, branch1);
       if(branch0.targetSecond > branch1.targetFirst) break;
       branch0 = branch0.previous;
@@ -1422,7 +1425,7 @@ public class ControlFlowHandler {
   }
   
   private static Branch combine_conditional_helper(State state, Branch branch0, Branch branch1) {
-    if(adjacent(state, branch0, branch1) && is_conditional(branch0) && is_conditional(branch1)) {
+    if(is_conditional(branch0) && is_conditional(branch1)) {
       int branch0TargetSecond = branch0.targetSecond;
       if(is_jmp(state, branch1.targetFirst) && state.code.target(branch1.targetFirst) == branch0TargetSecond) {
         // Handle redirected target

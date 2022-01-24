@@ -32,6 +32,7 @@ public class TestFiles {
     new TestFile("condition"),
     new TestFile("condition02"),
     new TestFile("condition03"),
+    new TestFile("condition04"),
     new TestFile("nestedif"),
     new TestFile("nestedif02"),
     new TestFile("ifthenelse"),
