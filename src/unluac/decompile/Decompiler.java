@@ -12,6 +12,7 @@ import unluac.Configuration;
 import unluac.Version;
 import unluac.decompile.block.Block;
 import unluac.decompile.block.DoEndBlock;
+import unluac.decompile.block.OuterBlock;
 import unluac.decompile.expression.ClosureExpression;
 import unluac.decompile.expression.ConstantExpression;
 import unluac.decompile.expression.Expression;
@@ -824,11 +825,12 @@ public class Decompiler {
     if(begin <= end) {
       State state = new State();
       state.r = new Registers(registers, length, declList, f, getNoDebug());
-      state.outer = new DoEndBlock(function, begin, end + 1);
+      state.outer = new OuterBlock(function, code.length);
+      Block scoped = new DoEndBlock(function, begin, end + 1);
       state.labels = new boolean[code.length + 1];
-      List<Block> blocks = Arrays.asList(state.outer);
-      processSequence(state, blocks, begin, end);
-      return !state.outer.isEmpty();
+      List<Block> blocks = Arrays.asList(state.outer, scoped);
+      processSequence(state, blocks, 1, code.length);
+      return !scoped.isEmpty();
     } else {
       return false;
     }

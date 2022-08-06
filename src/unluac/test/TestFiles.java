@@ -242,6 +242,7 @@ public class TestFiles {
     new TestFile("report03"),
     new TestFile("report04"),
     new TestFile("report05"),
+    new TestFile("report06"),
     new TestFile("scope02"),
     new TestFile("scope03"),
     new TestFile("51_expression"),
