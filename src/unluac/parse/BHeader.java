@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import unluac.Configuration;
+import unluac.Configuration.Mode;
 import unluac.Version;
 import unluac.assemble.Tokenizer;
 import unluac.decompile.CodeExtract;
@@ -151,7 +152,7 @@ public class BHeader {
         throw new IllegalStateException("The main chunk has the wrong number of upvalues: " + main.numUpvalues + " (" + upvalues + " expected)");
       }
     }
-    if(main.numUpvalues >= 1 && versionNumber >= 0x52 && (main.upvalues[0].name == null || main.upvalues[0].name.isEmpty())) {
+    if(main.numUpvalues >= 1 && versionNumber >= 0x52 && (main.upvalues[0].name == null || main.upvalues[0].name.isEmpty()) && config.mode == Mode.DECOMPILE) {
       main.upvalues[0].name = "_ENV";
     }
     main.setLevel(1);
