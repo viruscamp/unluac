@@ -81,7 +81,9 @@ class LStringType53 extends LStringType {
   public LString parse(final ByteBuffer buffer, BHeader header) {
     BInteger sizeT;
     int size = 0xFF & buffer.get();
-    if(size == 0xFF) {
+    if(size == 0) {
+      return LString.NULL;
+    } else if(size == 0xFF) {
       sizeT = header.sizeT.parse(buffer, header);
     } else {
       sizeT = new BInteger(size);
@@ -129,6 +131,9 @@ class LStringType54 extends LStringType {
   @Override
   public LString parse(final ByteBuffer buffer, BHeader header) {
     BInteger sizeT = header.sizeT.parse(buffer, header);
+    if(sizeT.asInt() == 0) {
+      return LString.NULL;
+    }
     final StringBuilder b = this.b.get();
     b.setLength(0);
     sizeT.iterate(new Runnable() {
@@ -154,9 +159,13 @@ class LStringType54 extends LStringType {
   
   @Override
   public void write(OutputStream out, BHeader header, LString string) throws IOException {
-    header.sizeT.write(out, header, header.sizeT.create(string.value.length() + 1));
-    for(int i = 0; i < string.value.length(); i++) {
-      out.write(string.value.charAt(i));
+    if(string == LString.NULL) {
+      header.sizeT.write(out, header, header.sizeT.create(0));
+    } else {
+      header.sizeT.write(out, header, header.sizeT.create(string.value.length() + 1));
+      for(int i = 0; i < string.value.length(); i++) {
+        out.write(string.value.charAt(i));
+      }
     }
   }
 }
