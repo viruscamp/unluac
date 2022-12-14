@@ -380,7 +380,7 @@ class LFunctionType54 extends LFunctionType {
     header.local.writeList(out, header, object.locals);
     int upvalueNameLength = 0;
     for(LUpvalue upvalue : object.upvalues) {
-      if(upvalue.bname != null) {
+      if(upvalue.bname != null && upvalue.bname != LString.NULL) {
         upvalueNameLength++;
       } else {
         break;
