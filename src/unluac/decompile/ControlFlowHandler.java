@@ -180,6 +180,9 @@ public class ControlFlowHandler {
   }
   
   private static int find_loadboolblock(State state, int target) {
+    if(target < 1) {
+      return -1;
+    }
     int loadboolblock = -1;
     Op op = state.code.op(target);
     if(op == Op.LOADBOOL) {

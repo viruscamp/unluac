@@ -43,6 +43,7 @@ public class TestFiles {
     new TestFile("while05"),
     new TestFile("while06"),
     new TestFile("while07"),
+    new TestFile("while08"),
     new TestFile("repeat"),
     new TestFile("repeat02"),
     new TestFile("repeat03"),
