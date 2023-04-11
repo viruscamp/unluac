@@ -779,11 +779,18 @@ public class ControlFlowHandler {
     if(!stack.isEmpty() && stack_reach(state, stack) <= line) {
       Branch top = stack.pop();
       int literalEnd = state.code.target(top.targetFirst - 1);
-      block = new IfThenEndBlock(
-        state.function, state.r, top.cond, top.targetFirst, top.targetSecond,
-        get_close_type(state, top.targetSecond - 1), top.targetSecond - 1,
-        literalEnd != top.targetSecond
-      );
+      if(state.function.header.version.useifbreakrewrite.get() && top.targetFirst + 1 == top.targetSecond && is_jmp(state, top.targetFirst)) {
+        // If this were actually an if statement, it would have been rewritten. It hasn't been, so it isn't...
+        block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1);
+        block.addStatement(new Goto(state.function, top.targetFirst - 1, top.targetSecond));
+        state.labels[top.targetSecond] = true;
+      } else {
+        block = new IfThenEndBlock(
+          state.function, state.r, top.cond, top.targetFirst, top.targetSecond,
+          get_close_type(state, top.targetSecond - 1), top.targetSecond - 1,
+          literalEnd != top.targetSecond
+        );
+      }
       state.blocks.add(block);
       remove_branch(state, top);
     }
