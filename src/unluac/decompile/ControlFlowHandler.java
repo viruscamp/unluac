@@ -120,7 +120,7 @@ public class ControlFlowHandler {
     resolve_lines(state);
     initialize_blocks(state);
     find_fixed_blocks(state);
-    find_while_loops(state);
+    find_while_loops(state, d.declList);
     find_repeat_loops(state);
     find_if_break(state, d.declList);
     find_set_blocks(state);
@@ -605,11 +605,11 @@ public class ControlFlowHandler {
     }
   }
   
-  private static void find_while_loops(State state) {
+  private static void find_while_loops(State state, Declaration[] declList) {
     List<Block> blocks = state.blocks;
     Branch j = state.end_branch;
     while(j != null) {
-      if(j.type == Branch.Type.jump && j.targetFirst <= j.line) {
+      if(j.type == Branch.Type.jump && j.targetFirst <= j.line && !splits_decl(j.targetFirst, j.targetFirst, j.line + 1, declList)) {
         int line = j.targetFirst;
         int loopback = line;
         int end = j.line + 1;
@@ -957,7 +957,7 @@ public class ControlFlowHandler {
           handled = true;
         }
         
-        if(!handled && !stack.isEmpty() && stack.peek().targetSecond - 1 == b.line && enclosing.contains(b.line, b.targetSecond)) {
+        if(!handled && !stack.isEmpty() && stack.peek().targetSecond - 1 == b.line && enclosing.contains(b.line, b.targetSecond) && b.targetSecond > b.line) {
           Branch top = stack.peek();
           while(top != null && top.targetSecond - 1 == b.line && splits_decl(top.line, top.targetFirst, top.targetSecond, declList)) {
             Block if_block = resolve_if_stack(state, stack, top.targetSecond);
