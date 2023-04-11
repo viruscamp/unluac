@@ -33,11 +33,15 @@ abstract public class Block extends Statement implements Comparable<Block> {
   public void resolve(Registers r) {}
   
   public boolean contains(Block block) {
-    return begin <= block.begin && end >= block.end;
+    return contains(block.begin, block.end);
   }
   
   public boolean contains(int line) {
     return begin <= line && line < end;
+  }
+  
+  public boolean contains(int begin, int end) {
+    return this.begin <= begin && this.end >= end;
   }
   
   public int scopeEnd() {

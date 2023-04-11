@@ -259,6 +259,7 @@ public class TestFiles {
     new TestFile("52_goto01"),
     new TestFile("52_goto02"),
     new TestFile("52_goto03"),
+    new TestFile("52_goto04"),
     new TestFile("53_expression"),
     new TestFile("53_expression02"),
     new TestFile("54_tbc01"),
