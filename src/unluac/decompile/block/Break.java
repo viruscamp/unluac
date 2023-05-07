@@ -42,6 +42,11 @@ public class Break extends Block {
   }
   
   @Override
+  public boolean hasHeader() {
+    return false;
+  }
+  
+  @Override
   public boolean isUnprotected() {
     //Actually, it is unprotected, but not really a block
     return false;

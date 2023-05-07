@@ -872,11 +872,6 @@ public class Decompiler {
         operations = Arrays.asList(operation);
         prevLocals = r.getNewLocals(line - 1);
       } else {
-        if(!labels_handled[line] && state.labels[line]) {
-          blockStack.peek().addStatement(new Label(line));
-          labels_handled[line] = true;
-        }
-        
         List<Declaration> locals = r.getNewLocals(line, blockStack.peek().closeRegister);
         while(blockContainerIndex < blockContainers.size() && blockContainers.get(blockContainerIndex).begin <= line) {
           Block next = blockContainers.get(blockContainerIndex++);
@@ -893,8 +888,22 @@ public class Decompiler {
             }
             blockStack.peek().addStatement(declaration);
           }
+          
+          if(!next.hasHeader()) {
+            if(!labels_handled[line] && state.labels[line]) {
+              blockStack.peek().addStatement(new Label(line));
+              labels_handled[line] = true;
+            }
+          }
+          
           blockStack.push(next);
         }
+        
+        if(!labels_handled[line] && state.labels[line]) {
+          blockStack.peek().addStatement(new Label(line));
+          labels_handled[line] = true;
+        }
+        
       }
       
       Block block = blockStack.peek();

@@ -35,6 +35,11 @@ public class ElseEndBlock extends ContainerBlock {
   }
   
   @Override
+  public boolean hasHeader() {
+    return true;
+  }
+  
+  @Override
   public boolean isUnprotected() {
     return false;
   }

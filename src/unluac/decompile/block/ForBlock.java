@@ -53,6 +53,11 @@ abstract public class ForBlock extends ContainerBlock {
   }
   
   @Override
+  public boolean hasHeader() {
+    return true;
+  }
+  
+  @Override
   public boolean isUnprotected() {
     return false;
   }

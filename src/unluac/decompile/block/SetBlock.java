@@ -50,6 +50,11 @@ public class SetBlock extends Block {
   }
   
   @Override
+  public boolean hasHeader() {
+    return true;
+  }
+  
+  @Override
   public boolean isUnprotected() {
     return false;
   }

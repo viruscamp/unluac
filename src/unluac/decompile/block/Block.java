@@ -64,6 +64,8 @@ abstract public class Block extends Statement implements Comparable<Block> {
     throw new IllegalStateException();
   }
   
+  abstract public boolean hasHeader();
+  
   /**
    * An unprotected block is one that ends in a JMP instruction.
    * If this is the case, any inner statement that tries to jump

@@ -1,5 +1,6 @@
 package unluac.decompile.block;
 
+import unluac.Version;
 import unluac.decompile.CloseType;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Function;
@@ -13,10 +14,12 @@ public class AlwaysLoop extends ContainerBlock {
   private final boolean repeat;
   
   private ConstantExpression condition;
+  private Version.WhileFormat whileFormat;
   
   public AlwaysLoop(LFunction function, int begin, int end, CloseType closeType, int closeLine, boolean repeat) {
     super(function, begin, end, closeType, closeLine, 0);
     this.repeat = repeat;
+    this.whileFormat = function.header.version.whileformat.get();
     condition = null;
   }
   
@@ -29,6 +32,17 @@ public class AlwaysLoop extends ContainerBlock {
   public boolean breakable() {
     return true;
   }
+  
+  @Override
+  public boolean hasHeader() {
+    if(whileFormat == Version.WhileFormat.BOTTOM_CONDITION) {
+      return !repeat;
+    } else {
+      return false;
+    }
+  }
+  
+  
   
   @Override
   public boolean isUnprotected() {

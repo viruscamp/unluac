@@ -41,6 +41,11 @@ public class Goto extends Block {
   }
   
   @Override
+  public boolean hasHeader() {
+    return true;
+  }
+  
+  @Override
   public boolean isUnprotected() {
     //Actually, it is unprotected, but not really a block
     return false;

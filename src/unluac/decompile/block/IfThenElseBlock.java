@@ -63,6 +63,11 @@ public class IfThenElseBlock extends ContainerBlock {
   }
   
   @Override
+  public boolean hasHeader() {
+    return true;
+  }
+  
+  @Override
   public boolean isUnprotected() {
     return true;
   }

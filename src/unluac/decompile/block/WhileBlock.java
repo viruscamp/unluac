@@ -41,6 +41,11 @@ abstract public class WhileBlock extends ContainerBlock {
   }
   
   @Override
+  public boolean hasHeader() {
+    return true;
+  }
+  
+  @Override
   public int getLoopback() {
     throw new IllegalStateException();
   }

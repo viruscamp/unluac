@@ -151,6 +151,11 @@ public class TForBlock extends ContainerBlock {
   }
   
   @Override
+  public boolean hasHeader() {
+    return true;
+  }
+  
+  @Override
   public boolean isUnprotected() {
     return false;
   }

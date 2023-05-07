@@ -18,6 +18,11 @@ public class DoEndBlock extends ContainerBlock {
   }
   
   @Override
+  public boolean hasHeader() {
+    return false;
+  }
+  
+  @Override
   public boolean isUnprotected() {
     return false;
   }
