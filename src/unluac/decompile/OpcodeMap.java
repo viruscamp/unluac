@@ -20,10 +20,12 @@ public class OpcodeMap {
     for(Entry<Integer, Op> entry : useropmap.entrySet()) {
       map[entry.getKey()] = entry.getValue();
     }
+    init_lookup();
     setup_lookup(false);
   }
   
   public OpcodeMap(Version.OpcodeMapType type) {
+    init_lookup();
     switch(type) {
       case LUA50:
         map = new Op[35];
@@ -62,6 +64,8 @@ public class OpcodeMap {
         map[32] = Op.SETLISTO;
         map[33] = Op.CLOSE;
         map[34] = Op.CLOSURE;
+        allow_51_math_lookup();
+        allow_53_math_lookup();
         break;
       case LUA51:
         map = new Op[38];
@@ -103,6 +107,7 @@ public class OpcodeMap {
         map[35] = Op.CLOSE;
         map[36] = Op.CLOSURE;
         map[37] = Op.VARARG;
+        allow_53_math_lookup();
         break;
       case LUA52:
         map = new Op[40];
@@ -146,6 +151,7 @@ public class OpcodeMap {
         map[37] = Op.CLOSURE;
         map[38] = Op.VARARG;
         map[39] = Op.EXTRAARG;
+        allow_53_math_lookup();
         break;
       case LUA53:
         map = new Op[47];
@@ -305,8 +311,32 @@ public class OpcodeMap {
     return map.length;
   }
   
-  private void setup_lookup(boolean validate) {
+  private void init_lookup() {
     lookup = new HashMap<String, Op>();
+  }
+  
+  private void allow_51_math_lookup() {
+    Op[] ops = {Op.MOD, Op.LEN};
+    allow_ops_lookup(ops);
+  }
+  
+  private void allow_53_math_lookup() {
+    Op[] ops = {Op.IDIV, Op.BAND, Op.BOR, Op.BXOR, Op.SHL, Op.SHR, Op.BNOT};
+    allow_ops_lookup(ops);
+  }
+  
+  private void allow_ops_lookup(Op[] ops) {
+    for(Op op : ops) {
+      String name = op.name;
+      if(!lookup.containsKey(name)) {
+        lookup.put(name, op);
+      } else {
+        throw new IllegalStateException();
+      }
+    }
+  }
+  
+  private void setup_lookup(boolean validate) {
     for(int i = 0; i < map.length; i++) {
       if(map[i] != null) {
         String name = map[i].name;
