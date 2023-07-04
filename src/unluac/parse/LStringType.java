@@ -48,15 +48,12 @@ class LStringType50 extends LStringType {
       return LString.NULL;
     } else {
       char last = b.charAt(b.length() - 1);
-      if(last != '\0') {
-        throw new IllegalStateException("String value does not have a null terminator");
-      }
       b.delete(b.length() - 1, b.length());
       String s = b.toString();
       if(header.debug) {
         System.out.println("-- parsed <string> \"" + s + "\"");
       }
-      return new LString(s);
+      return new LString(s, last);
     }
   }
   

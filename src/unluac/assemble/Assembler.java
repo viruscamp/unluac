@@ -724,12 +724,12 @@ class AssemblerChunk {
     if(string == null) {
       return LString.NULL;
     } else {
-      return new LString(string);
+      return new LString(string, '\0');
     }
   }
   
   private LString convert_long_string(BHeader header, String string) {
-    return new LString(string, true);
+    return new LString(string, '\0', true);
   }
 
 }
