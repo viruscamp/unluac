@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import unluac.Configuration;
 import unluac.Version;
 import unluac.decompile.CodeExtract;
 import unluac.decompile.Op;
@@ -515,11 +516,11 @@ class AssemblerChunk {
     }
     case INT_SIZE:
       int_size = a.getInteger();
-      integer = BIntegerType.create50Type(int_size);
+      integer = BIntegerType.create50Type(true, int_size, version.allownegativeint.get());
       break;
     case SIZE_T_SIZE:
       size_t_size = a.getInteger();
-      sizeT = BIntegerType.create50Type(size_t_size);
+      sizeT = BIntegerType.create50Type(false, size_t_size, false);
       break;
     case INSTRUCTION_SIZE:
       instruction_size = a.getInteger();
@@ -735,11 +736,13 @@ class AssemblerChunk {
 
 public class Assembler {
 
+  private Configuration config;
   private Tokenizer t;
   private OutputStream out;
   private Version version;
   
-  public Assembler(InputStream in, OutputStream out) {
+  public Assembler(Configuration config, InputStream in, OutputStream out) {
+    this.config = config;
     t = new Tokenizer(in);
     this.out = out;
   }
@@ -767,7 +770,7 @@ public class Assembler {
       throw new AssemblerException("Unsupported version " + tok);
     }
     
-    version = Version.getVersion(major, minor);
+    version = Version.getVersion(config, major, minor);
     
     if(version == null) {
       throw new AssemblerException("Unsupported version " + tok);

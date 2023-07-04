@@ -137,7 +137,7 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
     if(header.debug) {
       System.out.println("-- int size: " + intSize);
     }
-    s.integer = new BIntegerType50(intSize);
+    s.integer = new BIntegerType50(true, intSize, header.version.allownegativeint.get());
   }
   
   protected void write_int_size(OutputStream out, BHeader header, LHeader object) throws IOException {
@@ -150,7 +150,7 @@ abstract public class LHeaderType extends BObjectType<LHeader> {
     if(header.debug) {
       System.out.println("-- size_t size: " + sizeTSize);
     }
-    s.sizeT = new BIntegerType50(sizeTSize);
+    s.sizeT = new BIntegerType50(false, sizeTSize, false);
   }
   
   protected void write_size_t_size(OutputStream out, BHeader header, LHeader object) throws IOException {

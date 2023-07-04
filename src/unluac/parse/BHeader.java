@@ -85,7 +85,7 @@ public class BHeader {
     int major = versionNumber >> 4;
     int minor = versionNumber & 0x0F;
     
-    version = Version.getVersion(major, minor);
+    version = Version.getVersion(config, major, minor);
     if(version == null) {
       throw new IllegalStateException("The input chunk's Lua version is " + major + "." + minor + "; unluac can only handle Lua 5.0 - Lua 5.4.");
     }

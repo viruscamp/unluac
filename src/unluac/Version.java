@@ -13,8 +13,8 @@ import unluac.parse.LUpvalueType;
 
 public class Version {
 
-  public static Version getVersion(int major, int minor) {
-    return new Version(major, minor);
+  public static Version getVersion(Configuration config, int major, int minor) {
+    return new Version(config, major, minor);
   }
   
   public static class Setting<T> {
@@ -100,6 +100,12 @@ public class Version {
     LUA54,
   }
   
+  public static enum ListLengthMode {
+    STRICT, // Negative is illegal
+    ALLOW_NEGATIVE, // Negative treated as zero
+    IGNORE, // List length is already known; only accept 0 or else ignore
+  }
+  
   public final Setting<VarArgType> varargtype;
   public final Setting<Boolean> useupvaluecountinheader;
   public final Setting<InstructionFormat> instructionformat;
@@ -117,6 +123,11 @@ public class Version {
   public final Setting<Boolean> useifbreakrewrite;
   public final Setting<Boolean> usegoto;
   public final Setting<Integer> rkoffset;
+  public final Setting<Boolean> allownegativeint;
+  public final Setting<ListLengthMode> constantslengthmode;
+  public final Setting<ListLengthMode> functionslengthmode;
+  public final Setting<ListLengthMode> locallengthmode;
+  public final Setting<ListLengthMode> upvaluelengthmode;
   
   private final int major;
   private final int minor;
@@ -130,7 +141,7 @@ public class Version {
   private final OpcodeMap opcodemap;
   private final Op defaultop;
   
-  private Version(int major, int minor) {
+  private Version(Configuration config, int major, int minor) {
     HeaderType headertype;
     StringType stringtype;
     ConstantType constanttype;
@@ -140,6 +151,7 @@ public class Version {
     this.major = major;
     this.minor = minor;
     name = major + "." + minor;
+    final boolean luaj = config.luaj;
     if(major == 5 && minor >= 0 && minor <= 4) {
       switch(minor) {
         case 0:
@@ -167,6 +179,11 @@ public class Version {
           useifbreakrewrite = new Setting<>(false);
           usegoto = new Setting<>(false);
           rkoffset = new Setting<>(250);
+          allownegativeint = new Setting<Boolean>(false);
+          constantslengthmode = new Setting<>(ListLengthMode.STRICT);
+          functionslengthmode = new Setting<>(ListLengthMode.STRICT);
+          locallengthmode = new Setting<>(ListLengthMode.STRICT);
+          upvaluelengthmode = new Setting<>(ListLengthMode.STRICT);
           break;
         case 1:
           varargtype = new Setting<>(VarArgType.HYBRID);
@@ -193,6 +210,11 @@ public class Version {
           useifbreakrewrite = new Setting<>(false);
           usegoto = new Setting<>(false);
           rkoffset = new Setting<>(256);
+          allownegativeint = new Setting<Boolean>(luaj);
+          constantslengthmode = new Setting<>(luaj ? ListLengthMode.ALLOW_NEGATIVE : ListLengthMode.STRICT);
+          functionslengthmode = new Setting<>(luaj ? ListLengthMode.ALLOW_NEGATIVE : ListLengthMode.STRICT);
+          locallengthmode = new Setting<>(luaj ? ListLengthMode.ALLOW_NEGATIVE : ListLengthMode.STRICT);
+          upvaluelengthmode = new Setting<>(luaj ? ListLengthMode.ALLOW_NEGATIVE : ListLengthMode.STRICT);
           break;
         case 2:
           varargtype = new Setting<>(VarArgType.ELLIPSIS);
@@ -219,6 +241,11 @@ public class Version {
           useifbreakrewrite = new Setting<>(true);
           usegoto = new Setting<>(true);
           rkoffset = new Setting<>(256);
+          allownegativeint = new Setting<Boolean>(luaj);
+          constantslengthmode = new Setting<>(luaj ? ListLengthMode.ALLOW_NEGATIVE : ListLengthMode.STRICT);
+          functionslengthmode = new Setting<>(luaj ? ListLengthMode.ALLOW_NEGATIVE : ListLengthMode.STRICT);
+          locallengthmode = new Setting<>(luaj ? ListLengthMode.ALLOW_NEGATIVE : ListLengthMode.STRICT);
+          upvaluelengthmode = new Setting<>(luaj ? ListLengthMode.ALLOW_NEGATIVE : ListLengthMode.STRICT);
           break;
         case 3:
           varargtype = new Setting<>(VarArgType.ELLIPSIS);
@@ -245,6 +272,11 @@ public class Version {
           useifbreakrewrite = new Setting<>(true);
           usegoto = new Setting<>(true);
           rkoffset = new Setting<>(256);
+          allownegativeint = new Setting<Boolean>(true);
+          constantslengthmode = new Setting<>(ListLengthMode.STRICT);
+          functionslengthmode = new Setting<>(ListLengthMode.STRICT);
+          locallengthmode = new Setting<>(ListLengthMode.STRICT);
+          upvaluelengthmode = new Setting<>(ListLengthMode.STRICT);
           break;
         case 4:
           varargtype = new Setting<>(VarArgType.ELLIPSIS);
@@ -271,6 +303,11 @@ public class Version {
           useifbreakrewrite = new Setting<>(true);
           usegoto = new Setting<>(true);
           rkoffset = new Setting<>(null);
+          allownegativeint = new Setting<Boolean>(true);
+          constantslengthmode = new Setting<>(ListLengthMode.STRICT);
+          functionslengthmode = new Setting<>(ListLengthMode.STRICT);
+          locallengthmode = new Setting<>(ListLengthMode.STRICT);
+          upvaluelengthmode = new Setting<>(ListLengthMode.IGNORE);
           break;
         default: throw new IllegalStateException();
       }

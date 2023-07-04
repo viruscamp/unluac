@@ -40,6 +40,17 @@ public class BInteger extends BObject {
     }
   }
   
+  public int signum() {
+    if(big == null) {
+      if(n > 0) return 1;
+      if(n < 0) return -1;
+      if(n == 0) return 0;
+      throw new IllegalStateException();
+    } else {
+      return big.signum();
+    }
+  }
+  
   public byte[] littleEndianBytes(int size) {
     ArrayList<Byte> bytes = new ArrayList<Byte>();
     if(big == null) {
@@ -99,11 +110,17 @@ public class BInteger extends BObject {
   public void iterate(Runnable thunk) {
     if(big == null) {
       int i = n;
+      if(i < 0) {
+        throw new IllegalStateException("Illegal negative list length");
+      }
       while(i-- != 0) {
         thunk.run();
       }
     } else {
       BigInteger i = big;
+      if(i.signum() < 0) {
+        throw new IllegalStateException("Illegal negative list length");
+      }
       while(i.signum() > 0) {
         thunk.run();
         i = i.subtract(BigInteger.ONE);

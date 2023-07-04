@@ -24,6 +24,7 @@ public class Configuration {
   public Mode mode;
   public VariableMode variable;
   public boolean strict_scope;
+  public boolean luaj;
   public String opmap;
   public String output;
   
@@ -32,6 +33,7 @@ public class Configuration {
     mode = Mode.DECOMPILE;
     variable = VariableMode.DEFAULT;
     strict_scope = false;
+    luaj = false;
     opmap = null;
     output = null;
   }

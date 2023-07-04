@@ -60,7 +60,7 @@ abstract public class LFunctionType extends BObjectType<LFunction> {
     if(s.abslineinfo != null) {
       abslineinfo = s.abslineinfo.asArray(new LAbsLineInfo[s.abslineinfo.length.asInt()]);
     }
-    LFunction lfunc = new LFunction(header, s.name, s.lineBegin, s.lineEnd, s.code, lines, abslineinfo, s.locals.asArray(new LLocal[s.locals.length.asInt()]), s.constants.asArray(new LObject[s.constants.length.asInt()]), s.upvalues, s.functions.asArray(new LFunction[s.functions.length.asInt()]), s.maximumStackSize, s.lenUpvalues, s.lenParameter, s.vararg);
+    LFunction lfunc = new LFunction(header, s.name, s.lineBegin, s.lineEnd, s.code, lines, abslineinfo, s.locals.asArray(new LLocal[Math.max(0, s.locals.length.asInt())]), s.constants.asArray(new LObject[Math.max(0, s.constants.length.asInt())]), s.upvalues, s.functions.asArray(new LFunction[Math.max(0, s.functions.length.asInt())]), s.maximumStackSize, s.lenUpvalues, s.lenParameter, s.vararg);
     for(LFunction child : lfunc.functions) {
       child.parent = lfunc;
     }
@@ -147,12 +147,16 @@ abstract public class LFunctionType extends BObjectType<LFunction> {
     if(header.debug) {
       System.out.println("-- beginning to parse locals list");
     }
-    s.locals = header.local.parseList(buffer, header);
+    s.locals = header.local.parseList(buffer, header, header.version.locallengthmode.get());
+    parse_upvalue_names(buffer, header, s);
+  }
+  
+  protected void parse_upvalue_names(ByteBuffer buffer, BHeader header, LFunctionParseState s) {
     if(header.debug) {
-      System.out.println("-- beginning to parse upvalues list");
+      System.out.println("-- beginning to parse upvalue names list");
     }
-    BList<LString> upvalueNames = header.string.parseList(buffer, header);
-    for(int i = 0; i < upvalueNames.length.asInt(); i++) {
+    BList<LString> upvalueNames = header.string.parseList(buffer, header, header.version.upvaluelengthmode.get(), new BInteger(s.lenUpvalues));
+    for(int i = 0; i < Math.min(s.upvalues.length, upvalueNames.length.asInt()); i++) {
       s.upvalues[i].bname = upvalueNames.get(i);
       s.upvalues[i].name = s.upvalues[i].bname.deref();
     }
@@ -360,14 +364,10 @@ class LFunctionType54 extends LFunctionType {
   @Override
   protected void parse_debug(ByteBuffer buffer, BHeader header, LFunctionParseState s) {
     // TODO: process line info correctly
-    s.lines = (new BIntegerType50(1)).parseList(buffer, header);
+    s.lines = (new BIntegerType50(false, 1, false)).parseList(buffer, header);
     s.abslineinfo = header.abslineinfo.parseList(buffer, header);
     s.locals = header.local.parseList(buffer, header);
-    BList<LString> upvalueNames = header.string.parseList(buffer, header);
-    for(int i = 0; i < upvalueNames.length.asInt(); i++) {
-      s.upvalues[i].bname = upvalueNames.get(i);
-      s.upvalues[i].name = s.upvalues[i].bname.deref();
-    }
+    parse_upvalue_names(buffer, header, s);
   }
   
   @Override

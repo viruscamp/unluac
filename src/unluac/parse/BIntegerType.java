@@ -8,8 +8,8 @@ import java.nio.ByteOrder;
 
 abstract public class BIntegerType extends BObjectType<BInteger> {
   
-  public static BIntegerType create50Type(int intSize) {
-    return new BIntegerType50(intSize);
+  public static BIntegerType create50Type(boolean signed, int intSize, boolean allownegative) {
+    return new BIntegerType50(signed, intSize, allownegative);
   }
   
   public static BIntegerType create54() {
@@ -28,42 +28,57 @@ abstract public class BIntegerType extends BObjectType<BInteger> {
 
 class BIntegerType50 extends BIntegerType {
 
+  public final boolean signed;
   public final int intSize;
+  public final boolean allownegative;
   
-  public BIntegerType50(int intSize) {
+  public BIntegerType50(boolean signed, int intSize, boolean allownegative) {
+    this.signed = signed;
     this.intSize = intSize;
+    this.allownegative = allownegative;
   }
   
   protected BInteger raw_parse(ByteBuffer buffer, BHeader header) {
     BInteger value;
-    switch(intSize) {
-      case 0:
-        value = new BInteger(0);
-        break;
-      case 1:
-        value = new BInteger(buffer.get());
-        break;
-      case 2:
-        value = new BInteger(buffer.getShort());
-        break;
-      case 4:
-        value = new BInteger(buffer.getInt());
-        break;
-      default: {
-        byte[] bytes = new byte[intSize];
-        int start = 0;
-        int delta = 1;
-        if(buffer.order() == ByteOrder.LITTLE_ENDIAN) {
-          start = intSize - 1;
-          delta = -1;
-        }
-        for(int i = start; i >= 0 && i < intSize; i += delta) {
-          bytes[i] = buffer.get();
-        }
-        value = new BInteger(new BigInteger(bytes));
+    if(signed && (intSize == 0 || intSize == 1 || intSize == 2 || intSize == 4)) {
+      switch(intSize) {
+        case 0:
+          value = new BInteger(0);
+          break;
+        case 1:
+          value = new BInteger(buffer.get());
+          break;
+        case 2:
+          value = new BInteger(buffer.getShort());
+          break;
+        case 4:
+          value = new BInteger(buffer.getInt());
+          break;
+        default:
+          throw new IllegalStateException();  
       }
-        
+    } else {
+      byte[] bytes = new byte[intSize];
+      int start = 0;
+      int delta = 1;
+      if(buffer.order() == ByteOrder.LITTLE_ENDIAN) {
+        start = intSize - 1;
+        delta = -1;
+      }
+      for(int i = start; i >= 0 && i < intSize; i += delta) {
+        bytes[i] = buffer.get();
+      }
+      if(signed) {
+        value = new BInteger(new BigInteger(bytes));
+      } else {
+        value = new BInteger(new BigInteger(1, bytes));
+      }
     }
+
+    if(!allownegative && value.signum() < 0) {
+      throw new IllegalStateException("Illegal number");
+    }
+    
     return value;
   }
   

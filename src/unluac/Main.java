@@ -35,6 +35,8 @@ public class Main {
         // option
         if(arg.equals("--rawstring")) {
           config.rawstring = true;
+        } else if(arg.equals("--luaj")) {
+          config.luaj = true;
         } else if(arg.equals("--nodebug")) {
           config.variable = Configuration.VariableMode.NODEBUG;
         } else if(arg.equals("--disassemble")) {
@@ -97,6 +99,7 @@ public class Main {
         } else {
           try {
             Assembler a = new Assembler(
+              config,
               FileUtils.createSmartTextFileReader(new File(fn)),
               new FileOutputStream(config.output)
             );
@@ -174,7 +177,7 @@ public class Main {
   
   public static void assemble(String in, String out) throws IOException, AssemblerException {
     OutputStream outstream = new BufferedOutputStream(new FileOutputStream(new File(out)));
-    Assembler a = new Assembler(FileUtils.createSmartTextFileReader(new File(in)), outstream);
+    Assembler a = new Assembler(new Configuration(), FileUtils.createSmartTextFileReader(new File(in)), outstream);
     a.assemble();
     outstream.flush();
     outstream.close();
