@@ -41,6 +41,18 @@ public class LString extends LObject {
   }
   
   @Override
+  public String toShortString() {
+    if(this == NULL) {
+      return "null";
+    } else {
+      final int LIMIT = 20;
+      String suffix = "";
+      if(value.length() > LIMIT) suffix = " (truncated)";
+      return StringUtils.toPrintString(value, LIMIT) + suffix;
+    }
+  }
+  
+  @Override
   public boolean equals(Object o) {
     if(this == NULL || o == NULL) {
       return this == o;

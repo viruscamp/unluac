@@ -11,6 +11,10 @@ abstract public class LObject extends BObject {
     throw new IllegalStateException();
   }
   
+  public String toShortString() {
+    return toPrintString();
+  }
+  
   abstract public boolean equals(Object o);
   
 }

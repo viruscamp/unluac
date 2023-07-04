@@ -158,7 +158,7 @@ public class Code {
   }
   
   public String toString(int line) {
-    return op(line).codePointToString(codepoint(line), extractor, null);
+    return op(line).codePointToString(null, codepoint(line), extractor, null);
   }
   
 }

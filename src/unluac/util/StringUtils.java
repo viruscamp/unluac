@@ -3,10 +3,16 @@ package unluac.util;
 public class StringUtils {
 
   public static String toPrintString(String s) {
+    return toPrintString(s, -1);
+  }
+  
+  public static String toPrintString(String s, int limit) {
     if(s == null) return "null";
+    if(limit < 0) limit = s.length();
+    limit = Math.min(limit, s.length());
     StringBuilder b = new StringBuilder();
     b.append('"');
-    for(int i = 0; i < s.length(); i++) {
+    for(int i = 0; i < limit; i++) {
       char c = s.charAt(i);
       int ci = (int)c;
       if(c == '"') {

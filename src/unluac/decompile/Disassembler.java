@@ -121,9 +121,9 @@ public class Disassembler {
         }
       }
       if(op == null) {
-        out.println(Op.defaultToString(code.codepoint(line), function.header.version, code.getExtractor()));
+        out.println(Op.defaultToString(function, code.codepoint(line), function.header.version, code.getExtractor()));
       } else {
-        out.println(op.codePointToString(code.codepoint(line), code.getExtractor(), cpLabel));
+        out.println(op.codePointToString(function, code.codepoint(line), code.getExtractor(), cpLabel));
       }
       //out.println("\t" + code.opcode(line) + " " + code.A(line) + " " + code.B(line) + " " + code.C(line) + " " + code.Bx(line) + " " + code.sBx(line) + " " + code.codepoint(line));
     }

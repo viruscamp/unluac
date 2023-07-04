@@ -1,6 +1,7 @@
 package unluac.decompile;
 
 import unluac.Version;
+import unluac.parse.LFunction;
 
 class OpV {
   public static final int LUA50 = 1;
@@ -343,15 +344,16 @@ public enum Op {
     return false;
   }
   
-  public String codePointToString(int codepoint, CodeExtract ex, String label) {
-    return toStringHelper(name, operands, codepoint, ex, label);
+  public String codePointToString(LFunction function, int codepoint, CodeExtract ex, String label) {
+    return toStringHelper(function, name, operands, codepoint, ex, label);
   }
   
-  public static String defaultToString(int codepoint, Version version, CodeExtract ex) {
-    return toStringHelper(String.format("op%02d", ex.op.extract(codepoint)), version.getDefaultOp().operands, codepoint, ex, null);
+  public static String defaultToString(LFunction function, int codepoint, Version version, CodeExtract ex) {
+    return toStringHelper(function, String.format("op%02d", ex.op.extract(codepoint)), version.getDefaultOp().operands, codepoint, ex, null);
   }
   
-  private static String toStringHelper(String name, OperandFormat[] operands, int codepoint, CodeExtract ex, String label) {
+  private static String toStringHelper(LFunction function, String name, OperandFormat[] operands, int codepoint, CodeExtract ex, String label) {
+    int constant = -1;
     int width = 10;
     StringBuilder b = new StringBuilder();
     b.append(name);
@@ -383,13 +385,15 @@ public enum Op {
       case UPVALUE: parameters[i] = upvalueOperand(x); break;
       case REGISTER_K:
         if(ex.is_k(x)) {
-          parameters[i] = constantOperand(ex.get_k(x));
+          constant = ex.get_k(x);
+          parameters[i] = constantOperand(constant);
         } else {
           parameters[i] = registerOperand(x);
         }
         break;
       case REGISTER_K54:
         if(ex.k.extract(codepoint) != 0) {
+          constant = x;
           parameters[i] = constantOperand(x);
         } else {
           parameters[i] = registerOperand(x);
@@ -397,7 +401,10 @@ public enum Op {
         break;
       case CONSTANT:
       case CONSTANT_INTEGER:
-      case CONSTANT_STRING: parameters[i] = constantOperand(x); break;
+      case CONSTANT_STRING:
+        constant = x;
+        parameters[i] = constantOperand(x);
+        break;
       case FUNCTION: parameters[i] = functionOperand(x); break;
       case JUMP:
         if(label != null) {
@@ -423,6 +430,16 @@ public enum Op {
         b.append(' ');
       }
       b.append(parameter);
+    }
+    if(function != null && constant >= 0) {
+      b.append(" ; ");
+      b.append(constantOperand(constant));
+      if(constant < function.constants.length) {
+        b.append(" = ");
+        b.append(function.constants[constant].toShortString());
+      } else {
+        b.append(" out of range");
+      }
     }
     return b.toString();
   }
