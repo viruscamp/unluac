@@ -344,15 +344,15 @@ public enum Op {
     return false;
   }
   
-  public String codePointToString(LFunction function, int codepoint, CodeExtract ex, String label) {
-    return toStringHelper(function, name, operands, codepoint, ex, label);
+  public String codePointToString(LFunction function, int codepoint, CodeExtract ex, String label, boolean upvalue) {
+    return toStringHelper(function, name, operands, codepoint, ex, label, upvalue);
   }
   
-  public static String defaultToString(LFunction function, int codepoint, Version version, CodeExtract ex) {
-    return toStringHelper(function, String.format("op%02d", ex.op.extract(codepoint)), version.getDefaultOp().operands, codepoint, ex, null);
+  public static String defaultToString(LFunction function, int codepoint, Version version, CodeExtract ex, boolean upvalue) {
+    return toStringHelper(function, String.format("op%02d", ex.op.extract(codepoint)), version.getDefaultOp().operands, codepoint, ex, null, upvalue);
   }
   
-  private static String toStringHelper(LFunction function, String name, OperandFormat[] operands, int codepoint, CodeExtract ex, String label) {
+  private static String toStringHelper(LFunction function, String name, OperandFormat[] operands, int codepoint, CodeExtract ex, String label, boolean upvalue) {
     int constant = -1;
     int width = 10;
     StringBuilder b = new StringBuilder();
@@ -431,7 +431,9 @@ public enum Op {
       }
       b.append(parameter);
     }
-    if(function != null && constant >= 0) {
+    if(upvalue) {
+      b.append(" ; upvalue declaration");
+    } else if(function != null && constant >= 0) {
       b.append(" ; ");
       b.append(constantOperand(constant));
       if(constant < function.constants.length) {

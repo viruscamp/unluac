@@ -1,5 +1,6 @@
 package unluac.decompile;
 
+import unluac.Version;
 import unluac.assemble.Directive;
 import unluac.parse.LAbsLineInfo;
 import unluac.parse.LFunction;
@@ -100,6 +101,7 @@ public class Disassembler {
     }
     
     int abslineinfoindex = 0;
+    int upvalue_count = 0;
     
     for(int line = 1; line <= function.code.length; line++) {
       if(label[line - 1]) {
@@ -121,9 +123,22 @@ public class Disassembler {
         }
       }
       if(op == null) {
-        out.println(Op.defaultToString(function, code.codepoint(line), function.header.version, code.getExtractor()));
+        out.println(Op.defaultToString(function, code.codepoint(line), function.header.version, code.getExtractor(), upvalue_count > 0));
       } else {
-        out.println(op.codePointToString(function, code.codepoint(line), code.getExtractor(), cpLabel));
+        out.println(op.codePointToString(function, code.codepoint(line), code.getExtractor(), cpLabel, upvalue_count > 0));
+      }
+      if(upvalue_count > 0) {
+        upvalue_count--;
+      } else {
+        if(op == Op.CLOSURE && function.header.version.upvaluedeclarationtype.get() == Version.UpvalueDeclarationType.INLINE) {
+          int f = code.Bx(line);
+          if(f >= 0 && f < function.functions.length) {
+            LFunction closed = function.functions[f];
+            if(closed.numUpvalues > 0) {
+              upvalue_count = closed.numUpvalues;
+            }
+          }
+        }
       }
       //out.println("\t" + code.opcode(line) + " " + code.A(line) + " " + code.B(line) + " " + code.C(line) + " " + code.Bx(line) + " " + code.sBx(line) + " " + code.codepoint(line));
     }
