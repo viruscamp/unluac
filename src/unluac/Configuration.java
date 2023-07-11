@@ -12,6 +12,8 @@ public class Configuration {
     DECOMPILE,
     DISASSEMBLE,
     ASSEMBLE,
+    HELP,
+    VERSION,
   }
   
   public enum VariableMode {

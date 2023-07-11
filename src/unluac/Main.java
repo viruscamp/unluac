@@ -43,6 +43,10 @@ public class Main {
           config.mode = Mode.DISASSEMBLE;
         } else if(arg.equals("--assemble")) {
           config.mode = Mode.ASSEMBLE;
+        } else if(arg.equals("--help")) {
+          config.mode = Mode.HELP;
+        } else if(arg.equals("--version")) {
+          config.mode = Mode.VERSION;
         } else if(arg.equals("--output") || arg.equals("-o")) {
           if(i + 1 < args.length) {
             config.output = args[i + 1];
@@ -66,10 +70,16 @@ public class Main {
         error("too many arguments: " + arg, true);
       }
     }
-    if(fn == null) {
+    if(fn == null && config.mode != Mode.HELP && config.mode != Mode.VERSION) {
       error("no input file provided", true);
     } else {
       switch(config.mode) {
+      case HELP:
+        help();
+        break;
+      case VERSION:
+        System.out.println(version);
+        break;
       case DECOMPILE: {
         LFunction lmain = null;
         try {
@@ -120,13 +130,35 @@ public class Main {
   }
   
   public static void error(String err, boolean usage) {
-    System.err.println("unluac v" + version);
+    print_unluac_string(System.err);
     System.err.print("  error: ");
     System.err.println(err);
     if(usage) {
-      System.err.println("  usage: java -jar unluac.jar [options] <file>");
+      print_usage(System.err);
+      System.err.println("For information about options, use option: --help");
     }
     System.exit(1);
+  }
+  
+  public static void help() {
+    print_unluac_string(System.out);
+    print_usage(System.out);
+    System.out.println("Available options are:");
+    System.out.println("  --assemble       assemble given disassembly listing");
+    System.out.println("  --disassemble    disassemble instead of decompile");
+    System.out.println("  --nodebug        ignore debugging information in input file");
+    System.out.println("  --opmap <file>   use opcode mapping specified in <file>");
+    System.out.println("  --output <file>  output to <file> instead of stdout");
+    System.out.println("  --rawstring      copy string bytes directly to output");
+    System.out.println("  --luaj           emulate Luaj's permissive parser");
+  }
+  
+  private static void print_unluac_string(PrintStream out) {
+    out.println("unluac v" + version);
+  }
+  
+  private static void print_usage(PrintStream out) {
+    out.println("  usage: java -jar unluac.jar [options] <file>");
   }
   
   private static LFunction file_to_function(String fn, Configuration config) throws IOException {
