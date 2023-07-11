@@ -344,15 +344,15 @@ public enum Op {
     return false;
   }
   
-  public String codePointToString(LFunction function, int codepoint, CodeExtract ex, String label, boolean upvalue) {
-    return toStringHelper(function, name, operands, codepoint, ex, label, upvalue);
+  public String codePointToString(int flags, LFunction function, int codepoint, CodeExtract ex, String label, boolean upvalue) {
+    return toStringHelper(flags, function, name, operands, codepoint, ex, label, upvalue);
   }
   
-  public static String defaultToString(LFunction function, int codepoint, Version version, CodeExtract ex, boolean upvalue) {
-    return toStringHelper(function, String.format("op%02d", ex.op.extract(codepoint)), version.getDefaultOp().operands, codepoint, ex, null, upvalue);
+  public static String defaultToString(int flags, LFunction function, int codepoint, Version version, CodeExtract ex, boolean upvalue) {
+    return toStringHelper(flags, function, String.format("op%02d", ex.op.extract(codepoint)), version.getDefaultOp().operands, codepoint, ex, null, upvalue);
   }
   
-  private static String toStringHelper(LFunction function, String name, OperandFormat[] operands, int codepoint, CodeExtract ex, String label, boolean upvalue) {
+  private static String toStringHelper(int flags, LFunction function, String name, OperandFormat[] operands, int codepoint, CodeExtract ex, String label, boolean upvalue) {
     int constant = -1;
     int width = 10;
     StringBuilder b = new StringBuilder();
@@ -438,7 +438,7 @@ public enum Op {
       b.append(constantOperand(constant));
       if(constant < function.constants.length) {
         b.append(" = ");
-        b.append(function.constants[constant].toShortString());
+        b.append(function.constants[constant].toPrintString(flags | PrintFlag.SHORT));
       } else {
         b.append(" out of range");
       }

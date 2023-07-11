@@ -79,10 +79,10 @@ public enum Directive {
     }
   }
   
-  public void disassemble(Output out, BHeader chunk, LFunction function) {
+  public void disassemble(Output out, BHeader chunk, LFunction function, int print_flags) {
     out.print(this.token + "\t");
     switch(this) {
-    case SOURCE: out.println(function.name.toPrintString()); break;
+    case SOURCE: out.println(function.name.toPrintString(print_flags)); break;
     case LINEDEFINED: out.println(String.valueOf(function.linedefined)); break;
     case LASTLINEDEFINED: out.println(String.valueOf(function.lastlinedefined)); break;
     case NUMPARAMS: out.println(String.valueOf(function.numParams)); break;

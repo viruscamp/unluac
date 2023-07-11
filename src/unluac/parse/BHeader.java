@@ -23,7 +23,7 @@ public class BHeader {
     0x1B, 0x4C, 0x75, 0x61,
   };
   
-  public final boolean debug = false;
+  public final boolean debug = true;
   
   public final Configuration config;
   public final Version version;

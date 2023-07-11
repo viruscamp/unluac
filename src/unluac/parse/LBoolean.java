@@ -15,7 +15,8 @@ public class LBoolean extends LObject {
     return value;
   }
   
-  public String toPrintString() {
+  @Override
+  public String toPrintString(int flags) {
     return Boolean.toString(value);
   }
   

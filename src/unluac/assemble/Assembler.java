@@ -57,6 +57,7 @@ class AssemblerConstant {
     FLOAT,
     STRING,
     LONGSTRING,
+    NAN,
   }
   
   public String name;
@@ -66,6 +67,7 @@ class AssemblerConstant {
   public double numberValue;
   public String stringValue;
   public BigInteger integerValue;
+  public long nanValue;
 }
 
 class AssemblerAbsLineInfo {
@@ -247,10 +249,22 @@ class AssemblerFunction {
       } else if(value.equals("null")) {
         constant.type = AssemblerConstant.Type.STRING;
         constant.stringValue = null;
+      } else if(value.equals("NaN")) {
+        constant.type = AssemblerConstant.Type.NAN;
+        constant.nanValue = 0;
       } else {
         try {
-          // TODO: better check
-          if(chunk.number != null) {
+          if(value.startsWith("NaN+") || value.startsWith("NaN-")) {
+            long bits = Long.parseUnsignedLong(value.substring(4), 16);
+            if(bits < 0 || (bits & Double.doubleToRawLongBits(Double.NaN)) != 0) {
+              throw new AssemblerException("Unrecognized NaN value: " + value);
+            }
+            if(value.startsWith("NaN-")) {
+              bits ^= 0x8000000000000000L;
+            }
+            constant.type = AssemblerConstant.Type.NAN;
+            constant.nanValue = bits;
+          } else if(chunk.number != null) { // TODO: better check
             constant.numberValue = Double.parseDouble(value);
             constant.type = AssemblerConstant.Type.NUMBER;
           } else {
@@ -263,7 +277,7 @@ class AssemblerFunction {
             }
           }
         } catch(NumberFormatException e) {
-          throw new IllegalStateException("Unrecognized constant value: " + value);
+          throw new AssemblerException("Unrecognized constant value: " + value);
         }
       }
       constants.add(constant);
@@ -681,6 +695,13 @@ class AssemblerChunk {
         break;
       case LONGSTRING:
         object = convert_long_string(header, constant.stringValue);
+        break;
+      case NAN:
+        if(header.number != null) {
+          object = header.number.createNaN(constant.nanValue);
+        } else {
+          object = header.lfloat.createNaN(constant.nanValue);
+        }
         break;
       default:
         throw new IllegalStateException();

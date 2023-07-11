@@ -8,6 +8,7 @@ public class TestFiles {
     new TestFile("number01"),
     new TestFile("number02"),
     new TestFile("number03"),
+    new TestFile("number04"),
     new TestFile("multiassign"),
     new TestFile("multiassign02"),
     new TestFile("multiassign03"),

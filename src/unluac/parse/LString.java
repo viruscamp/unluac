@@ -1,5 +1,6 @@
 package unluac.parse;
 
+import unluac.decompile.PrintFlag;
 import unluac.util.StringUtils;
 
 public class LString extends LObject {
@@ -30,25 +31,20 @@ public class LString extends LObject {
   }
   
   @Override
-  public String toPrintString() {
+  public String toPrintString(int flags) {
     if(this == NULL) {
       return "null";
     } else {
       String prefix = "";
-      if(islong) prefix = "L";
-      return prefix + StringUtils.toPrintString(value);
-    }
-  }
-  
-  @Override
-  public String toShortString() {
-    if(this == NULL) {
-      return "null";
-    } else {
-      final int LIMIT = 20;
       String suffix = "";
-      if(value.length() > LIMIT) suffix = " (truncated)";
-      return StringUtils.toPrintString(value, LIMIT) + suffix;
+      if(islong) prefix = "L";
+      if(PrintFlag.test(flags, PrintFlag.SHORT)) {
+        final int LIMIT = 20;
+        if(value.length() > LIMIT) suffix = " (truncated)";
+        return prefix + StringUtils.toPrintString(value, LIMIT) + suffix;
+      } else {
+        return prefix + StringUtils.toPrintString(value);
+      }
     }
   }
   

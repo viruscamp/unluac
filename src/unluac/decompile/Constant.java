@@ -71,7 +71,7 @@ public class Constant {
         out.print(bool ? "true" : "false");
         break;
       case NUMBER:
-        out.print(number.toPrintString());
+        out.print(number.toPrintString(0));
         break;
       case STRING:
         int newlines = 0;
