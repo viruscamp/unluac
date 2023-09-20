@@ -743,7 +743,14 @@ public class Decompiler {
         break;
       case VARARG: {
         boolean multiple = (B != 2);
-        if(B == 1) throw new IllegalStateException();
+        
+        // B == 1 means no registers are set; this should only happen when the VARARG
+        // appears on the right-hand side of an assignment without enough targets.
+        // Should be multiple (as not adjusted "(...)"), and we need to pretend it's
+        // an actual operation so we can capture it...
+        // (luac allocates stack space even though it doesn't technically use it)
+        if(B == 1) B = 2;
+        
         if(B == 0) B = registers - A + 1;
         Expression value = new Vararg(B - 1, multiple);
         operations.add(new MultipleRegisterSet(line, A, A + B - 2, value));
@@ -751,7 +758,7 @@ public class Decompiler {
       }
       case VARARG54: {
         boolean multiple = (C != 2);
-        if(C == 1) throw new IllegalStateException();
+        if(C == 1) C = 2; // see above
         if(C == 0) C = registers - A + 1;
         Expression value = new Vararg(C - 1, multiple);
         operations.add(new MultipleRegisterSet(line, A, A + C - 2, value));
@@ -811,6 +818,16 @@ public class Decompiler {
             nextLine++;
           } else {
             break;
+          }
+        }
+        if(line >= 2 && isMoveIntoTarget(r, line)) {
+          int lastUsed = getMoveIntoTargetValueRegister(r, line, line);
+          int lastLoaded = getRegister(line - 1);
+          if(!r.isLocal(lastLoaded, line - 1)) {
+            while(lastUsed < lastLoaded) {
+              lastUsed++;
+              assign.addExcessValue(r.getValue(lastUsed, line), r.getUpdated(lastUsed, line), lastUsed);
+            }
           }
         }
       }
@@ -960,11 +977,23 @@ public class Decompiler {
             }
           }
         }
-          
+        
+        boolean firstProcess = !assignment.isDeclaration();
         assignment.declare(locals.get(0).begin);
+        int lastAssigned = locals.get(0).register;
         for(Declaration decl : locals) {
           if((scopeEnd == -1 || decl.end == scopeEnd) && decl.register >= block.closeRegister) {
             assignment.addLast(new VariableTarget(decl), r.getValue(decl.register, line + 1), r.getUpdated(decl.register, line - 1));
+            lastAssigned = decl.register;
+          }
+        }
+        
+        if(firstProcess) {
+          // only populate once (excess detection can fail on later lines)
+          int lastLoaded = getRegister(line);
+          while(lastAssigned < lastLoaded) {
+            lastAssigned++;
+            assignment.addExcessValue(r.getValue(lastAssigned, line + 1), r.getUpdated(lastAssigned, line), lastAssigned);
           }
         }
       }
@@ -1065,6 +1094,45 @@ public class Decompiler {
       default:
         throw new IllegalStateException();
     }
+  }
+  
+  private int getMoveIntoTargetValueRegister(Registers r, int line, int previous) {
+    int A = code.A(line);
+    int B = code.B(line);
+    int C = code.C(line);
+    switch(code.op(line)) {
+      case MOVE:
+        return B;
+      case SETUPVAL:
+      case SETGLOBAL:
+        return A;
+      case SETTABLE:
+      case SETTABUP:
+        if(f.isConstant(C)) {
+          throw new IllegalStateException();
+        } else {
+          return C;
+        }
+      case SETTABLE54:
+      case SETI:
+      case SETFIELD:
+      case SETTABUP54:
+        if(code.k(line)) {
+          throw new IllegalStateException();
+        } else {
+          return C;
+        }
+      default:
+        throw new IllegalStateException();
+    }
+  }
+  
+  public int getRegister(int line) {
+    while(code.isUpvalueDeclaration(line) || code.op(line) == Op.EXTRAARG || code.op(line) == Op.EXTRABYTE) {
+      if(line == 1) return -1;
+      line--;
+    }
+    return code.register(line);
   }
   
 }

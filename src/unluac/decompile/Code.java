@@ -142,6 +142,10 @@ public class Code {
     return line + 1 + op(line).jumpField(codepoint(line), extractor);
   }
   
+  public int register(int line) {
+    return op(line).target(codepoint(line), extractor);
+  }
+  
   /**
    * Returns the full instruction codepoint at the given line.
    */

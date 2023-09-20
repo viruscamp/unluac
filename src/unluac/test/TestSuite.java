@@ -85,8 +85,8 @@ public class TestSuite {
       working.mkdir();
     }
     for(TestFile testfile : files) {
-      String name = testfile.name;
-      if(spec.compatible(name)) {
+      if(spec.compatible(testfile)) {
+        String name = testfile.name;
         Configuration config = configure(testfile, base);
         TestResult result = test(spec, uspec, path + name + ext, config);
         report.result(testName(spec, name), result);

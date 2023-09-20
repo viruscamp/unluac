@@ -290,7 +290,7 @@ public enum Op {
       case VARARG: {
         int a = ex.A.extract(codepoint);
         int b = ex.B.extract(codepoint);
-        if(b == 2) {
+        if(b == 1 || b == 2) {
           return a;
         } else {
           return -1;
@@ -299,7 +299,7 @@ public enum Op {
       case VARARG54: {
         int a = ex.A.extract(codepoint);
         int c = ex.C.extract(codepoint);
-        if(c == 2) {
+        if(c == 1 || c == 2) {
           return a;
         } else {
           return -1;

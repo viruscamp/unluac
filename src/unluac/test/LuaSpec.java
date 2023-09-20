@@ -55,6 +55,14 @@ public class LuaSpec {
     }
   }
   
+  public boolean compatible(TestFile testfile) {
+    if(testfile.version == TestFile.DEFAULT_VERSION) {
+      return compatible(testfile.name);
+    } else {
+      return this.version >= testfile.version;
+    }
+  }
+  
   public boolean compatible(String filename) {
     int version = 0;
     int underscore = filename.indexOf('_');

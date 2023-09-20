@@ -96,7 +96,15 @@ public class IfThenEndBlock extends ContainerBlock {
           }
         }
       }
-      if(assign != null && (cond.isRegisterTest() || cond.isOrCondition() || assign.isDeclaration()) && assign.getLastTarget().isLocal() && assign.getLastTarget().getIndex() == test || statements.isEmpty()) {
+      boolean assignMatches = false;
+      if(assign != null) {
+        if(assign.hasExcess()) {
+          assignMatches = assign.getLastRegister() == test;
+        } else {
+          assignMatches = assign.getLastTarget().isLocal() && assign.getLastTarget().getIndex() == test;
+        }
+      }
+      if(assign != null && (cond.isRegisterTest() || cond.isOrCondition() || assign.isDeclaration()) && assignMatches || statements.isEmpty()) {
         FinalSetCondition finalset = new FinalSetCondition(end - 1, test);
         finalset.type = FinalSetCondition.Type.VALUE;
         Condition combined;

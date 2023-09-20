@@ -16,10 +16,11 @@ public class Assignment extends Statement {
   private final ArrayList<Target> targets = new ArrayList<Target>(5);
   private final ArrayList<Expression> values = new ArrayList<Expression>(5);
   private final ArrayList<Integer> lines = new ArrayList<Integer>(5);
-
+  
   private boolean allnil = true;
   private boolean declare = false;
   private int declareStart = 0;
+  private int register = -1;
   
   public Assignment() {
     
@@ -95,10 +96,34 @@ public class Assignment extends Statement {
       value = values.remove(index);
       lines.remove(index);
     }
+    int index = targets.size();
     targets.add(target);
+    values.add(index, value);
+    lines.add(index, line);
+    allnil = allnil && value.isNil();
+  }
+  
+  public boolean hasExcess() {
+    return values.size() > targets.size();
+  }
+  
+  public void addExcessValue(Expression value, int line, int register) {
     values.add(value);
     lines.add(line);
-    allnil = allnil && value.isNil();
+    allnil = false; // Excess can't be implicit
+    int firstRegister = register - (values.size() - 1);
+    if(this.register != -1 && this.register != firstRegister) throw new IllegalStateException();
+    this.register = firstRegister;
+  }
+  
+  public int getRegister(int index) {
+    if(index < 0 || index >= values.size()) throw new IndexOutOfBoundsException();
+    if(register == -1) throw new IllegalStateException();
+    return register + index;
+  }
+  
+  public int getLastRegister() {
+    return getRegister(values.size() - 1);
   }
   
   public Expression getValue(int target) {
