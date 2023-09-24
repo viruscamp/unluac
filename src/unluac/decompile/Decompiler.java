@@ -58,9 +58,19 @@ public class Decompiler {
   
   public static class State {
     private Registers r;
-    private boolean[] skip;
+    private byte[] flags;
     private Block outer;
-    private boolean[] labels;
+  }
+  
+  public static enum Flag {
+    SKIP,
+    LABELS;
+    
+    public final int bit;
+    
+    private Flag() {
+      bit = 1 << this.ordinal();
+    }
   }
   
   public Decompiler(LFunction function) {
@@ -126,7 +136,10 @@ public class Decompiler {
     ControlFlowHandler.Result result = ControlFlowHandler.process(this, state.r);
     List<Block> blocks = result.blocks;
     state.outer = blocks.get(0);
-    state.labels = result.labels;
+    state.flags = new byte[code.length + 1];
+    for(int i = 1; i <= code.length; i++) {
+      if(result.labels[i]) state.flags[i] |= Flag.LABELS.bit;
+    }
     processSequence(state, blocks, 1, code.length);
     for(Block block : blocks) {
       block.resolve(state.r);
@@ -290,7 +303,7 @@ public class Decompiler {
   
   private List<Operation> processLine(State state, int line) {
     Registers r = state.r;
-    boolean[] skip = state.skip;
+    byte[] flags = state.flags;
     List<Operation> operations = new LinkedList<Operation>();
     int A = code.A(line);
     int B = code.B(line);
@@ -641,7 +654,7 @@ public class Decompiler {
         }
         FunctionCall value = new FunctionCall(function, arguments, true);
         operations.add(new ReturnOperation(line, value));
-        skip[line + 1] = true;
+        flags[line + 1] |= Flag.SKIP.bit;
         break;
       }
       case RETURN:
@@ -678,7 +691,7 @@ public class Decompiler {
       case SETLIST: {
         if(C == 0) {
           C = code.codepoint(line + 1);
-          skip[line + 1] = true;
+          flags[line + 1] |= Flag.SKIP.bit;
         }
         if(B == 0) {
           B = registers - A - 1;
@@ -690,7 +703,7 @@ public class Decompiler {
         if(C == 0) {
           if(line + 1 > code.length || code.op(line + 1) != Op.EXTRAARG) throw new IllegalStateException();
           C = code.Ax(line + 1);
-          skip[line + 1] = true;
+          flags[line + 1] |= Flag.SKIP.bit;
         }
         if(B == 0) {
           B = registers - A - 1;
@@ -702,7 +715,7 @@ public class Decompiler {
         if(code.k(line)) {
           if(line + 1 > code.length || code.op(line + 1) != Op.EXTRAARG) throw new IllegalStateException();
           C += code.Ax(line + 1) * (code.getExtractor().C.max() + 1);
-          skip[line + 1] = true;
+          flags[line + 1] |= Flag.SKIP.bit;
         }
         if(B == 0) {
           B = registers - A - 1;
@@ -733,7 +746,7 @@ public class Decompiler {
                 throw new IllegalStateException();
             }
             upvalue.idx = code.B(line + 1 + i);
-            skip[line + 1 + i] = true;
+            flags[line + 1 + i] |= Flag.SKIP.bit;
           }
         }
         break;
@@ -786,7 +799,7 @@ public class Decompiler {
   
   private Assignment processOperation(State state, Operation operation, int line, int nextLine, Block block) {
     Registers r = state.r;
-    boolean[] skip = state.skip;
+    byte[] flags = state.flags;
     Assignment assign = null;
     List<Statement> stmts = operation.process(r, block);
     if(stmts.size() == 1) {
@@ -811,7 +824,7 @@ public class Decompiler {
             Target target = getMoveIntoTargetTarget(r, nextLine, line + 1);
             Expression value = getMoveIntoTargetValue(r, nextLine, line + 1); //updated?
             assign.addFirst(target, value, nextLine);
-            skip[nextLine] = true;
+            flags[nextLine] |= Flag.SKIP.bit;
             nextLine++;
           } else if(op == Op.MMBIN || op == Op.MMBINI || op == Op.MMBINK || code.isUpvalueDeclaration(nextLine)) {
             // skip
@@ -844,7 +857,7 @@ public class Decompiler {
       state.r = new Registers(registers, length, declList, f, getNoDebug());
       state.outer = new OuterBlock(function, code.length);
       Block scoped = new DoEndBlock(function, begin, end + 1);
-      state.labels = new boolean[code.length + 1];
+      state.flags = new byte[code.length + 1];
       List<Block> blocks = Arrays.asList(state.outer, scoped);
       processSequence(state, blocks, 1, code.length);
       return !scoped.isEmpty();
@@ -869,8 +882,7 @@ public class Decompiler {
     Stack<Block> blockStack = new Stack<Block>();
     blockStack.push(blockContainers.get(blockContainerIndex++));
     
-    state.skip = new boolean[code.length + 1];
-    boolean[] skip = state.skip;
+    byte[] flags = state.flags;
     boolean[] labels_handled = new boolean[code.length + 1];
     
     int line = 1;
@@ -907,7 +919,7 @@ public class Decompiler {
           }
           
           if(!next.hasHeader()) {
-            if(!labels_handled[line] && state.labels[line]) {
+            if(!labels_handled[line] && ((flags[line] & Flag.LABELS.bit) != 0)) {
               blockStack.peek().addStatement(new Label(line));
               labels_handled[line] = true;
             }
@@ -916,7 +928,7 @@ public class Decompiler {
           blockStack.push(next);
         }
         
-        if(!labels_handled[line] && state.labels[line]) {
+        if(!labels_handled[line] && ((flags[line] & Flag.LABELS.bit) != 0)) {
           blockStack.peek().addStatement(new Label(line));
           labels_handled[line] = true;
         }
@@ -936,7 +948,7 @@ public class Decompiler {
         } else {
           // After all blocks are handled for a line, we will reach here
           nextline = line + 1;
-          if(!skip[line] && line >= begin && line <= end) {
+          if(!((flags[line] & Flag.SKIP.bit) != 0) && line >= begin && line <= end) {
             operations = processLine(state, line);
           } else {
             operations = Collections.emptyList();
