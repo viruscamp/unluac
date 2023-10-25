@@ -281,7 +281,7 @@ public enum Op {
       case CALL: {
         int a = ex.A.extract(codepoint);
         int c = ex.C.extract(codepoint);
-        if(c == 2) {
+        if(c == 1 || c == 2) {
           return a;
         } else {
           return -1; 

@@ -24,6 +24,7 @@ public class TestFiles {
     new TestFile("excess01"),
     new TestFile("excess02", 0x51),
     new TestFile("excess03"),
+    new TestFile("excess04"),
     new TestFile("expression"),
     new TestFile("expression02"),
     new TestFile("functioncall"),

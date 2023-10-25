@@ -633,9 +633,10 @@ public class Decompiler {
           arguments[register - A - 1] = r.getExpression(register, line);
         }
         FunctionCall value = new FunctionCall(function, arguments, multiple);
-        if(C == 1) {
+        if(C == 1 && !(A > 0 && (!r.isLocal(A - 1, line) || r.isNewLocal(A - 1, line)))) {
           operations.add(new CallOperation(line, value));
         } else {
+          if(C == 1) C = 2;
           if(C == 2 && !multiple) {
             operations.add(new RegisterSet(line, A, value));
           } else {
