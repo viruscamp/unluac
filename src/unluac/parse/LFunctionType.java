@@ -8,6 +8,8 @@ import java.util.List;
 
 import unluac.Version;
 import unluac.assemble.Directive;
+import unluac.decompile.CodeExtract;
+import unluac.decompile.Op;
 
 
 abstract public class LFunctionType extends BObjectType<LFunction> {
@@ -83,7 +85,15 @@ abstract public class LFunctionType extends BObjectType<LFunction> {
     for(int i = 0; i < s.length; i++) {
       s.code[i] = buffer.getInt();
       if(header.debug) {
-        System.out.println("-- parsed codepoint " + Integer.toHexString(s.code[i]));
+        int codepoint = s.code[i];
+        CodeExtract ex = header.extractor;
+        Op op = header.opmap.get(ex.op.extract(codepoint));
+        System.out.println("-- parsed codepoint " + Integer.toHexString(codepoint));
+        if(op != null) {
+          System.out.println("-- " + op.codePointToString(0, null, codepoint, ex, null, false));
+        } else {
+          System.out.println("-- " + Op.defaultToString(0, null, codepoint, header.version, ex, false));
+        }
       }
     }
   }
