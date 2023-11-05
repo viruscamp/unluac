@@ -42,6 +42,7 @@ public class Declaration {
   
   public boolean isSplitBy(int line, int begin, int end) {
     int scopeEnd = end - 1;
+    if(begin == end) begin = begin - 1;
     return this.begin >= line && this.begin < begin
       || this.end >= line && this.end < begin
       || this.begin < begin && this.end >= begin && this.end < scopeEnd
