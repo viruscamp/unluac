@@ -200,9 +200,6 @@ public class Assignment extends Statement {
   @Override
   public void print(Decompiler d, Output out) {
     if(!targets.isEmpty()) {
-      if(declare) {
-        out.print("local ");
-      }
       boolean functionSugar = false;
       if(targets.size() == 1 && values.size() == 1 && values.get(0).isClosure() && targets.get(0).isFunctionName()) {
         Expression closure = values.get(0);
@@ -216,6 +213,12 @@ public class Assignment extends Statement {
           functionSugar = true;
         }
         //if(closure.isUpvalueOf(targets.get(0).))
+      }
+      if(functionSugar) {
+        out.paragraph();
+      }
+      if(declare) {
+        out.print("local ");
       }
       if(!functionSugar) {
         targets.get(0).print(d, out, declare);
@@ -255,6 +258,7 @@ public class Assignment extends Statement {
         }
       } else {
         values.get(0).printClosure(d, out, targets.get(0));
+        out.paragraph();
       }
       if(comment != null) {
         out.print(" -- ");
