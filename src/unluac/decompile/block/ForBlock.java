@@ -13,17 +13,17 @@ import unluac.parse.LFunction;
 abstract public class ForBlock extends ContainerBlock {
 
   protected final int register;
-  protected final boolean forvarClose;
+  protected final boolean forvarPreClose;
   
   protected Target target;
   protected Expression start;
   protected Expression stop;
   protected Expression step;
   
-  public ForBlock(LFunction function, int begin, int end, int register, CloseType closeType, int closeLine, boolean forvarClose) {
+  public ForBlock(LFunction function, int begin, int end, int register, CloseType closeType, int closeLine, boolean forvarPreClose) {
     super(function, begin, end, closeType, closeLine, -1);
     this.register = register;
-    this.forvarClose = forvarClose;
+    this.forvarPreClose = forvarPreClose;
   }
 
   abstract public void handleVariableDeclarations(Registers r);
@@ -42,7 +42,7 @@ abstract public class ForBlock extends ContainerBlock {
   @Override
   public int scopeEnd() {
     int scopeEnd = end - 2;
-    if(forvarClose) scopeEnd--;
+    if(forvarPreClose) scopeEnd--;
     if(usingClose && (closeType == CloseType.CLOSE || closeType == CloseType.JMP)) scopeEnd--;
     return scopeEnd;
   }

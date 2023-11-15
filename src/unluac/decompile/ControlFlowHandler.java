@@ -527,17 +527,22 @@ public class ControlFlowHandler {
           
           int A = code.A(line);
           int target = code.target(line);
+          int begin = line + 1;
+          int end = target + 1;
           
-          boolean forvarClose = false;
+          boolean forvarPreClose = false;
+          boolean forvarPostClose = false;
           int closeLine = target - 1;
           if(closeLine >= line + 1 && is_close(state, closeLine) && code.A(closeLine) == A + 3) {
-            forvarClose = true;
+            forvarPreClose = true;
             closeLine--;
+          } else if(end <= code.length && is_close(state, end) && code.A(end) == A + 3) {
+            forvarPostClose = true;
           }
           
           ForBlock block = new ForBlock51(
-            state.function, line + 1, target + 1, A,
-            get_close_type(state, closeLine), closeLine, forvarClose
+            state.function, begin, end, A,
+            get_close_type(state, closeLine), closeLine, forvarPreClose, forvarPostClose
           );
           
           block.handleVariableDeclarations(r);
