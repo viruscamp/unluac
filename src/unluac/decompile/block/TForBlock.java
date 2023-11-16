@@ -3,6 +3,7 @@ package unluac.decompile.block;
 import java.util.ArrayList;
 import java.util.List;
 
+import unluac.Version.CloseSemantics;
 import unluac.decompile.CloseType;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
@@ -49,12 +50,18 @@ public class TForBlock extends ContainerBlock {
   public static TForBlock make51(LFunction function, int begin, int end, int register, int length, boolean forvarClose, boolean innerClose) {
     int explicitScopeEnd = end - 3;
     int innerScopeEnd = end - 3;
-    if(forvarClose) {
-      explicitScopeEnd--;
-      innerScopeEnd--;
-    }
-    if(innerClose) {
-      innerScopeEnd--;
+    if(function.header.version.closesemantics.get() == CloseSemantics.JUMP) {
+      if(forvarClose) {
+        innerScopeEnd--;
+      }
+    } else {
+      if(forvarClose) {
+        explicitScopeEnd--;
+        innerScopeEnd--;
+      }
+      if(innerClose) {
+        innerScopeEnd--;
+      }
     }
     return new TForBlock(
       function, begin, end,

@@ -30,7 +30,7 @@ public class ForBlock51 extends ForBlock {
     r.setInternalLoopVariable(register + 1, begin - 2, implicitEnd);
     r.setInternalLoopVariable(register + 2, begin - 2, implicitEnd);
     int explicitEnd = end - 2;
-    if(forvarPreClose && r.getVersion().closesemantics.get() != Version.CloseSemantics.LUA54) explicitEnd--;
+    if(forvarPreClose && r.getVersion().closesemantics.get() == Version.CloseSemantics.DEFAULT) explicitEnd--;
     r.setExplicitLoopVariable(register + 3, begin - 1, explicitEnd);
   }
   

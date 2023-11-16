@@ -491,11 +491,11 @@ public class ControlFlowHandler {
           boolean forvarClose = false;
           boolean innerClose = false;
           int close = target - 1;
-          if(close >= line + 1 && is_close(state, close) && code.A(close) == A + 3) {
+          if(close >= line + 1 && is_close(state, close) && get_close_value(state, close) == A + 3) {
             forvarClose = true;
             close--;
           }
-          if(close >= line + 1 && is_close(state, close) && code.A(close) <= A + 3 + C) {
+          if(close >= line + 1 && is_close(state, close) && get_close_value(state, close) <= A + 3 + C) {
             innerClose = true;
           }
           
@@ -533,10 +533,10 @@ public class ControlFlowHandler {
           boolean forvarPreClose = false;
           boolean forvarPostClose = false;
           int closeLine = target - 1;
-          if(closeLine >= line + 1 && is_close(state, closeLine) && code.A(closeLine) == A + 3) {
+          if(closeLine >= line + 1 && is_close(state, closeLine) && get_close_value(state, closeLine) == A + 3) {
             forvarPreClose = true;
             closeLine--;
-          } else if(end <= code.length && is_close(state, end) && code.A(end) == A + 3) {
+          } else if(end <= code.length && is_close(state, end) && get_close_value(state, end) == A + 3) {
             forvarPostClose = true;
           }
           
@@ -556,7 +556,7 @@ public class ControlFlowHandler {
           
           boolean innerClose = false;
           int close = target - 1;
-          if(close >= line + 1 && is_close(state, close) && code.A(close) == A + 3 + C) {
+          if(close >= line + 1 && is_close(state, close) && get_close_value(state, close) == A + 3 + C) {
             innerClose = true;
           }
           
@@ -573,7 +573,7 @@ public class ControlFlowHandler {
           
           boolean forvarClose = false;
           int close = target - 1;
-          if(close >= line + 1 && is_close(state, close) && code.A(close) == A + 4) {
+          if(close >= line + 1 && is_close(state, close) && get_close_value(state, close) == A + 4) {
             forvarClose = true;
             close--;
           }

@@ -43,7 +43,7 @@ abstract public class ForBlock extends ContainerBlock {
   public int scopeEnd() {
     int scopeEnd = end - 2;
     if(forvarPreClose) scopeEnd--;
-    if(usingClose && (closeType == CloseType.CLOSE || closeType == CloseType.JMP)) scopeEnd--;
+    if(usingClose && (closeType == CloseType.CLOSE)) scopeEnd--;
     return scopeEnd;
   }
   
