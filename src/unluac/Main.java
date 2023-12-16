@@ -18,7 +18,6 @@ import unluac.decompile.Decompiler;
 import unluac.decompile.Disassembler;
 import unluac.decompile.FileOutputProvider;
 import unluac.decompile.Output;
-import unluac.decompile.OutputProvider;
 import unluac.parse.BHeader;
 import unluac.parse.LFunction;
 import unluac.util.FileUtils;
