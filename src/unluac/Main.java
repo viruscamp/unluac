@@ -16,6 +16,7 @@ import unluac.assemble.Assembler;
 import unluac.assemble.AssemblerException;
 import unluac.decompile.Decompiler;
 import unluac.decompile.Disassembler;
+import unluac.decompile.FileOutputProvider;
 import unluac.decompile.Output;
 import unluac.decompile.OutputProvider;
 import unluac.parse.BHeader;
@@ -218,27 +219,6 @@ public class Main {
   public static void disassemble(String in, String out) throws IOException {
     LFunction lmain = file_to_function(in, new Configuration());
     Disassembler d = new Disassembler(lmain);
-    final PrintStream pout = new PrintStream(out);
-    d.disassemble(new Output(new OutputProvider() {
-
-      @Override
-      public void print(String s) {
-        pout.print(s);
-      }
-      
-      @Override
-      public void print(byte b) {
-        pout.print(b);
-      }
-
-      @Override
-      public void println() {
-        pout.println();
-      }
-      
-    }));
-    pout.flush();
-    pout.close();
-  }
-  
+    d.disassemble(new Output(new FileOutputProvider(new FileOutputStream(out))));
+  } 
 }
