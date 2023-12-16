@@ -5,6 +5,7 @@ import java.util.Set;
 
 import unluac.decompile.Op;
 import unluac.decompile.OpcodeMap;
+import unluac.decompile.TypeMap;
 import unluac.parse.LConstantType;
 import unluac.parse.LFunctionType;
 import unluac.parse.LHeaderType;
@@ -51,12 +52,6 @@ public class Version {
     LUA54,
   }
   
-  public static enum ConstantType {
-    LUA50,
-    LUA53,
-    LUA54,
-  }
-  
   public static enum UpvalueType {
     LUA50,
     LUA54
@@ -65,6 +60,13 @@ public class Version {
   public static enum FunctionType {
     LUA50,
     LUA51,
+    LUA52,
+    LUA53,
+    LUA54,
+  }
+  
+  public static enum TypeMapType {
+    LUA50,
     LUA52,
     LUA53,
     LUA54,
@@ -138,15 +140,16 @@ public class Version {
   private final LConstantType lconstanttype;
   private final LUpvalueType lupvaluetype;
   private final LFunctionType lfunctiontype;
+  private final TypeMap typemap;
   private final OpcodeMap opcodemap;
   private final Op defaultop;
   
   private Version(Configuration config, int major, int minor) {
     HeaderType headertype;
     StringType stringtype;
-    ConstantType constanttype;
     UpvalueType upvaluetype;
     FunctionType functiontype;
+    TypeMapType typemap;
     OpcodeMapType opcodemap;
     this.major = major;
     this.minor = minor;
@@ -159,9 +162,9 @@ public class Version {
           useupvaluecountinheader = new Setting<>(false);
           headertype = HeaderType.LUA50;
           stringtype = StringType.LUA50;
-          constanttype = ConstantType.LUA50;
           upvaluetype = UpvalueType.LUA50;
           functiontype = FunctionType.LUA50;
+          typemap = TypeMapType.LUA50;
           opcodemap = OpcodeMapType.LUA50;
           defaultop = Op.DEFAULT;
           instructionformat = new Setting<>(InstructionFormat.LUA50);
@@ -190,9 +193,9 @@ public class Version {
           useupvaluecountinheader = new Setting<>(false);
           headertype = HeaderType.LUA51;
           stringtype = StringType.LUA50;
-          constanttype = ConstantType.LUA50;
           upvaluetype = UpvalueType.LUA50;
           functiontype = FunctionType.LUA51;
+          typemap = TypeMapType.LUA50;
           opcodemap = OpcodeMapType.LUA51;
           defaultop = Op.DEFAULT;
           instructionformat = new Setting<>(InstructionFormat.LUA51);
@@ -221,9 +224,9 @@ public class Version {
           useupvaluecountinheader = new Setting<>(false);
           headertype = HeaderType.LUA52;
           stringtype = StringType.LUA50;
-          constanttype = ConstantType.LUA50;
           upvaluetype = UpvalueType.LUA50;
           functiontype = FunctionType.LUA52;
+          typemap = TypeMapType.LUA52;
           opcodemap = OpcodeMapType.LUA52;
           defaultop = Op.DEFAULT;
           instructionformat = new Setting<>(InstructionFormat.LUA51);
@@ -252,9 +255,9 @@ public class Version {
           useupvaluecountinheader = new Setting<>(true);
           headertype = HeaderType.LUA53;
           stringtype = StringType.LUA53;
-          constanttype = ConstantType.LUA53;
           upvaluetype = UpvalueType.LUA50;
           functiontype = FunctionType.LUA53;
+          typemap = TypeMapType.LUA53;
           opcodemap = OpcodeMapType.LUA53;
           defaultop = Op.DEFAULT;
           instructionformat = new Setting<>(InstructionFormat.LUA51);
@@ -283,9 +286,9 @@ public class Version {
           useupvaluecountinheader = new Setting<>(true);
           headertype = HeaderType.LUA54;
           stringtype = StringType.LUA54;
-          constanttype = ConstantType.LUA54;
           upvaluetype = UpvalueType.LUA54;
           functiontype = FunctionType.LUA54;
+          typemap = TypeMapType.LUA54;
           opcodemap = OpcodeMapType.LUA54;
           defaultop = Op.DEFAULT54;
           instructionformat = new Setting<>(InstructionFormat.LUA54);
@@ -343,9 +346,10 @@ public class Version {
     
     this.lheadertype = LHeaderType.get(headertype);
     this.lstringtype = LStringType.get(stringtype);
-    this.lconstanttype = LConstantType.get(constanttype);
+    this.lconstanttype = new LConstantType();
     this.lupvaluetype = LUpvalueType.get(upvaluetype);
     this.lfunctiontype = LFunctionType.get(functiontype);
+    this.typemap = new TypeMap(typemap);
     this.opcodemap = new OpcodeMap(opcodemap);
   }
   
@@ -392,6 +396,10 @@ public class Version {
   
   public LFunctionType getLFunctionType() {
     return lfunctiontype;
+  }
+  
+  public TypeMap getTypeMap() {
+    return typemap;
   }
   
   public OpcodeMap getOpcodeMap() {

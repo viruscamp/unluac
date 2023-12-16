@@ -15,6 +15,7 @@ import unluac.assemble.Tokenizer;
 import unluac.decompile.CodeExtract;
 import unluac.decompile.Op;
 import unluac.decompile.OpcodeMap;
+import unluac.decompile.TypeMap;
 
 
 public class BHeader {
@@ -42,6 +43,7 @@ public class BHeader {
   public final LUpvalueType upvalue;
   public final LFunctionType function;
   public final CodeExtract extractor;
+  public final TypeMap typemap;
   public final OpcodeMap opmap;
   
   public final LFunction main;
@@ -68,6 +70,7 @@ public class BHeader {
     upvalue = lheader.upvalue;
     function = lheader.function;
     extractor = lheader.extractor;
+    typemap = version.getTypeMap();
     opmap = version.getOpcodeMap();
     this.main = main;
   }
@@ -105,6 +108,8 @@ public class BHeader {
     upvalue = lheader.upvalue;
     function = lheader.function;
     extractor = lheader.extractor;
+    
+    typemap = version.getTypeMap();
     
     if(config.opmap != null) {
       try {
