@@ -110,15 +110,19 @@ class LStringType53 extends LStringType {
   
   @Override
   public void write(OutputStream out, BHeader header, LString string) throws IOException {
-    int len = string.value.length() + 1;
-    if(len < 0xFF) {
-      out.write((byte)len);
+    if(string == LString.NULL) {
+      out.write(0);
     } else {
-      out.write(0xFF);
-      header.sizeT.write(out, header, header.sizeT.create(len));
-    }
-    for(int i = 0; i < string.value.length(); i++) {
-      out.write(string.value.charAt(i));
+      int len = string.value.length() + 1;
+      if(len < 0xFF) {
+        out.write((byte)len);
+      } else {
+        out.write(0xFF);
+        header.sizeT.write(out, header, header.sizeT.create(len));
+      }
+      for(int i = 0; i < string.value.length(); i++) {
+        out.write(string.value.charAt(i));
+      }
     }
   }
 }
