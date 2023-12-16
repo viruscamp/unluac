@@ -1,5 +1,7 @@
 package unluac.decompile;
 
+import java.util.Map;
+
 import unluac.Version;
 
 public class TypeMap {
@@ -91,6 +93,55 @@ public class TypeMap {
       types[SHORT_STRING] = Type.SHORT_STRING;
       types[LONG_STRING] = Type.LONG_STRING;
     }
+  }
+  
+  public TypeMap(Map<Integer, Type> usertypemap) {
+    int maximum = 0;
+    for(Integer typecode : usertypemap.keySet()) {
+      maximum = Math.max(maximum, typecode);
+    }
+    types = new Type[maximum + 1];
+    int user_nil = UNMAPPED;
+    int user_boolean = UNMAPPED;
+    int user_false = UNMAPPED;
+    int user_true = UNMAPPED;
+    int user_number = UNMAPPED;
+    int user_float = UNMAPPED;
+    int user_integer = UNMAPPED;
+    int user_string = UNMAPPED;
+    int user_short_string = UNMAPPED;
+    int user_long_string = UNMAPPED;
+    for(Map.Entry<Integer, Type> entry : usertypemap.entrySet()) {
+      int typecode = entry.getKey();
+      Type type = entry.getValue();
+      types[typecode] = type;
+      switch(type) {
+        case NIL: user_nil = typecode; break;
+        case BOOLEAN: user_boolean = typecode; break;
+        case FALSE: user_false = typecode; break;
+        case TRUE: user_true = typecode; break;
+        case NUMBER: user_number = typecode; break;
+        case FLOAT: user_float = typecode; break;
+        case INTEGER: user_integer = typecode; break;
+        case STRING: user_string = typecode; break;
+        case SHORT_STRING: user_short_string = typecode; break;
+        case LONG_STRING: user_long_string = typecode; break;
+      }
+    }
+    NIL = user_nil;
+    BOOLEAN = user_boolean;
+    FALSE = user_false;
+    TRUE = user_true;
+    NUMBER = user_number;
+    FLOAT = user_float;
+    INTEGER = user_integer;
+    STRING = user_string;
+    SHORT_STRING = user_short_string;
+    LONG_STRING = user_long_string;
+  }
+  
+  public int size() {
+    return types.length;
   }
   
   public Type get(int typecode) {

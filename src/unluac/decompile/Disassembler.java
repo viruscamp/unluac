@@ -41,6 +41,17 @@ public class Disassembler {
       }
       out.println();
       
+      if(function.header.typemap != function.header.version.getTypeMap()) {
+        TypeMap typemap = function.header.typemap;
+        for(int typecode = 0; typecode < typemap.size(); typecode++) {
+          Type type = typemap.get(typecode);
+          if(type != null) {
+            out.println(Directive.TYPE.token + "\t" + typecode + "\t" + type.name);
+          }
+        }
+        out.println();
+      }
+      
       if(function.header.opmap != function.header.version.getOpcodeMap()) {
         OpcodeMap opmap = function.header.opmap;
         for(int opcode = 0; opcode < opmap.size(); opcode++) {

@@ -27,6 +27,7 @@ public class Configuration {
   public VariableMode variable;
   public boolean strict_scope;
   public boolean luaj;
+  public String typemap;
   public String opmap;
   public String output;
   

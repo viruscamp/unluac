@@ -15,6 +15,7 @@ import unluac.assemble.Tokenizer;
 import unluac.decompile.CodeExtract;
 import unluac.decompile.Op;
 import unluac.decompile.OpcodeMap;
+import unluac.decompile.Type;
 import unluac.decompile.TypeMap;
 
 
@@ -48,11 +49,11 @@ public class BHeader {
   
   public final LFunction main;
   
-  public BHeader(Version version, LHeader lheader) {
-    this(version, lheader, null);
+  public BHeader(Version version, LHeader lheader, TypeMap typemap) {
+    this(version, lheader, typemap, null);
   }
   
-  public BHeader(Version version, LHeader lheader, LFunction main) {
+  public BHeader(Version version, LHeader lheader, TypeMap typemap, LFunction main) {
     this.config = null;
     this.version = version;
     this.lheader = lheader;
@@ -70,7 +71,7 @@ public class BHeader {
     upvalue = lheader.upvalue;
     function = lheader.function;
     extractor = lheader.extractor;
-    typemap = version.getTypeMap();
+    this.typemap = typemap;
     opmap = version.getOpcodeMap();
     this.main = main;
   }
@@ -109,38 +110,64 @@ public class BHeader {
     function = lheader.function;
     extractor = lheader.extractor;
     
-    typemap = version.getTypeMap();
-    
-    if(config.opmap != null) {
-      try {
+    try {
+      if(config.typemap != null) {
+        Tokenizer t = new Tokenizer(new FileInputStream(new File(config.typemap)));
+        String tok;
+        Map<Integer, Type> usertypemap = new HashMap<Integer, Type>();
+        while((tok = t.next()) != null) {
+          if(tok.equals(".type")) {
+            tok = t.next();
+            if(tok == null) throw new RuntimeException("Unexpected end of typemap file.");
+            int opcode;
+            try {
+              opcode = Integer.parseInt(tok);
+            } catch(NumberFormatException e) {
+              throw new RuntimeException("Excepted number in typemap file, got \"" + tok + "\".");
+            }
+            tok = t.next();
+            if(tok == null) throw new RuntimeException("Unexpected end of typemap file.");
+            Type type = Type.get(tok);
+            if(type == null) throw new RuntimeException("Unknown type name \"" + tok + "\" in typemap file.");
+            usertypemap.put(opcode, type);
+          } else {
+            throw new RuntimeException("Unexpected token \"" + tok + "\" + in typemap file.");
+          }
+        }
+        typemap = new TypeMap(usertypemap);
+      } else {
+        typemap = version.getTypeMap();
+      }
+      
+      if(config.opmap != null) {      
         Tokenizer t = new Tokenizer(new FileInputStream(new File(config.opmap)));
         String tok;
         Map<Integer, Op> useropmap = new HashMap<Integer, Op>();
         while((tok = t.next()) != null) {
           if(tok.equals(".op")) {
             tok = t.next();
-            if(tok == null) throw new IllegalStateException("Unexpected end of opmap file.");
+            if(tok == null) throw new RuntimeException("Unexpected end of opmap file.");
             int opcode;
             try {
               opcode = Integer.parseInt(tok);
             } catch(NumberFormatException e) {
-              throw new IllegalStateException("Excepted number in opmap file, got \"" + tok + "\".");
+              throw new RuntimeException("Excepted number in opmap file, got \"" + tok + "\".");
             }
             tok = t.next();
-            if(tok == null) throw new IllegalStateException("Unexpected end of opmap file.");
+            if(tok == null) throw new RuntimeException("Unexpected end of opmap file.");
             Op op = version.getOpcodeMap().get(tok);
-            if(op == null) throw new IllegalStateException("Unknown op name \"" + tok + "\" in opmap file.");
+            if(op == null) throw new RuntimeException("Unknown op name \"" + tok + "\" in opmap file.");
             useropmap.put(opcode, op);
           } else {
-            throw new IllegalStateException("Unexpected token \"" + tok + "\" + in opmap file.");
+            throw new RuntimeException("Unexpected token \"" + tok + "\" + in opmap file.");
           }
         }
         opmap = new OpcodeMap(useropmap);
-      } catch(IOException e) {
-        throw new IllegalStateException(e.getMessage());
+      } else {
+        opmap = version.getOpcodeMap();
       }
-    } else {
-      opmap = version.getOpcodeMap();
+    } catch(IOException e) {
+      throw new RuntimeException(e.getMessage());
     }
     
     int upvalues = -1;

@@ -17,6 +17,8 @@ import unluac.decompile.CodeExtract;
 import unluac.decompile.Op;
 import unluac.decompile.OpcodeMap;
 import unluac.decompile.OperandFormat;
+import unluac.decompile.Type;
+import unluac.decompile.TypeMap;
 import unluac.parse.BHeader;
 import unluac.parse.BInteger;
 import unluac.parse.BIntegerType;
@@ -480,6 +482,7 @@ class AssemblerChunk {
   public int b_size;
   public int c_size;
   
+  public Map<Integer, Type> usertypemap;
   public Map<Integer, Op> useropmap;
   
   public boolean number_integral;
@@ -506,7 +509,7 @@ class AssemblerChunk {
   }
   
   public void processHeaderDirective(Assembler a, Directive d) throws AssemblerException, IOException {
-    if(d != Directive.OP && processed_directives.contains(d)) {
+    if(!d.repeatable && processed_directives.contains(d)) {
       throw new AssemblerException("Duplicate " + d.name() + " directive");
     }
     processed_directives.add(d);
@@ -568,6 +571,19 @@ class AssemblerChunk {
     case FLOAT_FORMAT:
       lfloat = new LNumberType(a.getInteger(), false, NumberMode.MODE_FLOAT);
       break;
+    case TYPE: {
+      if(usertypemap == null) {
+        usertypemap = new HashMap<Integer, Type>();
+      }
+      int typecode = a.getInteger();
+      String name = a.getName();
+      Type type = Type.get(name);
+      if(type == null) {
+        throw new AssemblerException("Unknown type name \"" + name + "\"");
+      }
+      usertypemap.put(typecode, type);
+      break;
+    }
     case OP: {
       if(useropmap == null) {
         useropmap = new HashMap<Integer, Op>();
@@ -640,10 +656,17 @@ class AssemblerChunk {
       sizeT = integer;
     }
     
+    TypeMap typemap;
+    if(usertypemap != null) {
+      typemap = new TypeMap(usertypemap);
+    } else {
+      typemap = version.getTypeMap();
+    }
+    
     LHeader lheader = new LHeader(format, endianness, integer, sizeT, bool, number, linteger, lfloat, string, constant, abslineinfo, local, upvalue, function, extract);
-    BHeader header = new BHeader(version, lheader);
+    BHeader header = new BHeader(version, lheader, typemap);
     LFunction main = convert_function(header, this.main);
-    header = new BHeader(version, lheader, main);
+    header = new BHeader(version, lheader, typemap, main);
     
     header.write(out);
   }

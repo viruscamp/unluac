@@ -54,6 +54,13 @@ public class Main {
           } else {
             error("option \"" + arg + "\" doesn't have an argument", true);
           }
+        } else if(arg.equals("--typemap")) {
+          if(i + 1 < args.length) {
+            config.typemap = args[i + 1];
+            i++;
+          } else {
+            error("option \"" + arg + "\" doesn't have an argument", true);
+          }
         } else if(arg.equals("--opmap")) {
           if(i + 1 < args.length) {
             config.opmap = args[i + 1];
@@ -148,13 +155,14 @@ public class Main {
     print_unluac_string(System.out);
     print_usage(System.out);
     System.out.println("Available options are:");
-    System.out.println("  --assemble       assemble given disassembly listing");
-    System.out.println("  --disassemble    disassemble instead of decompile");
-    System.out.println("  --nodebug        ignore debugging information in input file");
-    System.out.println("  --opmap <file>   use opcode mapping specified in <file>");
-    System.out.println("  --output <file>  output to <file> instead of stdout");
-    System.out.println("  --rawstring      copy string bytes directly to output");
-    System.out.println("  --luaj           emulate Luaj's permissive parser");
+    System.out.println("  --assemble        assemble given disassembly listing");
+    System.out.println("  --disassemble     disassemble instead of decompile");
+    System.out.println("  --nodebug         ignore debugging information in input file");
+    System.out.println("  --typemap <file>  use type mapping specified in <file>");
+    System.out.println("  --opmap <file>    use opcode mapping specified in <file>");
+    System.out.println("  --output <file>   output to <file> instead of stdout");
+    System.out.println("  --rawstring       copy string bytes directly to output");
+    System.out.println("  --luaj            emulate Luaj's permissive parser");
   }
   
   private static void print_unluac_string(PrintStream out) {
