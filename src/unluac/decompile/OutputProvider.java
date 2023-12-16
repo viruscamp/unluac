@@ -8,4 +8,6 @@ public interface OutputProvider {
   
   public void println();
   
+  public void finish();
+  
 }

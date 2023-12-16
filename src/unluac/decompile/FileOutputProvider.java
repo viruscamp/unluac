@@ -1,15 +1,17 @@
 package unluac.decompile;
 
+import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 public class FileOutputProvider implements OutputProvider {
   
-  private final FileOutputStream out;
+  private final OutputStream out;
   private final String eol;
   
   public FileOutputProvider(FileOutputStream out) {
-    this.out = out;
+    this.out = new BufferedOutputStream(out);
     eol = System.lineSeparator();
   }
   
@@ -34,6 +36,16 @@ public class FileOutputProvider implements OutputProvider {
   @Override
   public void println() {
     print(eol);
+  }
+  
+  @Override
+  public void finish() {
+   try {
+     out.flush();
+     out.close();
+    } catch(IOException e) {
+      throw new RuntimeException(e.getMessage());
+    }
   }
   
 }

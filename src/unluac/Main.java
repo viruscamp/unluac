@@ -90,7 +90,9 @@ public class Main {
         }
         Decompiler d = new Decompiler(lmain);
         Decompiler.State result = d.decompile();
-        d.print(result, config.getOutput());
+        Output output = config.getOutput();
+        d.print(result, output);
+        output.finish();
         break;
       }
       case DISASSEMBLE: {
@@ -101,7 +103,9 @@ public class Main {
           error(e.getMessage(), false);
         }
         Disassembler d = new Disassembler(lmain);
-        d.disassemble(config.getOutput());
+        Output output = config.getOutput();
+        d.disassemble(output);
+        output.finish();
         break;
       }
       case ASSEMBLE: {
@@ -185,27 +189,9 @@ public class Main {
     LFunction lmain = file_to_function(in, config);
     Decompiler d = new Decompiler(lmain);
     Decompiler.State result = d.decompile();
-    final PrintStream pout = new PrintStream(out);
-    d.print(result, new Output(new OutputProvider() {
-
-      @Override
-      public void print(String s) {
-        pout.print(s);
-      }
-      
-      @Override
-      public void print(byte b) {
-        pout.write(b);
-      }
-
-      @Override
-      public void println() {
-        pout.println();
-      }
-      
-    }));
-    pout.flush();
-    pout.close();
+    Output output = new Output(new FileOutputProvider(new FileOutputStream(out)));
+    d.print(result, output);
+    output.finish();
   }
   
   public static void assemble(String in, String out) throws IOException, AssemblerException {
@@ -219,6 +205,8 @@ public class Main {
   public static void disassemble(String in, String out) throws IOException {
     LFunction lmain = file_to_function(in, new Configuration());
     Disassembler d = new Disassembler(lmain);
-    d.disassemble(new Output(new FileOutputProvider(new FileOutputStream(out))));
+    Output output = new Output(new FileOutputProvider(new FileOutputStream(out)));
+    d.disassemble(output);
+    output.finish();
   } 
 }

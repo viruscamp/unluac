@@ -26,6 +26,11 @@ public class Output {
         System.out.println();
       }
       
+      @Override
+      public void finish() {
+        System.out.flush();
+      }
+      
     });
   }
   
@@ -98,6 +103,10 @@ public class Output {
   public void println(String s) {
     print(s);
     println();
+  }
+  
+  public void finish() {
+    out.finish();
   }
   
 }
