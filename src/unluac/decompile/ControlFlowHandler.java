@@ -978,6 +978,11 @@ public class ControlFlowHandler {
           }
           if(top != null && top.targetSecond - 1 == b.line) {
             if(top.targetSecond != b.targetSecond) {
+              // resolve intervening hangers
+              while(!hangingResolver.isEmpty() && !hanging.isEmpty() && is_hanger_resolvable(state, declList, hanging.peek(), hangingResolver.peek())) {
+                resolve_hanger(state, declList, stack, hanging.pop(), hangingResolver.peek());
+              }
+              
               resolve_else(state, stack, hanging, elseStack, top, b, tailTargetSecond);
               stack.pop();
             } else if(!splits_decl(top.line, top.targetFirst, top.targetSecond - 1, declList)) {
