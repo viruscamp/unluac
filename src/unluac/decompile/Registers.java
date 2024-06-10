@@ -143,7 +143,7 @@ public class Registers {
   }
   
   public Target getTarget(int register, int line) {
-    if(!isLocal(register, line)) {
+    if(!isNoDebug && !isLocal(register, line)) {
       throw new IllegalStateException("No declaration exists in register " + register + " at line " + line);
     }
     return new VariableTarget(decls[register][line]);
