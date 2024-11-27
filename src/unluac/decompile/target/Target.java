@@ -21,6 +21,10 @@ abstract public class Target {
     return false;
   }
   
+  public String getLocalName() {
+    throw new IllegalStateException();
+  }
+  
   public int getIndex() {
     throw new IllegalStateException();
   }

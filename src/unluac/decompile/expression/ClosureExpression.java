@@ -13,6 +13,7 @@ public class ClosureExpression extends Expression {
 
   private final LFunction function;
   private int upvalueLine;
+  private Decompiler d;
   
   public ClosureExpression(LFunction function, int upvalueLine) {
     super(PRECEDENCE_ATOMIC);
@@ -56,20 +57,45 @@ public class ClosureExpression extends Expression {
   }
   
   @Override
+  public boolean isNameUnbound(Decompiler outer, String id) {
+    for(LUpvalue upvalue : function.upvalues) {
+      if(upvalue.name.equals(id)) {
+        return true;
+      }
+    }
+    Decompiler d = getDecompiler(outer);
+    if(function.header.version.hasGlobalSupport()) {
+      for(int line = 1; line <= d.code.length; line++) {
+        switch(d.code.op(line)) {
+          case GETGLOBAL:
+          case SETGLOBAL:
+            if(function.constants[d.code.Bx(line)].deref().equals(id)) {
+              return true;
+            }
+            break;
+          default: break;
+        }
+      }
+      // TODO: recurse
+    }
+    return false;
+  }
+  
+  @Override
   public int closureUpvalueLine() {
     return upvalueLine;
   }
   
   @Override
   public void print(Decompiler outer, Output out) {
-    Decompiler d = new Decompiler(function, outer.declList, upvalueLine);
+    Decompiler d = getDecompiler(outer);
     out.print("function");
     printMain(out, d, true);
   }
   
   @Override
   public void printClosure(Decompiler outer, Output out, Target name) {
-    Decompiler d = new Decompiler(function, outer.declList, upvalueLine);
+    Decompiler d = getDecompiler(outer);
     out.print("function ");
     if(function.numParams >= 1 && d.declList[0].name.equals("self") && name instanceof TableTarget) {
       name.printMethod(outer, out);
@@ -105,6 +131,13 @@ public class ClosureExpression extends Expression {
     out.dedent();
     out.print("end");
     //out.println(); //This is an extra space for formatting
+  }
+  
+  private Decompiler getDecompiler(Decompiler outer) {
+    if(d == null) {
+      d = new Decompiler(function, outer.declList, upvalueLine);
+    }
+    return d;
   }
   
 }

@@ -40,6 +40,11 @@ public class VariableTarget extends Target {
   }
   
   @Override
+  public String getLocalName() {
+    return decl.name;
+  }
+  
+  @Override
   public int getIndex() {
     return decl.register;
   }

@@ -150,6 +150,7 @@ public class TestFiles {
     new TestFile("localfunction02"),
     new TestFile("localfunction03"),
     new TestFile("localfunction04"),
+    new TestFile("localfunction05"),
     new TestFile("declare"),
     new TestFile("declare02"),
     new TestFile("declare03"),

@@ -365,6 +365,10 @@ public class Version {
     return name;
   }
   
+  public boolean hasGlobalSupport() {
+    return environmenttable.get() == null;
+  }
+  
   public boolean isEnvironmentTable(String name) {
     String env = environmenttable.get();
     if(env != null) {

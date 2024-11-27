@@ -170,6 +170,10 @@ abstract public class Expression {
     return -1;
   }
   
+  public boolean isNameUnbound(Decompiler d, String id) {
+    throw new IllegalStateException();
+  }
+  
   public boolean beginsWithParen() {
     return false;
   }

@@ -202,17 +202,19 @@ public class Assignment extends Statement {
     if(!targets.isEmpty()) {
       boolean functionSugar = false;
       if(targets.size() == 1 && values.size() == 1 && values.get(0).isClosure() && targets.get(0).isFunctionName()) {
+        // must avoid sugar when it's a declaration that shadows a used upvalue or global
+        // must use sugar when it's a declaration that is used as an upvalue
+        // (by default, better to use sugar)
+        functionSugar = true;
         Expression closure = values.get(0);
-        //comment = "" + declareStart + " >= " + closure.closureUpvalueLine();
-        //System.out.println("" + declareStart + " >= " + closure.closureUpvalueLine());
-        // This check only works in Lua version 0x51
-        if(!declare || declareStart >= closure.closureUpvalueLine()) {
-          functionSugar = true;
+        
+        if(!declare) {
+          // sugar is always okay
+        } else if(targets.get(0).isLocal() && closure.isUpvalueOf(targets.get(0).getIndex())) {
+          // sugar must be used
+        } else if(targets.get(0).isLocal() && closure.isNameUnbound(d, targets.get(0).getLocalName())) {
+          functionSugar = false;
         }
-        if(targets.get(0).isLocal() && closure.isUpvalueOf(targets.get(0).getIndex())) {
-          functionSugar = true;
-        }
-        //if(closure.isUpvalueOf(targets.get(0).))
       }
       if(functionSugar) {
         out.paragraph();
