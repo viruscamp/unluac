@@ -19,7 +19,6 @@ public class Assignment extends Statement {
   
   private boolean allnil = true;
   private boolean declare = false;
-  private int declareStart = 0;
   private int register = -1;
   
   public Assignment() {
@@ -165,9 +164,8 @@ public class Assignment extends Statement {
     return true;
   }
   
-  public void declare(int declareStart) {
+  public void declare() {
     declare = true;
-    this.declareStart = declareStart;
   }
   
   public boolean isDeclaration() {
@@ -209,10 +207,10 @@ public class Assignment extends Statement {
         Expression closure = values.get(0);
         
         if(!declare) {
-          // sugar is always okay
+          // sugar is always okay (there is no difference)
         } else if(targets.get(0).isLocal() && closure.isUpvalueOf(targets.get(0).getIndex())) {
           // sugar must be used
-        } else if(targets.get(0).isLocal() && closure.isNameUnbound(d, targets.get(0).getLocalName())) {
+        } else if(targets.get(0).isLocal() && closure.isNameExternallyBound(targets.get(0).getLocalName())) {
           functionSugar = false;
         }
       }

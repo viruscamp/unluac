@@ -58,25 +58,14 @@ public class ClosureExpression extends Expression {
   }
   
   @Override
-  public boolean isNameUnbound(Decompiler outer, String id) {
+  public boolean isNameExternallyBound(String id) {
     for(LUpvalue upvalue : function.upvalues) {
       if(upvalue.name.equals(id)) {
         return true;
       }
     }
-    if(function.header.version.hasGlobalSupport()) {
-      for(int line = 1; line <= d.code.length; line++) {
-        switch(d.code.op(line)) {
-          case GETGLOBAL:
-          case SETGLOBAL:
-            if(function.constants[d.code.Bx(line)].deref().equals(id)) {
-              return true;
-            }
-            break;
-          default: break;
-        }
-      }
-      // TODO: recurse
+    if(function.header.version.hasGlobalSupport() && d.isNameGlobal(id)) {
+      return true;
     }
     return false;
   }

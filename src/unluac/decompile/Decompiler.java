@@ -879,6 +879,27 @@ public class Decompiler {
     return assign;
   }
   
+  public boolean isNameGlobal(String name) {
+    for(int line = 1; line <= code.length; line++) {
+      switch(code.op(line)) {
+        case GETGLOBAL:
+        case SETGLOBAL:
+          if(function.constants[code.Bx(line)].deref().equals(name)) {
+            return true;
+          }
+          break;
+        case CLOSURE:
+          if(decompilers[code.Bx(line)].isNameGlobal(name)) {
+            return true;
+          }
+          break;
+        default:
+          break;
+      }
+    }
+    return false;
+  }
+  
   public boolean hasStatement(int begin, int end) {
     if(begin <= end) {
       State state = new State();
@@ -937,7 +958,7 @@ public class Decompiler {
           ) {
             Assignment declaration = new Assignment();
             int declareEnd = locals.get(0).end;
-            declaration.declare(locals.get(0).begin);
+            declaration.declare();
             while(!locals.isEmpty() && locals.get(0).end == declareEnd && (next.closeRegister == -1 || locals.get(0).register < next.closeRegister)) {
               Declaration decl = locals.get(0);
               declaration.addLast(new VariableTarget(decl), ConstantExpression.createNil(line), line);
@@ -1019,7 +1040,7 @@ public class Decompiler {
         }
         
         boolean firstProcess = !assignment.isDeclaration();
-        assignment.declare(locals.get(0).begin);
+        assignment.declare();
         int lastAssigned = locals.get(0).register;
         for(Declaration decl : locals) {
           if((scopeEnd == -1 || decl.end == scopeEnd) && decl.register >= block.closeRegister) {

@@ -170,7 +170,7 @@ abstract public class Expression {
     return -1;
   }
   
-  public boolean isNameUnbound(Decompiler d, String id) {
+  public boolean isNameExternallyBound(String id) {
     throw new IllegalStateException();
   }
   
