@@ -36,7 +36,7 @@ public class TableSet extends Operation {
       table.addEntry(new TableLiteral.Entry(index, value, !isTable, timestamp));
       return Collections.emptyList();
     } else {
-      return Arrays.asList(new Assignment(new TableTarget(table, index), value, line));
+      return Arrays.asList(new Assignment(new TableTarget(r, line, table, index), value, line));
     }
   }
 

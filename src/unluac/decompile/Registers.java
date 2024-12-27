@@ -62,6 +62,17 @@ public class Registers {
     return decls[register][line] != null;
   }
   
+  public boolean isLocalName(String name, int line) {
+    for(int register = 0; register < registers; register++) {
+      Declaration decl = decls[register][line];
+      if(decl == null) break;
+      if(decl.name.equals(name)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
   public boolean isNewLocal(int register, int line) {
     Declaration decl = decls[register][line];
     return decl != null && decl.begin == line && !decl.forLoop && !decl.forLoopExplicit;

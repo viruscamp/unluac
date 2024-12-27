@@ -45,6 +45,7 @@ public class Decompiler {
   
   public final LFunction function;
   public final Code code;
+  public final Set<String> boundNames;
   public final Declaration[] declList;
   
   private final int registers;
@@ -52,7 +53,8 @@ public class Decompiler {
   private final Upvalues upvalues;
   
   private final Function f;
-  private final LFunction[] functions;  
+  private final LFunction[] functions;
+  private final Decompiler[] decompilers;
   private final int params;
   private final int vararg;
   
@@ -74,12 +76,13 @@ public class Decompiler {
   }
   
   public Decompiler(LFunction function) {
-    this(function, null, -1);
+    this(function, Collections.emptySet(), null, -1);
   }
   
-  public Decompiler(LFunction function, Declaration[] parentDecls, int line) {
+  public Decompiler(LFunction function, Set<String> boundNames, Declaration[] parentDecls, int line) {
     this.f = new Function(function);
     this.function = function;
+    this.boundNames = boundNames;
     registers = function.maximumStackSize;
     length = function.code.length;
     code = new Code(function);
@@ -115,6 +118,29 @@ public class Decompiler {
     functions = function.functions;
     params = function.numParams;
     vararg = function.vararg;
+    
+    int[] closureLines = new int[functions.length];
+    //Arrays.fill(closureLines, 0);
+    for(int cline = 1; cline <= code.length(); cline++) {
+      if(code.op(cline) == Op.CLOSURE) {
+        int f = code.Bx(cline);
+        if(closureLines[f] > 0) throw new IllegalStateException();
+        closureLines[f] = cline;
+      }
+    }
+    decompilers = new Decompiler[functions.length];
+    for(int f = 0; f < functions.length; f++) {
+      int closureLine = closureLines[f];
+      if(closureLine > 0) {
+        HashSet<String> innerNames = new HashSet<String>(boundNames);
+        for(Declaration decl : declList) {
+          if(closureLine >= decl.begin && closureLine < decl.end) {
+            innerNames.add(decl.name);
+          }
+        }
+        decompilers[f] = new Decompiler(functions[f], innerNames, declList, closureLine);
+      }
+    }
   }
   
   public Configuration getConfiguration() {
@@ -355,22 +381,22 @@ public class Decompiler {
         operations.add(new UpvalueSet(line, upvalues.getName(B), r.getExpression(A, line)));
         break;
       case GETTABUP:
-        operations.add(new RegisterSet(line, A, new TableReference(upvalues.getExpression(B), r.getKExpression(C, line))));
+        operations.add(new RegisterSet(line, A, new TableReference(r, line, upvalues.getExpression(B), r.getKExpression(C, line))));
         break;
       case GETTABUP54:
-        operations.add(new RegisterSet(line, A, new TableReference(upvalues.getExpression(B), f.getConstantExpression(C))));
+        operations.add(new RegisterSet(line, A, new TableReference(r, line, upvalues.getExpression(B), f.getConstantExpression(C))));
         break;
       case GETTABLE:
-        operations.add(new RegisterSet(line, A, new TableReference(r.getExpression(B, line), r.getKExpression(C, line))));
+        operations.add(new RegisterSet(line, A, new TableReference(r, line, r.getExpression(B, line), r.getKExpression(C, line))));
         break;
       case GETTABLE54:
-        operations.add(new RegisterSet(line, A, new TableReference(r.getExpression(B, line), r.getExpression(C, line))));
+        operations.add(new RegisterSet(line, A, new TableReference(r, line, r.getExpression(B, line), r.getExpression(C, line))));
         break;
       case GETI:
-        operations.add(new RegisterSet(line, A, new TableReference(r.getExpression(B, line), ConstantExpression.createInteger(C))));
+        operations.add(new RegisterSet(line, A, new TableReference(r, line, r.getExpression(B, line), ConstantExpression.createInteger(C))));
         break;
       case GETFIELD:
-        operations.add(new RegisterSet(line, A, new TableReference(r.getExpression(B, line), f.getConstantExpression(C))));
+        operations.add(new RegisterSet(line, A, new TableReference(r, line, r.getExpression(B, line), f.getConstantExpression(C))));
         break;
       case SETTABLE:
         operations.add(new TableSet(line, r.getExpression(A, line), r.getKExpression(B, line), r.getKExpression(C, line), true, line));
@@ -409,14 +435,14 @@ public class Decompiler {
         // We can later determine if : syntax was used by comparing subexpressions with ==
         Expression common = r.getExpression(B, line);
         operations.add(new RegisterSet(line, A + 1, common));
-        operations.add(new RegisterSet(line, A, new TableReference(common, r.getKExpression(C, line))));
+        operations.add(new RegisterSet(line, A, new TableReference(r, line, common, r.getKExpression(C, line))));
         break;
       }
       case SELF54: {
         // We can later determine if : syntax was used by comparing subexpressions with ==
         Expression common = r.getExpression(B, line);
         operations.add(new RegisterSet(line, A + 1, common));
-        operations.add(new RegisterSet(line, A, new TableReference(common, r.getKExpression54(C, code.k(line), line))));
+        operations.add(new RegisterSet(line, A, new TableReference(r, line, common, r.getKExpression54(C, code.k(line), line))));
         break;
       }
       case ADD:
@@ -731,7 +757,8 @@ public class Decompiler {
         break;
       case CLOSURE: {
         LFunction f = functions[Bx];
-        operations.add(new RegisterSet(line, A, new ClosureExpression(f, line + 1)));
+        Decompiler innerd = decompilers[Bx];
+        operations.add(new RegisterSet(line, A, new ClosureExpression(f, innerd, line + 1)));
         if(function.header.version.upvaluedeclarationtype.get() == Version.UpvalueDeclarationType.INLINE) {
           // Handle upvalue declarations
           for(int i = 0; i < f.numUpvalues; i++) {
@@ -1056,22 +1083,22 @@ public class Decompiler {
       case SETGLOBAL:
         return new GlobalTarget(f.getGlobalName(code.Bx(line)));
       case SETTABLE:
-        return new TableTarget(r.getExpression(code.A(line), previous), r.getKExpression(code.B(line), previous));
+        return new TableTarget(r, line, r.getExpression(code.A(line), previous), r.getKExpression(code.B(line), previous));
       case SETTABLE54:
-        return new TableTarget(r.getExpression(code.A(line), previous), r.getExpression(code.B(line), previous));
+        return new TableTarget(r, line, r.getExpression(code.A(line), previous), r.getExpression(code.B(line), previous));
       case SETI:
-        return new TableTarget(r.getExpression(code.A(line), previous), ConstantExpression.createInteger(code.B(line)));
+        return new TableTarget(r, line, r.getExpression(code.A(line), previous), ConstantExpression.createInteger(code.B(line)));
       case SETFIELD:
-        return new TableTarget(r.getExpression(code.A(line), previous), f.getConstantExpression(code.B(line)));
+        return new TableTarget(r, line, r.getExpression(code.A(line), previous), f.getConstantExpression(code.B(line)));
       case SETTABUP: {
         int A = code.A(line);
         int B = code.B(line);
-        return new TableTarget(upvalues.getExpression(A), r.getKExpression(B, previous));
+        return new TableTarget(r, line, upvalues.getExpression(A), r.getKExpression(B, previous));
       }
       case SETTABUP54: {
         int A = code.A(line);
         int B = code.B(line);
-        return new TableTarget(upvalues.getExpression(A), f.getConstantExpression(B));
+        return new TableTarget(r, line, upvalues.getExpression(A), f.getConstantExpression(B));
       }
       default:
         throw new IllegalStateException();

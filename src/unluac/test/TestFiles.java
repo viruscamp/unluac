@@ -259,6 +259,8 @@ public class TestFiles {
     new TestFile("report06"),
     new TestFile("scope02"),
     new TestFile("scope03"),
+    new TestFile("env01"),
+    new TestFile("env02"),
     new TestFile("51_expression"),
     new TestFile("51_expression2"),
     new TestFile("51_expression03"),

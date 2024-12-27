@@ -15,9 +15,10 @@ public class ClosureExpression extends Expression {
   private int upvalueLine;
   private Decompiler d;
   
-  public ClosureExpression(LFunction function, int upvalueLine) {
+  public ClosureExpression(LFunction function, Decompiler d, int upvalueLine) {
     super(PRECEDENCE_ATOMIC);
     this.function = function;
+    this.d = d;
     this.upvalueLine = upvalueLine;
   }
 
@@ -63,7 +64,6 @@ public class ClosureExpression extends Expression {
         return true;
       }
     }
-    Decompiler d = getDecompiler(outer);
     if(function.header.version.hasGlobalSupport()) {
       for(int line = 1; line <= d.code.length; line++) {
         switch(d.code.op(line)) {
@@ -88,25 +88,23 @@ public class ClosureExpression extends Expression {
   
   @Override
   public void print(Decompiler outer, Output out) {
-    Decompiler d = getDecompiler(outer);
     out.print("function");
-    printMain(out, d, true);
+    printMain(out, true);
   }
   
   @Override
   public void printClosure(Decompiler outer, Output out, Target name) {
-    Decompiler d = getDecompiler(outer);
     out.print("function ");
     if(function.numParams >= 1 && d.declList[0].name.equals("self") && name instanceof TableTarget) {
       name.printMethod(outer, out);
-      printMain(out, d, false);
+      printMain(out, false);
     } else {
       name.print(outer, out, false);
-      printMain(out, d, true);
+      printMain(out, true);
     }
   }
   
-  private void printMain(Output out, Decompiler d, boolean includeFirst) {
+  private void printMain(Output out, boolean includeFirst) {
     out.print("(");
     int start = includeFirst ? 0 : 1;
     if(function.numParams > start) {
@@ -131,13 +129,6 @@ public class ClosureExpression extends Expression {
     out.dedent();
     out.print("end");
     //out.println(); //This is an extra space for formatting
-  }
-  
-  private Decompiler getDecompiler(Decompiler outer) {
-    if(d == null) {
-      d = new Decompiler(function, outer.declList, upvalueLine);
-    }
-    return d;
   }
   
 }

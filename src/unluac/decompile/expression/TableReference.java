@@ -2,15 +2,22 @@ package unluac.decompile.expression;
 
 import unluac.decompile.Decompiler;
 import unluac.decompile.Output;
+import unluac.decompile.Registers;
 import unluac.decompile.Walker;
+import unluac.parse.LFunction;
+import unluac.parse.LUpvalue;
 
 public class TableReference extends Expression {
 
+  private final Registers r;
+  private final int line;
   private final Expression table;
   private final Expression index;
   
-  public TableReference(Expression table, Expression index) {
+  public TableReference(Registers r, int line, Expression table, Expression index) {
     super(PRECEDENCE_ATOMIC);
+    this.r = r;
+    this.line = line;
     this.table = table;
     this.index = index;
   }
@@ -27,9 +34,26 @@ public class TableReference extends Expression {
     return Math.max(table.getConstantIndex(), index.getConstantIndex());
   }
   
+  private static boolean isUpvalueOf(LFunction function, String id) {
+    for(int i = 0; i < function.upvalues.length; i++) {
+      LUpvalue upvalue = function.upvalues[i];
+      if(upvalue.name.equals(id)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
   @Override
   public void print(Decompiler d, Output out) {
     boolean isGlobal = table.isEnvironmentTable(d) && index.isIdentifier();
+    if(isGlobal) {
+      String name = index.asName();
+      if(r.isLocalName(name, line) || isUpvalueOf(d.function, name) || d.boundNames.contains(name)) {
+        // _ENV lookup reference is shadowed; need explicit _ENV
+        isGlobal = false;
+      }
+    }
     if(!isGlobal) {
       if(table.isUngrouped()) {
         out.print("(");
