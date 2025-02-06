@@ -3,6 +3,8 @@ package unluac.parse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import unluac.Version;
 
@@ -34,23 +36,37 @@ class LStringType50 extends LStringType {
   @Override
   public LString parse(final ByteBuffer buffer, BHeader header) {
     BInteger sizeT = header.sizeT.parse(buffer, header);
-    final StringBuilder b = this.b.get();
-    b.setLength(0);
-    sizeT.iterate(new Runnable() {
-      
-      @Override
-      public void run() {
-        b.append((char) (0xFF & buffer.get()));
-      }
-      
-    });
-    if(b.length() == 0) {
+//    final StringBuilder b = this.b.get();
+//    b.setLength(0);
+//    sizeT.iterate(new Runnable() {
+//
+//      @Override
+//      public void run() {
+//        b.append((char) (0xFF & buffer.get()));
+//      }
+//
+//    });
+//    if(b.length() == 0) {
+//      return LString.NULL;
+//    } else {
+//      char last = b.charAt(b.length() - 1);
+//      b.delete(b.length() - 1, b.length());
+//      String s = b.toString();
+//      if(header.debug) {
+//        System.out.println("-- parsed <string> \"" + s + "\"");
+//      }
+//      return new LString(s, last);
+//    }
+    int length = sizeT.asInt();
+    if(length == 0) {
       return LString.NULL;
     } else {
-      char last = b.charAt(b.length() - 1);
-      b.delete(b.length() - 1, b.length());
-      String s = b.toString();
-      if(header.debug) {
+      byte[] bytes = new byte[length - 1];
+      buffer.get(bytes);
+      String s = new String(bytes, StandardCharsets.UTF_8);
+
+      char last = (char) (0xFF & buffer.get());
+      if (header.debug) {
         System.out.println("-- parsed <string> \"" + s + "\"");
       }
       return new LString(s, last);
@@ -64,9 +80,8 @@ class LStringType50 extends LStringType {
       header.sizeT.write(out, header, header.sizeT.create(0));
     } else {
       header.sizeT.write(out, header, header.sizeT.create(len + 1));
-      for(int i = 0; i < len; i++) {
-        out.write(string.value.charAt(i));
-      }
+      byte[] bytes = string.value.getBytes(StandardCharsets.UTF_8);
+      out.write(bytes);
       out.write(0);
     }
   }
@@ -77,32 +92,41 @@ class LStringType53 extends LStringType {
   @Override
   public LString parse(final ByteBuffer buffer, BHeader header) {
     BInteger sizeT;
-    int size = 0xFF & buffer.get();
-    if(size == 0) {
+    int length = 0xFF & buffer.get();
+    if(length == 0) {
       return LString.NULL;
-    } else if(size == 0xFF) {
+    } else if(length == 0xFF) {
       sizeT = header.sizeT.parse(buffer, header);
+      length = sizeT.asInt();
     } else {
-      sizeT = new BInteger(size);
+      sizeT = new BInteger(length);
     }
-    final StringBuilder b = this.b.get();
-    b.setLength(0);
-    sizeT.iterate(new Runnable() {
-      
-      boolean first = true;
-      
-      @Override
-      public void run() {
-        if(!first) {
-          b.append((char) (0xFF & buffer.get()));
-        } else {
-          first = false;
-        }
-      }
-      
-    });
-    String s = b.toString();
-    if(header.debug) {
+//    final StringBuilder b = this.b.get();
+//    b.setLength(0);
+//    sizeT.iterate(new Runnable() {
+//
+//      boolean first = true;
+//
+//      @Override
+//      public void run() {
+//        if(!first) {
+//          b.append((char) (0xFF & buffer.get()));
+//        } else {
+//          first = false;
+//        }
+//      }
+//
+//    });
+//    String s = b.toString();
+//    if(header.debug) {
+//      System.out.println("-- parsed <string> \"" + s + "\"");
+//    }
+//    return new LString(s);
+    byte[] bytes = new byte[length - 1];
+    buffer.get(bytes);
+    String s = new String(bytes, StandardCharsets.UTF_8);
+
+    if (header.debug) {
       System.out.println("-- parsed <string> \"" + s + "\"");
     }
     return new LString(s);
@@ -120,9 +144,8 @@ class LStringType53 extends LStringType {
         out.write(0xFF);
         header.sizeT.write(out, header, header.sizeT.create(len));
       }
-      for(int i = 0; i < string.value.length(); i++) {
-        out.write(string.value.charAt(i));
-      }
+      byte[] bytes = string.value.getBytes(StandardCharsets.UTF_8);
+      out.write(bytes);
     }
   }
 }
@@ -132,27 +155,32 @@ class LStringType54 extends LStringType {
   @Override
   public LString parse(final ByteBuffer buffer, BHeader header) {
     BInteger sizeT = header.sizeT.parse(buffer, header);
-    if(sizeT.asInt() == 0) {
+    int length = sizeT.asInt();
+    if(length == 0) {
       return LString.NULL;
     }
-    final StringBuilder b = this.b.get();
-    b.setLength(0);
-    sizeT.iterate(new Runnable() {
-      
-      boolean first = true;
-      
-      @Override
-      public void run() {
-        if(!first) {
-          b.append((char) (0xFF & buffer.get()));
-        } else {
-          first = false;
-        }
-      }
-      
-    });
-    String s = b.toString();
-    if(header.debug) {
+//    final StringBuilder b = this.b.get();
+//    b.setLength(0);
+//    sizeT.iterate(new Runnable() {
+//
+//      boolean first = true;
+//
+//      @Override
+//      public void run() {
+//        if(!first) {
+//          b.append((char) (0xFF & buffer.get()));
+//        } else {
+//          first = false;
+//        }
+//      }
+//
+//    });
+//    String s = b.toString();
+    byte[] bytes = new byte[length - 1];
+    buffer.get(bytes);
+    String s = new String(bytes, StandardCharsets.UTF_8);
+
+    if (header.debug) {
       System.out.println("-- parsed <string> \"" + s + "\"");
     }
     return new LString(s);
@@ -164,9 +192,8 @@ class LStringType54 extends LStringType {
       header.sizeT.write(out, header, header.sizeT.create(0));
     } else {
       header.sizeT.write(out, header, header.sizeT.create(string.value.length() + 1));
-      for(int i = 0; i < string.value.length(); i++) {
-        out.write(string.value.charAt(i));
-      }
+      byte[] bytes = string.value.getBytes(StandardCharsets.UTF_8);
+      out.write(bytes);
     }
   }
 }
