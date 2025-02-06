@@ -82,10 +82,11 @@ public class Output {
   
   public void print(String s) {
     start();
-    for(int i = 0; i < s.length(); i++) {
-      out.print((byte) s.charAt(i));
+    byte[] bytes = s.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    for (byte b : bytes) {
+      out.print(b);
     }
-    position += s.length();
+    position += bytes.length;
   }
   
   public void print(byte b) {

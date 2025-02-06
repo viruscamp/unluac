@@ -1,5 +1,7 @@
 package unluac.decompile;
 
+import java.util.PrimitiveIterator;
+
 import unluac.Version;
 import unluac.parse.LBoolean;
 import unluac.parse.LNil;
@@ -116,8 +118,8 @@ public class Constant {
           out.setIndentationLevel(indent);
         } else {
           out.print("\"");
-          for(int i = 0; i < string.length(); i++) {
-            char c = string.charAt(i);
+          for (PrimitiveIterator.OfInt i = string.codePoints().iterator(); i.hasNext(); ) {
+            int c = i.nextInt();
             if(c <= 31 || c >= 127) {
               if(c == 7) {
                 out.print("\\a");
@@ -134,13 +136,9 @@ public class Constant {
               } else if(c == 11) {
                 out.print("\\v");
               } else if(!rawstring || c <= 127) {
-                String dec = Integer.toString(c);
-                int len = dec.length();
-                out.print("\\");
-                while(len++ < 3) {
-                  out.print("0");
-                }
-                out.print(dec);
+                char[] chars = Character.toChars(c);
+                String character = new String(chars);
+                out.print(character);
               } else {
                 out.print((byte)c);
               }
