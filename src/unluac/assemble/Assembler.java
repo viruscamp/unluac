@@ -876,10 +876,14 @@ public class Assembler {
       } else {
         Op op = oplookup.get(tok);
         if(op != null) {
-          // TODO:
           chunk.processOp(this, t.line(), op, opcodelookup.get(op));
         } else {
-          throw new AssemblerException(t.line(), "Unexpected token \"" + tok + "\"");
+          int opcode = parseGenericOpcode(tok);
+          if(opcode >= 0) {
+            chunk.processOp(this, t.line(), version.getDefaultOp(), opcode);
+          } else {
+            throw new AssemblerException(t.line(), "Unexpected token \"" + tok + "\"");
+          }
         }
       }
       
@@ -1010,6 +1014,21 @@ public class Assembler {
       throw new AssemblerException(t.line(), "Excepted register, got \"" + s + "\"");
     }
     return u;
+  }
+  
+  int parseGenericOpcode(String tok) {
+    if(!tok.startsWith("op")) {
+      return -1;
+    }
+    char first = tok.charAt(2);
+    if(first < '0' || first > '9') {
+      return -1;
+    }
+    try {
+      return Integer.parseInt(tok.substring(2));
+    } catch(NumberFormatException e) {
+      return -1;
+    }
   }
   
 }
