@@ -324,19 +324,7 @@ class AssemblerFunction {
     if(opcode >= 0 && !extract.op.check(opcode)) throw new IllegalStateException("Invalid opcode: " + opcode);
     int codepoint = opcode >= 0 ? extract.op.encode(opcode) : 0;
     for(OperandFormat operand : op.operands) {
-      CodeExtract.Field field;
-      switch(operand.field) {
-      case A: field = extract.A; break;
-      case B: field = extract.B; break;
-      case C: field = extract.C; break;
-      case k: field = extract.k; break;
-      case Ax: field = extract.Ax; break;
-      case sJ: field = extract.sJ; break;
-      case Bx: field = extract.Bx; break;
-      case sBx: field = extract.sBx; break;
-      case x: field = extract.x; break;
-      default: throw new IllegalStateException("Unhandled field: " + operand.field);
-      }
+      CodeExtract.Field field = extract.get_field(operand.field);
       int x;
       switch(operand.format) {
       case RAW:
@@ -419,6 +407,22 @@ class AssemblerFunction {
       codepoint |= field.encode(x);
     }
     code.add(codepoint);
+  }
+  
+  public void updateLastOp(int line, CodeExtract extract, OperandFormat.Field fieldtype, int x) throws AssemblerException {
+    int index = code.size() - 1;
+    int codepoint = code.get(index);
+    
+    CodeExtract.Field field = extract.get_field(fieldtype);
+    
+    if(!field.check(x)) {
+      throw new AssemblerException(line, "Field " + fieldtype + " out of range"); 
+    }
+    
+    codepoint &= ~field.mask();
+    codepoint |= field.encode(x);
+    
+    code.set(index, codepoint);
   }
   
   public void fixup(CodeExtract extract) throws AssemblerException {
@@ -645,6 +649,10 @@ class AssemblerChunk {
     current.processOp(a, line, getCodeExtract(), op, opcode);
   }
   
+  public void updateLastOp(int line, OperandFormat.Field fieldtype, int value) throws AssemblerException {
+    current.updateLastOp(line, getCodeExtract(), fieldtype, value);
+  }
+  
   public void fixup() throws AssemblerException {
     main.fixup(getCodeExtract());
   }
@@ -833,10 +841,12 @@ public class Assembler {
     
     AssemblerChunk chunk = new AssemblerChunk(version);
     boolean opinit = false;
+    boolean postop = false;
     
     while((tok = t.next()) != null) {
       Directive d = Directive.lookup.get(tok);
       if(d != null) {
+        postop = false;
         switch(d.type) {
         case HEADER:
           chunk.processHeaderDirective(this, t.line(), d);
@@ -877,10 +887,26 @@ public class Assembler {
         Op op = oplookup.get(tok);
         if(op != null) {
           chunk.processOp(this, t.line(), op, opcodelookup.get(op));
+          postop = true;
         } else {
           int opcode = parseGenericOpcode(tok);
           if(opcode >= 0) {
             chunk.processOp(this, t.line(), version.getDefaultOp(), opcode);
+            postop = true;
+          } else if (postop) {
+            OperandFormat.Field fieldtype = null;
+            for(OperandFormat opformat : version.getDefaultOp().operands) {
+              if(tok.equals(opformat.field.name().toLowerCase() + "=")) {
+                fieldtype = opformat.field;
+                break;
+              }
+            }
+            if(fieldtype != null) {
+              int value = getInteger();
+              chunk.updateLastOp(t.line(), fieldtype, value);
+            } else {
+              throw new AssemblerException(t.line(), "Unexpected token \"" + tok + "\"");
+            }
           } else {
             throw new AssemblerException(t.line(), "Unexpected token \"" + tok + "\"");
           }

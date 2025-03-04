@@ -37,6 +37,10 @@ public static class Field {
       return mask - offset;
     }
     
+    public int mask() {
+      return mask << shift;
+    }
+    
     public final int size;
     private final int shift;
     private final int mask;
@@ -99,6 +103,21 @@ public static class Field {
   
   public int encode_k(int constant) {
     return constant + rk_offset;
+  }
+  
+  public Field get_field(OperandFormat.Field f) {
+    switch(f) {
+      case A: return A;
+      case B: return B;
+      case C: return C;
+      case k: return k;
+      case Ax: return Ax;
+      case sJ: return sJ;
+      case Bx: return Bx;
+      case sBx: return sBx;
+      case x: return x;
+      default: throw new IllegalStateException("Unhandled field: " + f);
+      }
   }
 
   public final Field op;
