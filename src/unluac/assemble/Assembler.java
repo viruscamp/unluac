@@ -99,6 +99,7 @@ class AssemblerFunction {
   
   class FunctionFixup {
     
+    int line;
     int code_index;
     String function;
     CodeExtract.Field field;
@@ -107,6 +108,7 @@ class AssemblerFunction {
   
   class JumpFixup {
     
+    int line;
     int code_index;
     String label;
     CodeExtract.Field field;
@@ -186,38 +188,38 @@ class AssemblerFunction {
         return child.getInnerParent(parts, index + 1);
       }
     }
-    throw new AssemblerException("Can't find outer function");
+    return null;
   }
   
-  public void processFunctionDirective(Assembler a, Directive d) throws AssemblerException, IOException {
+  public void processFunctionDirective(Assembler a, int line, Directive d) throws AssemblerException, IOException {
     switch(d) {
     case SOURCE:
-      if(hasSource) throw new AssemblerException("Duplicate .source directive");
+      if(hasSource) throw new AssemblerException(line, "Duplicate .source directive");
       hasSource = true;
       source = a.getString();
       break;
     case LINEDEFINED:
-      if(hasLineDefined) throw new AssemblerException("Duplicate .linedefined directive");
+      if(hasLineDefined) throw new AssemblerException(line, "Duplicate .linedefined directive");
       hasLineDefined = true;
       linedefined = a.getInteger();
       break;
     case LASTLINEDEFINED:
-      if(hasLastLineDefined) throw new AssemblerException("Duplicate .lastlinedefined directive");
+      if(hasLastLineDefined) throw new AssemblerException(line, "Duplicate .lastlinedefined directive");
       hasLastLineDefined = true;
       lastlinedefined = a.getInteger();
       break;
     case MAXSTACKSIZE:
-      if(hasMaxStackSize) throw new AssemblerException("Duplicate .maxstacksize directive");
+      if(hasMaxStackSize) throw new AssemblerException(line, "Duplicate .maxstacksize directive");
       hasMaxStackSize = true;
       maxStackSize = a.getInteger();
       break;
     case NUMPARAMS:
-      if(hasNumParams) throw new AssemblerException("Duplicate .numparams directive");
+      if(hasNumParams) throw new AssemblerException(line, "Duplicate .numparams directive");
       hasNumParams = true;
       numParams = a.getInteger();
       break;
     case IS_VARARG:
-      if(hasVararg) throw new AssemblerException("Duplicate .is_vararg directive");
+      if(hasVararg) throw new AssemblerException(line, "Duplicate .is_vararg directive");
       hasVararg = true;
       vararg = a.getInteger();
       break;
@@ -259,7 +261,7 @@ class AssemblerFunction {
           if(value.startsWith("NaN+") || value.startsWith("NaN-")) {
             long bits = Long.parseUnsignedLong(value.substring(4), 16);
             if(bits < 0 || (bits & Double.doubleToRawLongBits(Double.NaN)) != 0) {
-              throw new AssemblerException("Unrecognized NaN value: " + value);
+              throw new AssemblerException(line, "Unrecognized NaN value: " + value);
             }
             if(value.startsWith("NaN-")) {
               bits ^= 0x8000000000000000L;
@@ -279,7 +281,7 @@ class AssemblerFunction {
             }
           }
         } catch(NumberFormatException e) {
-          throw new AssemblerException("Unrecognized constant value: " + value);
+          throw new AssemblerException(line, "Unrecognized constant value: " + value);
         }
       }
       constants.add(constant);
@@ -317,8 +319,8 @@ class AssemblerFunction {
     }
   }
   
-  public void processOp(Assembler a, CodeExtract extract, Op op, int opcode) throws AssemblerException, IOException {
-    if(!hasMaxStackSize) throw new AssemblerException("Expected .maxstacksize before code");
+  public void processOp(Assembler a, int line, CodeExtract extract, Op op, int opcode) throws AssemblerException, IOException {
+    if(!hasMaxStackSize) throw new AssemblerException(line, "Expected .maxstacksize before code");
     if(opcode >= 0 && !extract.op.check(opcode)) throw new IllegalStateException("Invalid opcode: " + opcode);
     int codepoint = opcode >= 0 ? extract.op.encode(opcode) : 0;
     for(OperandFormat operand : op.operands) {
@@ -378,6 +380,7 @@ class AssemblerFunction {
       }
       case FUNCTION: {
         FunctionFixup fix = new FunctionFixup();
+        fix.line = line;
         fix.code_index = code.size();
         fix.function = a.getAny();
         fix.field = field;
@@ -387,6 +390,7 @@ class AssemblerFunction {
       }
       case JUMP: {
         JumpFixup fix = new JumpFixup();
+        fix.line = line;
         fix.code_index = code.size();
         fix.label = a.getAny();
         fix.field = field;
@@ -397,6 +401,7 @@ class AssemblerFunction {
       }
       case JUMP_NEGATIVE: {
         JumpFixup fix = new JumpFixup();
+        fix.line = line;
         fix.code_index = code.size();
         fix.label = a.getAny();
         fix.field = field;
@@ -409,7 +414,7 @@ class AssemblerFunction {
         throw new IllegalStateException("Unhandled operand format: " + operand.format);
       }
       if(!field.check(x)) {
-        throw new AssemblerException("Operand " + operand.field + " out of range"); 
+        throw new AssemblerException(line, "Operand " + operand.field + " out of range"); 
       }
       codepoint |= field.encode(x);
     }
@@ -428,7 +433,7 @@ class AssemblerFunction {
         }
       }
       if(x == -1) {
-        throw new AssemblerException("Unknown function: " + fix.function);
+        throw new AssemblerException(fix.line, "Unknown function: " + fix.function);
       }
       codepoint = fix.field.clear(codepoint);
       codepoint |= fix.field.encode(x);
@@ -448,7 +453,7 @@ class AssemblerFunction {
         }
       }
       if(!found) {
-        throw new AssemblerException("Unknown label: " + fix.label);
+        throw new AssemblerException(fix.line, "Unknown label: " + fix.label);
       }
       codepoint = fix.field.clear(codepoint);
       codepoint |= fix.field.encode(x);
@@ -508,9 +513,9 @@ class AssemblerChunk {
     extract = null;
   }
   
-  public void processHeaderDirective(Assembler a, Directive d) throws AssemblerException, IOException {
+  public void processHeaderDirective(Assembler a, int line, Directive d) throws AssemblerException, IOException {
     if(!d.repeatable && processed_directives.contains(d)) {
-      throw new AssemblerException("Duplicate " + d.name() + " directive");
+      throw new AssemblerException(line, "Duplicate " + d.name() + " directive");
     }
     processed_directives.add(d);
     switch(d) {
@@ -527,7 +532,7 @@ class AssemblerChunk {
         endianness = LHeader.LEndianness.BIG;
         break;
       default:
-        throw new AssemblerException("Unknown endianness \"" + endiannessName + "\"");
+        throw new AssemblerException(line, "Unknown endianness \"" + endiannessName + "\"");
       }
       break;
     }
@@ -559,7 +564,7 @@ class AssemblerChunk {
       switch(numberTypeName) {
       case "integer": number_integral = true; break;
       case "float": number_integral = false; break;
-      default: throw new AssemblerException("Unknown number_format \"" + numberTypeName + "\"");
+      default: throw new AssemblerException(line, "Unknown number_format \"" + numberTypeName + "\"");
       }
       number_size = a.getInteger();
       number = new LNumberType(number_size, number_integral, NumberMode.MODE_NUMBER);
@@ -579,7 +584,7 @@ class AssemblerChunk {
       String name = a.getName();
       Type type = Type.get(name);
       if(type == null) {
-        throw new AssemblerException("Unknown type name \"" + name + "\"");
+        throw new AssemblerException(line, "Unknown type name \"" + name + "\"");
       }
       usertypemap.put(typecode, type);
       break;
@@ -592,7 +597,7 @@ class AssemblerChunk {
       String name = a.getName();
       Op op = version.getOpcodeMap().get(name);
       if(op == null) {
-        throw new AssemblerException("Unknown op name \"" + name + "\"");
+        throw new AssemblerException(line, "Unknown op name \"" + name + "\"");
       }
       useropmap.put(opcode, op);
       break;
@@ -609,32 +614,35 @@ class AssemblerChunk {
     return extract;
   }
   
-  public void processNewFunction(Assembler a) throws AssemblerException, IOException {
+  public void processNewFunction(Assembler a, int line) throws AssemblerException, IOException {
     String name = a.getName();
     String[] parts = name.split("/");
     if(main == null) {
-      if(parts.length != 1) throw new AssemblerException("First (main) function declaration must not have a \"/\" in the name");
+      if(parts.length != 1) throw new AssemblerException(line, "First (main) function declaration must not have a \"/\" in the name");
       main = new AssemblerFunction(this, null, name);
       current = main;
     } else {
-      if(parts.length == 1 || !parts[0].equals(main.name)) throw new AssemblerException("Function \"" + name + "\" isn't contained in the main function");
+      if(parts.length == 1 || !parts[0].equals(main.name)) throw new AssemblerException(line, "Function \"" + name + "\" isn't contained in the main function");
       AssemblerFunction parent = main.getInnerParent(parts, 1);
+      if(parent == null) {
+        throw new AssemblerException(line, "Can't find outer function");
+      }
       current = parent.addChild(parts[parts.length - 1]);
     }
   }
   
-  public void processFunctionDirective(Assembler a, Directive d) throws AssemblerException, IOException {
+  public void processFunctionDirective(Assembler a, int line, Directive d) throws AssemblerException, IOException {
     if(current == null) {
-      throw new AssemblerException("Misplaced function directive before declaration of any function");
+      throw new AssemblerException(line, "Misplaced function directive before declaration of any function");
     }
-    current.processFunctionDirective(a, d);
+    current.processFunctionDirective(a, line, d);
   }
   
-  public void processOp(Assembler a, Op op, int opcode) throws AssemblerException, IOException {
+  public void processOp(Assembler a, int line, Op op, int opcode) throws AssemblerException, IOException {
     if(current == null) {
-      throw new AssemblerException("Misplaced code before declaration of any function");
+      throw new AssemblerException(line, "Misplaced code before declaration of any function");
     }
-    current.processOp(a, getCodeExtract(), op, opcode);
+    current.processOp(a, line, getCodeExtract(), op, opcode);
   }
   
   public void fixup() throws AssemblerException {
@@ -794,7 +802,7 @@ public class Assembler {
   public void assemble() throws AssemblerException, IOException {
     
     String tok = t.next();
-    if(!tok.equals(".version")) throw new AssemblerException("First directive must be .version, instead was \"" + tok + "\"");
+    if(!tok.equals(".version")) throw new AssemblerException(t.line(), "First directive must be .version, instead was \"" + tok + "\"");
     tok = t.next();
     
     int major;
@@ -805,19 +813,19 @@ public class Assembler {
         major = Integer.valueOf(parts[0]);
         minor = Integer.valueOf(parts[1]);
       } catch(NumberFormatException e) {
-        throw new AssemblerException("Unsupported version " + tok);
+        throw new AssemblerException(t.line(), "Unsupported version " + tok);
       }
     } else {
-      throw new AssemblerException("Unsupported version " + tok);
+      throw new AssemblerException(t.line(), "Unsupported version " + tok);
     }
     if(major < 0 || major > 0xF || minor < 0 || minor > 0xF) {
-      throw new AssemblerException("Unsupported version " + tok);
+      throw new AssemblerException(t.line(), "Unsupported version " + tok);
     }
     
     version = Version.getVersion(config, major, minor);
     
     if(version == null) {
-      throw new AssemblerException("Unsupported version " + tok);
+      throw new AssemblerException(t.line(), "Unsupported version " + tok);
     }
     
     Map<String, Op> oplookup = null;
@@ -831,7 +839,7 @@ public class Assembler {
       if(d != null) {
         switch(d.type) {
         case HEADER:
-          chunk.processHeaderDirective(this, d);
+          chunk.processHeaderDirective(this, t.line(), d);
           break;
         case NEWFUNCTION:
           if(!opinit) {
@@ -856,10 +864,10 @@ public class Assembler {
             opcodelookup.put(Op.EXTRABYTE, -1);
           }
           
-          chunk.processNewFunction(this);
+          chunk.processNewFunction(this, t.line());
           break;
         case FUNCTION:
-          chunk.processFunctionDirective(this, d);
+          chunk.processFunctionDirective(this, t.line(), d);
           break;
         default:
           throw new IllegalStateException();
@@ -869,9 +877,9 @@ public class Assembler {
         Op op = oplookup.get(tok);
         if(op != null) {
           // TODO:
-          chunk.processOp(this, op, opcodelookup.get(op));
+          chunk.processOp(this, t.line(), op, opcodelookup.get(op));
         } else {
-          throw new AssemblerException("Unexpected token \"" + tok + "\"");
+          throw new AssemblerException(t.line(), "Unexpected token \"" + tok + "\"");
         }
       }
       
@@ -885,60 +893,60 @@ public class Assembler {
   
   String getAny() throws AssemblerException, IOException {
     String s = t.next();
-    if(s == null) throw new AssemblerException("Unexcepted end of file");
+    if(s == null) throw new AssemblerException(t.line(), "Unexcepted end of file");
     return s;
   }
   
   String getName() throws AssemblerException, IOException {
     String s = t.next();
-    if(s == null) throw new AssemblerException("Unexcepted end of file");
+    if(s == null) throw new AssemblerException(t.line(), "Unexcepted end of file");
     return s;
   }
   
   String getString() throws AssemblerException, IOException {
     String s = t.next();
-    if(s == null) throw new AssemblerException("Unexcepted end of file");
+    if(s == null) throw new AssemblerException(t.line(), "Unexcepted end of file");
     return StringUtils.fromPrintString(s);
   }
   
   int getInteger() throws AssemblerException, IOException {
     String s = t.next();
-    if(s == null) throw new AssemblerException("Unexcepted end of file");
+    if(s == null) throw new AssemblerException(t.line(), "Unexcepted end of file");
     int i;
     try {
       i = Integer.parseInt(s);
     } catch(NumberFormatException e) {
-      throw new AssemblerException("Excepted number, got \"" + s + "\"");
+      throw new AssemblerException(t.line(), "Excepted number, got \"" + s + "\"");
     }
     return i;
   }
   
   boolean getBoolean() throws AssemblerException, IOException {
     String s = t.next();
-    if(s == null) throw new AssemblerException("Unexcepted end of file");
+    if(s == null) throw new AssemblerException(t.line(), "Unexcepted end of file");
     boolean b;
     if(s.equals("true")) {
       b = true;
     } else if(s.equals("false")) {
       b = false;
     } else {
-      throw new AssemblerException("Expected boolean, got \"" + s + "\"");
+      throw new AssemblerException(t.line(), "Expected boolean, got \"" + s + "\"");
     }
     return b;
   }
   
   int getRegister() throws AssemblerException, IOException {
     String s = t.next();
-    if(s == null) throw new AssemblerException("Unexcepted end of file");
+    if(s == null) throw new AssemblerException(t.line(), "Unexcepted end of file");
     int r;
     if(s.length() >= 2 && s.charAt(0) == 'r') {
       try {
         r = Integer.parseInt(s.substring(1));
       } catch(NumberFormatException e) {
-        throw new AssemblerException("Excepted register, got \"" + s + "\"");
+        throw new AssemblerException(t.line(), "Excepted register, got \"" + s + "\"");
       }
     } else {
-      throw new AssemblerException("Excepted register, got \"" + s + "\"");
+      throw new AssemblerException(t.line(), "Excepted register, got \"" + s + "\"");
     }
     return r;
   }
@@ -950,56 +958,56 @@ public class Assembler {
   
   RKInfo getRegisterK54() throws AssemblerException, IOException {
     String s = t.next();
-    if(s == null) throw new AssemblerException("Unexcepted end of file");
+    if(s == null) throw new AssemblerException(t.line(), "Unexcepted end of file");
     RKInfo rk = new RKInfo();
     if(s.length() >= 2 && s.charAt(0) == 'r') {
       rk.constant = false;
       try {
         rk.x = Integer.parseInt(s.substring(1));
       } catch(NumberFormatException e) {
-        throw new AssemblerException("Excepted register, got \"" + s + "\"");
+        throw new AssemblerException(t.line(), "Excepted register, got \"" + s + "\"");
       }
     } else if(s.length() >= 2 && s.charAt(0) == 'k') {
       rk.constant = true;
       try {
         rk.x = Integer.parseInt(s.substring(1));
       } catch(NumberFormatException e) {
-        throw new AssemblerException("Excepted constant, got \"" + s + "\"");
+        throw new AssemblerException(t.line(), "Excepted constant, got \"" + s + "\"");
       }
     } else {
-      throw new AssemblerException("Excepted register or constant, got \"" + s + "\"");
+      throw new AssemblerException(t.line(), "Excepted register or constant, got \"" + s + "\"");
     }
     return rk;
   }
   
   int getConstant() throws AssemblerException, IOException {
     String s = t.next();
-    if(s == null) throw new AssemblerException("Unexpected end of file");
+    if(s == null) throw new AssemblerException(t.line(), "Unexpected end of file");
     int k;
     if(s.length() >= 2 && s.charAt(0) == 'k') {
       try {
         k = Integer.parseInt(s.substring(1));
       } catch(NumberFormatException e) {
-        throw new AssemblerException("Excepted constant, got \"" + s + "\"");
+        throw new AssemblerException(t.line(), "Excepted constant, got \"" + s + "\"");
       }
     } else {
-      throw new AssemblerException("Excepted constant, got \"" + s + "\"");
+      throw new AssemblerException(t.line(), "Excepted constant, got \"" + s + "\"");
     }
     return k;
   }
   
   int getUpvalue() throws AssemblerException, IOException {
     String s = t.next();
-    if(s == null) throw new AssemblerException("Unexcepted end of file");
+    if(s == null) throw new AssemblerException(t.line(), "Unexcepted end of file");
     int u;
     if(s.length() >= 2 && s.charAt(0) == 'u') {
       try {
         u = Integer.parseInt(s.substring(1));
       } catch(NumberFormatException e) {
-        throw new AssemblerException("Excepted register, got \"" + s + "\"");
+        throw new AssemblerException(t.line(), "Excepted register, got \"" + s + "\"");
       }
     } else {
-      throw new AssemblerException("Excepted register, got \"" + s + "\"");
+      throw new AssemblerException(t.line(), "Excepted register, got \"" + s + "\"");
     }
     return u;
   }

@@ -7,9 +7,19 @@ public class Tokenizer {
 
   private StringBuilder b;
   private InputStream in;
+  private int line;
+  private int pos;
+  private int tokenline;
+  private int tokenpos;
+  private char lineending;
   
   public Tokenizer(InputStream in) {
     this.in = in;
+    this.line = 1;
+    this.pos = 0;
+    this.tokenline = 1;
+    this.tokenpos = 0;
+    this.lineending = '\0';
     b = new StringBuilder();
   }
   
@@ -23,11 +33,19 @@ public class Tokenizer {
     boolean inEscape = false;
     
     for(;;) {
+      if(!inToken) {
+        tokenline = line;
+        tokenpos = pos;
+      }
       int code = in.read();
       if(code == -1) break;
+      pos++;
       char c = (char)code;
-      //if(c == '\n') System.out.println("line"); 
-      if(inString) {
+      char lastlineending = lineending;
+      lineending = '\0';
+      if(lastlineending == '\r' && c == '\n') {
+        // skip
+      } else if(inString) {
         if(c == '\\' && !inEscape) {
           inEscape = true;
           b.append(c);
@@ -40,6 +58,9 @@ public class Tokenizer {
         }
       } else if(inComment) {
         if(c == '\n' || c == '\r') {
+          line++;
+          pos = 0;
+          lineending = c;
           inComment = false;
           if(inToken) {
             break;
@@ -48,6 +69,11 @@ public class Tokenizer {
       } else if(c == ';') {
         inComment = true;
       } else if(Character.isWhitespace(c)) {
+        if(c == '\n' || c == '\r') {
+          line++;
+          pos = 0;
+          lineending = c;
+        }
         if(inToken) {
           break;
         }
@@ -71,6 +97,14 @@ public class Tokenizer {
     } else {
       return b.toString();
     }
+  }
+  
+  public int line() {
+    return tokenline;
+  }
+  
+  public int pos() {
+    return tokenpos;
   }
   
 }

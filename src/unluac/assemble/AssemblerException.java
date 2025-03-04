@@ -3,8 +3,8 @@ package unluac.assemble;
 @SuppressWarnings("serial")
 public class AssemblerException extends Exception {
   
-  AssemblerException(String msg) {
-    super(msg);
+  AssemblerException(int line, String msg) {
+    super(String.format("line %d: %s", line, msg));
   }
   
 }
