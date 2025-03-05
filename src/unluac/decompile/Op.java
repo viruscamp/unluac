@@ -360,21 +360,11 @@ public enum Op {
     for(int i = 0; i < width - name.length(); i++) {
       b.append(' ');
     }
+    int slot = CodeExtract.BITFIELD_OPCODE;
     String[] parameters = new String[operands.length];
     for(int i = 0; i < operands.length; ++i) {
-      CodeExtract.Field field;
-      switch(operands[i].field) {
-      case A: field = ex.A; break;
-      case B: field = ex.B; break;
-      case C: field = ex.C; break;
-      case k: field = ex.k; break;
-      case Ax: field = ex.Ax; break;
-      case sJ: field = ex.sJ; break;
-      case Bx: field = ex.Bx; break;
-      case sBx: field = ex.sBx; break;
-      case x: field = ex.x; break;
-      default: throw new IllegalStateException();
-      }
+      CodeExtract.Field field = ex.get_field(operands[i].field);
+      slot |= field.slot;
       int x = field.extract(codepoint);
       switch(operands[i].format) {
       case IMMEDIATE_INTEGER:
@@ -431,6 +421,22 @@ public enum Op {
       }
       b.append(parameter);
     }
+    
+    while(true) {
+      CodeExtract.Field extra = ex.get_field_for_slot(slot);
+      if(extra == null) break;
+      slot |= extra.slot;
+      int x = extra.extract(codepoint);
+      if(x != 0) {
+        b.append(' ');
+        String parameter = extra.defaultname() + "= " + fixedOperand(x);
+        for(int i = 0; i < 5 - parameter.length(); i++) {
+          b.append(' ');
+        }
+        b.append(parameter);
+      }
+    }
+    
     if(upvalue) {
       b.append(" ; upvalue declaration");
     } else if(function != null && constant >= 0) {
