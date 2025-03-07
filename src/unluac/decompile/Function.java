@@ -8,16 +8,30 @@ import unluac.parse.LFunction;
 public class Function {
 
   private Version version;
+  private String name;
+  private Function parent;
+  public final Code code;
   private Constant[] constants;
   private final CodeExtract extract;
   
-  public Function(LFunction function) {
+  public Function(Function parent, int index, LFunction function) {
+    name = parent == null ? "main" : String.valueOf(index);
+    this.parent = parent;
     version = function.header.version;
+    code = new Code(function);
     constants = new Constant[function.constants.length];
     for(int i = 0; i < constants.length; i++) {
       constants[i] = new Constant(function.constants[i]);
     }
     extract = function.header.extractor;
+  }
+  
+  public String disassemblerName() {
+    return name;
+  }
+  
+  public String fullDisassemblerName() {
+    return parent == null ? name : parent.fullDisassemblerName() + "/" + name;
   }
   
   public boolean isConstant(int register) {

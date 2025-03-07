@@ -76,16 +76,16 @@ public class Decompiler {
   }
   
   public Decompiler(LFunction function) {
-    this(function, Collections.emptySet(), null, -1);
+    this(null, 0, function, Collections.emptySet(), null, -1);
   }
   
-  public Decompiler(LFunction function, Set<String> boundNames, Declaration[] parentDecls, int line) {
-    this.f = new Function(function);
+  public Decompiler(Decompiler parent, int index, LFunction function, Set<String> boundNames, Declaration[] parentDecls, int line) {
+    this.f = new Function( parent != null ? parent.f : null, index, function);
     this.function = function;
     this.boundNames = boundNames;
     registers = function.maximumStackSize;
     length = function.code.length;
-    code = new Code(function);
+    code = f.code;
     if(function.stripped || getConfiguration().variable == Configuration.VariableMode.NODEBUG) {
       if(getConfiguration().variable == Configuration.VariableMode.FINDER) {
         declList = VariableFinder.process(this, function.numParams, function.maximumStackSize);
@@ -138,7 +138,7 @@ public class Decompiler {
             innerNames.add(decl.name);
           }
         }
-        decompilers[f] = new Decompiler(functions[f], innerNames, declList, closureLine);
+        decompilers[f] = new Decompiler(this, f, functions[f], innerNames, declList, closureLine);
       }
     }
   }
@@ -159,6 +159,9 @@ public class Decompiler {
   public State decompile() {
     State state = new State();
     state.r = new Registers(registers, length, declList, f, getNoDebug());
+    
+    Validator.process(f);
+    
     ControlFlowHandler.Result result = ControlFlowHandler.process(this, state.r);
     List<Block> blocks = result.blocks;
     state.outer = blocks.get(0);
