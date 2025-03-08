@@ -219,6 +219,35 @@ public enum Op {
   }
   
   /**
+   * Is this op the standard JMP instruction in its opmap?
+   */
+  public boolean isJmp() {
+    switch(this) {
+      case JMP:
+      case JMP52:
+      case JMP54:
+        return true;
+      default:
+        return false;
+    }
+  }
+  
+  public boolean isCondition() {
+    switch(this) {
+      case TEST50:
+      case TEST: case TESTSET:
+      case TEST54: case TESTSET54:
+      case EQ: case LT: case LE:
+      case EQ54: case LT54: case LE54:
+      case EQK: case EQI:
+      case LTI: case LEI: case GTI: case GEI:
+        return true;
+      default:
+        return false;
+    }
+  }
+  
+  /**
    * Returns the target register of the instruction at the given
    * line or -1 if the instruction does not have a unique target.
    */

@@ -11,7 +11,7 @@ public class Function {
   private String name;
   private Function parent;
   public final Code code;
-  private Constant[] constants;
+  public final Constant[] constants;
   private final CodeExtract extract;
   
   public Function(Function parent, int index, LFunction function) {

@@ -134,6 +134,10 @@ public class Code {
     return extractor.sBx.extract(code[line - 1]);
   }
   
+  public int field(OperandFormat.Field f, int line) {
+    return extractor.get_field(f).extract(code[line - 1]);
+  }
+  
   /**
    * Returns the absolute target address of a jump instruction and the given line.
    * This field will be chosen automatically based on the opcode.

@@ -160,7 +160,7 @@ public class Decompiler {
     State state = new State();
     state.r = new Registers(registers, length, declList, f, getNoDebug());
     
-    Validator.process(f);
+    Validator.process(f, state.r);
     
     ControlFlowHandler.Result result = ControlFlowHandler.process(this, state.r);
     List<Block> blocks = result.blocks;
