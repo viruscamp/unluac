@@ -532,9 +532,16 @@ public class ControlFlowHandler {
           
           boolean forvarPreClose = false;
           boolean forvarPostClose = false;
+          boolean closeIsInScope = false;
           int closeLine = target - 1;
           if(closeLine >= line + 1 && is_close(state, closeLine) && get_close_value(state, closeLine) == A + 3) {
             forvarPreClose = true;
+            if(!state.r.isNoDebug) {
+              int declScopeEnd = r.getDeclaration(A + 3, line).end;
+              if(get_close_type(state, closeLine) == CloseType.CLOSE54) {
+                if(declScopeEnd == closeLine) closeIsInScope = true;
+              }
+            }
             closeLine--;
           } else if(end <= code.length && is_close(state, end) && get_close_value(state, end) == A + 3) {
             forvarPostClose = true;
@@ -542,7 +549,7 @@ public class ControlFlowHandler {
           
           ForBlock block = new ForBlock51(
             state.function, begin, end, A,
-            get_close_type(state, closeLine), closeLine, forvarPreClose, forvarPostClose
+            get_close_type(state, closeLine), closeLine, forvarPreClose, forvarPostClose, closeIsInScope
           );
           
           block.handleVariableDeclarations(r);
@@ -578,15 +585,21 @@ public class ControlFlowHandler {
             close--;
           }
           
-          boolean adjustImplicitScope = false;
+          boolean closeIsInScope = false;
           if(!state.r.isNoDebug && target + 2 <= code.length && is_close(state, target + 2)) {
-            // Prior to 5.4.5, implicit scope ends on the close line
-            // After 5.4.5, implicit scope ends before the close line
+            // Prior to 5.4.5, scope ends on the close line
+            // After 5.4.5, scope ends before the close line
             // See: https://www.lua.org/bugs.html#5.4.4-6
-            adjustImplicitScope = (r.getDeclaration(A, target).end == target + 2); 
+            
+            // (In 5.4, there is always a close for tfor)
+            closeIsInScope = (r.getDeclaration(A, target).end == target + 2); 
           }
           
-          TForBlock block = TForBlock.make54(state.function, line + 1, target + 2, A, C, forvarClose, adjustImplicitScope);
+          TForBlock block = TForBlock.make54(
+            state.function, line + 1, target + 2, A, C,
+            get_close_type(state, close), close,
+            forvarClose, closeIsInScope
+          );
           block.handleVariableDeclarations(r);
           blocks.add(block);
           break;
@@ -1379,7 +1392,13 @@ public class ControlFlowHandler {
                 if(closeType == CloseType.CLOSE) {
                   scopeEnd = closeLine - 1;
                 } else if(closeType == CloseType.CLOSE54) {
-                  scopeEnd = closeLine;
+                  scopeEnd = closeLine - 1;
+                  if(decl.end == closeLine) {
+                    // Prior to 5.4.5, scope ends on the close line
+                    // After 5.4.5, scope ends before the close line
+                    // See: https://www.lua.org/bugs.html#5.4.4-6 
+                    scopeEnd = closeLine;
+                  }
                 }
               }
             }

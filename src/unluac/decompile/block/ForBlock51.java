@@ -8,10 +8,12 @@ import unluac.parse.LFunction;
 public class ForBlock51 extends ForBlock {
 
   protected boolean forvarPostClose;
+  protected boolean closeIsInScope;
   
-  public ForBlock51(LFunction function, int begin, int end, int register, CloseType closeType, int closeLine, boolean forvarPreClose, boolean forvarPostClose) {
+  public ForBlock51(LFunction function, int begin, int end, int register, CloseType closeType, int closeLine, boolean forvarPreClose, boolean forvarPostClose, boolean closeIsInScope) {
     super(function, begin, end, register, closeType, closeLine, forvarPreClose);
     this.forvarPostClose = forvarPostClose;
+    this.closeIsInScope = closeIsInScope;
   }
 
   @Override
@@ -30,7 +32,11 @@ public class ForBlock51 extends ForBlock {
     r.setInternalLoopVariable(register + 1, begin - 2, implicitEnd);
     r.setInternalLoopVariable(register + 2, begin - 2, implicitEnd);
     int explicitEnd = end - 2;
-    if(forvarPreClose && r.getVersion().closesemantics.get() == Version.CloseSemantics.DEFAULT) explicitEnd--;
+    if(forvarPreClose) {
+      Version.CloseSemantics closeSemantics = r.getVersion().closesemantics.get();
+      if(closeSemantics == Version.CloseSemantics.DEFAULT) explicitEnd--;
+      else if(closeSemantics == Version.CloseSemantics.LUA54 && !closeIsInScope) explicitEnd--;
+    }
     r.setExplicitLoopVariable(register + 3, begin - 1, explicitEnd);
   }
   

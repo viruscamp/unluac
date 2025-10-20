@@ -40,6 +40,7 @@ public class TForBlock extends ContainerBlock {
     }
     return new TForBlock(
       function, begin, end,
+      CloseType.NONE, -1,
       register, register + 1, register + 2, register + 1 + length,
       begin - 1, end - 1,
       begin - 1, end - 1,
@@ -65,6 +66,7 @@ public class TForBlock extends ContainerBlock {
     }
     return new TForBlock(
       function, begin, end,
+      CloseType.NONE, -1,
       register, register + 2, register + 3, register + 2 + length,
       begin - 2, end - 1,
       begin - 1, explicitScopeEnd,
@@ -72,32 +74,42 @@ public class TForBlock extends ContainerBlock {
     );
   }
   
-  public static TForBlock make54(LFunction function, int begin, int end, int register, int length, boolean forvarClose, boolean adjustImplicitScope) {
-    int implicitScopeEnd = end - 1;
+  public static TForBlock make54(
+    LFunction function, int begin, int end, int register, int length,
+    CloseType closeType, int closeLine,
+    boolean forvarClose, boolean closeIsInScope)
+  {
+    int internalScopeEnd = end - 1;
+    int explicitScopeEnd = end - 3;
     int innerScopeEnd = end - 3;
     if(forvarClose) {
       innerScopeEnd--;
+      if(!closeIsInScope) {
+        explicitScopeEnd--;
+      }
     }
-    if(adjustImplicitScope) {
-      implicitScopeEnd++;
+    if(closeIsInScope) {
+      internalScopeEnd++;
     }
     return new TForBlock(
       function, begin, end,
+      closeType, closeLine,
       register, register + 3, register + 4, register + 3 + length,
-      begin - 2, implicitScopeEnd,
-      begin - 1, end - 3,
+      begin - 2, internalScopeEnd,
+      begin - 1, explicitScopeEnd,
       innerScopeEnd
     );
   }
   
   public TForBlock(LFunction function, int begin, int end,
+    CloseType closeType, int closeLine,
     int internalRegisterFirst, int internalRegisterLast,
     int explicitRegisterFirst, int explicitRegisterLast,
     int internalScopeBegin, int internalScopeEnd,
     int explicitScopeBegin, int explicitScopeEnd,
     int innerScopeEnd
   ) {
-    super(function, begin, end, CloseType.NONE, -1, -1);
+    super(function, begin, end, closeType, closeLine, -1);
     this.internalRegisterFirst = internalRegisterFirst;
     this.internalRegisterLast = internalRegisterLast;
     this.explicitRegisterFirst = explicitRegisterFirst;
