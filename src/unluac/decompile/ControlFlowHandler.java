@@ -578,7 +578,15 @@ public class ControlFlowHandler {
             close--;
           }
           
-          TForBlock block = TForBlock.make54(state.function, line + 1, target + 2, A, C, forvarClose);
+          boolean adjustImplicitScope = false;
+          if(!state.r.isNoDebug && target + 2 <= code.length && is_close(state, target + 2)) {
+            // Prior to 5.4.5, implicit scope ends on the close line
+            // After 5.4.5, implicit scope ends before the close line
+            // See: https://www.lua.org/bugs.html#5.4.4-6
+            adjustImplicitScope = (r.getDeclaration(A, target).end == target + 2); 
+          }
+          
+          TForBlock block = TForBlock.make54(state.function, line + 1, target + 2, A, C, forvarClose, adjustImplicitScope);
           block.handleVariableDeclarations(r);
           blocks.add(block);
           break;

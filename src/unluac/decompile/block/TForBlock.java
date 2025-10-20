@@ -72,15 +72,19 @@ public class TForBlock extends ContainerBlock {
     );
   }
   
-  public static TForBlock make54(LFunction function, int begin, int end, int register, int length, boolean forvarClose) {
+  public static TForBlock make54(LFunction function, int begin, int end, int register, int length, boolean forvarClose, boolean adjustImplicitScope) {
+    int implicitScopeEnd = end - 1;
     int innerScopeEnd = end - 3;
     if(forvarClose) {
       innerScopeEnd--;
     }
+    if(adjustImplicitScope) {
+      implicitScopeEnd++;
+    }
     return new TForBlock(
       function, begin, end,
       register, register + 3, register + 4, register + 3 + length,
-      begin - 2, end,
+      begin - 2, implicitScopeEnd,
       begin - 1, end - 3,
       innerScopeEnd
     );
