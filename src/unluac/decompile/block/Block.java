@@ -60,6 +60,10 @@ abstract public class Block extends Statement implements Comparable<Block> {
     throw new IllegalStateException();
   }
   
+  public CloseType getCloseType() {
+    throw new IllegalStateException();
+  }
+  
   public void useClose() {
     throw new IllegalStateException();
   }

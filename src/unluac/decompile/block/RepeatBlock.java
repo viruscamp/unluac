@@ -14,15 +14,15 @@ public class RepeatBlock extends ContainerBlock {
 
   private final Condition cond;
   private final boolean extendedRepeatScope;
-  private final int scopeEnd;
+  private final int extendedScopeEnd;
   
   private Expression condexpr;
   
-  public RepeatBlock(LFunction function, Condition cond, int begin, int end, CloseType closeType, int closeLine, boolean extendedRepeatScope, int scopeEnd) {
+  public RepeatBlock(LFunction function, Condition cond, int begin, int end, CloseType closeType, int closeLine, boolean extendedRepeatScope, int extendedScopeEnd) {
     super(function, begin, end, closeType, closeLine, 0);
     this.cond = cond;
     this.extendedRepeatScope = extendedRepeatScope;
-    this.scopeEnd = scopeEnd;
+    this.extendedScopeEnd = extendedScopeEnd;
   }
   
   @Override
@@ -41,12 +41,18 @@ public class RepeatBlock extends ContainerBlock {
   
   @Override
   public int scopeEnd() {
+    return extendedRepeatScope ? extendedScopeEnd : end - 1;
+  }
+  
+  /* TODO: remove
+  @Override
+  public int scopeEnd() {
     if(extendedRepeatScope) {
       return usingClose && closeType != CloseType.NONE ? closeLine - 1 : scopeEnd;
     } else {
       return usingClose && closeType != CloseType.NONE ? closeLine : super.scopeEnd();
     }
-  }
+  }*/
   
   @Override
   public boolean breakable() {

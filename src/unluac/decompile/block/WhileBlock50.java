@@ -15,7 +15,7 @@ public class WhileBlock50 extends WhileBlock {
   
   @Override
   public int scopeEnd() {
-    return usingClose && closeType != CloseType.NONE ? closeLine - 1 : enterTarget - 1;
+    return enterTarget - 1;
   }
   
   @Override

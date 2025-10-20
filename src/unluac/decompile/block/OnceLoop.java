@@ -13,11 +13,6 @@ public class OnceLoop extends ContainerBlock {
   }
   
   @Override
-  public int scopeEnd() {
-    return end - 1;
-  }
-  
-  @Override
   public boolean breakable() {
     return true;
   }

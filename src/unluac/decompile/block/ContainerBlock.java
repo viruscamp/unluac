@@ -60,6 +60,11 @@ abstract public class ContainerBlock extends Block {
   }
   
   @Override
+  public CloseType getCloseType() {
+    return closeType;
+  }
+  
+  @Override
   public void useClose() {
     usingClose = true;
   }

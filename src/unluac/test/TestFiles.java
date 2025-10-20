@@ -233,6 +233,7 @@ public class TestFiles {
     new TestFile("close10"),
     new TestFile("close11"),
     new TestFile("close12"),
+    new TestFile("close13"), // TODO: enforce no goto
     new TestFile("always01"),
     new TestFile("always02"),
     new TestFile("always03"),

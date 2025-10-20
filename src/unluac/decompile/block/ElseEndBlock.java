@@ -30,11 +30,6 @@ public class ElseEndBlock extends ContainerBlock {
   }
   
   @Override
-  public int scopeEnd() {
-    return usingClose && closeType == CloseType.CLOSE ? closeLine - 1 : super.scopeEnd();
-  }
-  
-  @Override
   public boolean hasHeader() {
     return true;
   }

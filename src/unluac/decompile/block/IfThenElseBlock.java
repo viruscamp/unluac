@@ -59,7 +59,7 @@ public class IfThenElseBlock extends ContainerBlock {
   
   @Override
   public int scopeEnd() {
-    return usingClose && closeType == CloseType.CLOSE ? closeLine - 1 : end - 2;
+    return end - 2;
   }
   
   @Override

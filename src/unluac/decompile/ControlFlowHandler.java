@@ -670,15 +670,11 @@ public class ControlFlowHandler {
           if(b != null) {
             Branch skip = state.branches[j.line - 2];
             if(skip == null) throw new IllegalStateException();
-            int scopeEnd = j.line - 3;
-            if(state.function.header.version.closeinscope.get()) {
-              scopeEnd = j.line - 2;
-            }
-            // TODO: make this work better with new close system
+            int closeLine = state.function.header.version.closesemantics.get() == Version.CloseSemantics.LUA54 ? j.line - 3 : j.line - 1;
             loop = new RepeatBlock(
               state.function, b.cond, j.targetFirst, j.line + 1,
-              CloseType.NONE, -1,
-              true, scopeEnd
+              get_close_type(state, closeLine), closeLine,
+              false, -1
             );
             remove_branch(state, b);
             remove_branch(state, skip);
@@ -743,9 +739,9 @@ public class ControlFlowHandler {
                 get_close_type(state, statementLine), statementLine,
                 true, statementLine
               );
-            } else if(state.function.header.version.closesemantics.get() == Version.CloseSemantics.JUMP) {
+            } else if(state.function.header.version.closesemantics.get() == Version.CloseSemantics.JUMP && is_close(state, b.targetFirst)) {
               block = new RepeatBlock(
-                state.function, b.cond, b.targetSecond, b.targetFirst,
+                state.function, b.cond, b.targetSecond, b.targetFirst + 1,
                 get_close_type(state, b.targetFirst), b.targetFirst,
                 false, -1
               );
@@ -1374,7 +1370,20 @@ public class ControlFlowHandler {
         boolean needsDoEnd = true;
         for(Block block : state.blocks) {
           if(block.contains(decl.begin)) {
-            if(block.scopeEnd() == decl.end) {
+            int scopeEnd = block.scopeEnd();
+            if(block.hasCloseLine()) {
+              int closeLine = block.getCloseLine();
+              int closeRegister = get_close_value(state, closeLine);
+              if(closeRegister <= decl.register) {
+                CloseType closeType = block.getCloseType();
+                if(closeType == CloseType.CLOSE) {
+                  scopeEnd = closeLine - 1;
+                } else if(closeType == CloseType.CLOSE54) {
+                  scopeEnd = closeLine;
+                }
+              }
+            }
+            if(scopeEnd == decl.end) {
               block.useScope();
               needsDoEnd = false;
               break;

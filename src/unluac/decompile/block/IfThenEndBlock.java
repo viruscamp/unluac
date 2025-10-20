@@ -39,11 +39,6 @@ public class IfThenEndBlock extends ContainerBlock {
   }
   
   @Override
-  public int scopeEnd() {
-    return usingClose && closeType == CloseType.CLOSE ? closeLine - 1 : super.scopeEnd();
-  }
-  
-  @Override
   public void resolve(Registers r) {
     condexpr = cond.asExpression(r);
   }
