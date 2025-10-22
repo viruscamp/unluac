@@ -18,6 +18,7 @@ public class RunTests {
       new LuaSpec(0x52),
       new LuaSpec(0x53),
       new LuaSpec(0x54),
+      new LuaSpec(0x54, 8),
     }) {
       UnluacSpec uspec = new UnluacSpec();
       System.out.print(spec.id());
