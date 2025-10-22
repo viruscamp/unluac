@@ -706,11 +706,30 @@ public class ControlFlowHandler {
               }
             }
           }
-          loop = new AlwaysLoop(state.function, loopback, end, get_close_type(state, end - 2), end - 2, repeat);
-          unredirect(state, loopback, end, j.line, loopback);
+          boolean gotoheuristic = false;
+          if(state.function.header.version.usegoto.get()) {
+            Branch k = j.previous;
+            while(k != null && k.line >= loopback) {
+              if((k.type == Branch.Type.jump
+                  || (k.type == Branch.Type.test || k.type == Branch.Type.comparison)
+                  && state.function.header.version.useifgotorewrite.get() != Maybe.NO)
+                && (k.targetFirst < loopback || k.targetSecond > end)
+              ) {
+                // Decompilation as loop may require a goto anyway to exit
+                gotoheuristic = true;
+              }
+              k = k.previous;
+            }
+          }
+          if(!gotoheuristic) {
+            loop = new AlwaysLoop(state.function, loopback, end, get_close_type(state, end - 2), end - 2, repeat);
+            unredirect(state, loopback, end, j.line, loopback);
+          }
         }
-        remove_branch(state, j);
-        blocks.add(loop);
+        if(loop != null) {
+          remove_branch(state, j);
+          blocks.add(loop);
+        }
       }
       j = j.previous;
     }
