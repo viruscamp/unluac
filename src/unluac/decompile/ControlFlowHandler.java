@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import unluac.Version;
+import unluac.Version.Maybe;
 import unluac.decompile.block.AlwaysLoop;
 import unluac.decompile.block.Block;
 import unluac.decompile.block.Break;
@@ -801,12 +802,17 @@ public class ControlFlowHandler {
     if(!stack.isEmpty() && stack_reach(state, stack) <= line) {
       Branch top = stack.pop();
       int literalEnd = state.code.target(top.targetFirst - 1);
-      if(state.function.header.version.useifbreakrewrite.get() && state.function.header.version.usegoto.get() && top.targetFirst + 1 == top.targetSecond && is_jmp(state, top.targetFirst)) {
-        // If this were actually an if statement, it would have been rewritten. It hasn't been, so it isn't...
-        block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1);
-        block.addStatement(new Goto(state.function, top.targetFirst - 1, top.targetSecond));
-        state.labels[top.targetSecond] = true;
-      } else {
+      if(state.function.header.version.useifgotorewrite.get() != Maybe.NO && top.targetFirst + 1 == top.targetSecond && is_jmp(state, top.targetFirst)) {
+        boolean isbreakrewrite = state.function.header.version.useifbreakrewrite.get() && is_break_jmp(state, top.targetFirst); 
+        boolean isgotorewrite = !isbreakrewrite && state.function.header.version.useifgotorewrite.get() == Maybe.YES;
+        if(isbreakrewrite || isgotorewrite) {
+          // If this were actually an if statement, it would have been rewritten. It hasn't been, so it isn't...
+          block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1);
+          block.addStatement(new Goto(state.function, top.targetFirst - 1, top.targetSecond));
+          state.labels[top.targetSecond] = true;
+        }
+      }
+      if(block == null) {
         block = new IfThenEndBlock(
           state.function, state.r, top.cond, top.targetFirst, top.targetSecond,
           get_close_type(state, top.targetSecond - 1), top.targetSecond - 1,
@@ -873,6 +879,11 @@ public class ControlFlowHandler {
       && !splits_decl(hanging.line, hanging.targetFirst, resolver.line, declList)
       && !(
         state.function.header.version.useifbreakrewrite.get()
+        && hanging.targetFirst == resolver.line - 1
+        && is_break_jmp(state, resolver.line - 1)
+      )
+      && !(
+        state.function.header.version.useifgotorewrite.get() == Maybe.YES
         && hanging.targetFirst == resolver.line - 1
         && is_jmp(state, resolver.line - 1)
       )
@@ -1025,11 +1036,15 @@ public class ControlFlowHandler {
           for(int i = 0; i < hanging.size(); i++) {
             Branch hanger = hanging.peek(i);
             if(
-              state.resolved[hanger.targetSecond] == state.resolved[breakable.end]
+              (
+                state.resolved[hanger.targetSecond] == state.resolved[breakable.end]
+                || state.function.header.version.usegoto.get()
+                  && !breakable.contains(hanger.targetSecond)
+              )
               && line + 1 < state.branches.length && state.branches[line + 1] != null
               && state.branches[line + 1].targetFirst == hanger.targetSecond
               && !splits_decl(hanger.line, hanger.targetFirst, b.line, declList) // if else
-              && !splits_decl(b.line, b.line + 1, b.line + 2, declList) // else break
+              && !splits_decl(b.line, b.line + 1, b.line + 2, declList) // else break/goto
               && !splits_decl(hanger.line, hanger.targetFirst, b.line + 2, declList) // full
             ) {
               // resolve intervening hangers
@@ -1040,7 +1055,7 @@ public class ControlFlowHandler {
                 resolve_hanger(state, declList, stack, hanging.pop(), hangingResolver.peek());
               }
               
-              // else break
+              // else break or else goto
               Branch top = hanging.pop();
               if(!hangingResolver.isEmpty() && hangingResolver.peek().targetFirst == top.targetSecond) {
                 hangingResolver.pop();
@@ -1148,7 +1163,7 @@ public class ControlFlowHandler {
           throw new IllegalStateException();
         }
       } else if(state.function.header.version.usegoto.get() || state.r.isNoDebug) {
-        if(state.function.header.version.useifbreakrewrite.get() || state.r.isNoDebug) {
+        if(state.function.header.version.useifgotorewrite.get() != Maybe.NO || state.r.isNoDebug) {
           Block block = new IfThenEndBlock(state.function, state.r, top.cond.inverse(), top.targetFirst - 1, top.targetFirst - 1);
           block.addStatement(new Goto(state.function, top.targetFirst - 1, top.targetSecond));
           state.blocks.add(block);
@@ -1759,6 +1774,15 @@ public class ControlFlowHandler {
     } else {
       return false;
     }
+  }
+  
+  private static boolean is_break_jmp(State state, int line) {
+    if(is_jmp(state, line)) {
+      int target = state.code.target(line);
+      Block breakable = enclosing_breakable_block(state, line);
+      return target == breakable.end || target == state.resolved[breakable.end];
+    }
+    return false;
   }
   
   private static boolean is_close(State state, int line) {

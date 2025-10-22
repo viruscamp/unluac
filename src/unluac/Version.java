@@ -32,6 +32,12 @@ public class Version {
     
   }
   
+  public static enum Maybe {
+    NO,
+    MAYBE,
+    YES,
+  }
+  
   public static enum VarArgType {
     ARG,
     HYBRID,
@@ -122,6 +128,7 @@ public class Version {
   public final Setting<Boolean> usenestinglongstrings;
   public final Setting<String> environmenttable;
   public final Setting<Boolean> useifbreakrewrite;
+  public final Setting<Maybe> useifgotorewrite;
   public final Setting<Boolean> usegoto;
   public final Setting<Integer> rkoffset;
   public final Setting<Boolean> allownegativeint;
@@ -178,6 +185,7 @@ public class Version {
           usenestinglongstrings = new Setting<>(true);
           environmenttable = new Setting<>(null);
           useifbreakrewrite = new Setting<>(false);
+          useifgotorewrite = new Setting<>(Maybe.NO);
           usegoto = new Setting<>(false);
           rkoffset = new Setting<>(250);
           allownegativeint = new Setting<Boolean>(false);
@@ -208,6 +216,7 @@ public class Version {
           usenestinglongstrings = new Setting<>(false);
           environmenttable = new Setting<>(null);
           useifbreakrewrite = new Setting<>(false);
+          useifgotorewrite = new Setting<>(Maybe.NO);
           usegoto = new Setting<>(false);
           rkoffset = new Setting<>(256);
           allownegativeint = new Setting<Boolean>(luaj);
@@ -238,6 +247,7 @@ public class Version {
           usenestinglongstrings = new Setting<>(false);
           environmenttable = new Setting<>("_ENV");
           useifbreakrewrite = new Setting<>(true);
+          useifgotorewrite = new Setting<>(Maybe.YES);
           usegoto = new Setting<>(true);
           rkoffset = new Setting<>(256);
           allownegativeint = new Setting<Boolean>(luaj);
@@ -268,6 +278,7 @@ public class Version {
           usenestinglongstrings = new Setting<>(false);
           environmenttable = new Setting<>("_ENV");
           useifbreakrewrite = new Setting<>(true);
+          useifgotorewrite = new Setting<>(Maybe.YES);
           usegoto = new Setting<>(true);
           rkoffset = new Setting<>(256);
           allownegativeint = new Setting<Boolean>(true);
@@ -298,6 +309,7 @@ public class Version {
           usenestinglongstrings = new Setting<>(false);
           environmenttable = new Setting<>("_ENV");
           useifbreakrewrite = new Setting<>(true);
+          useifgotorewrite = new Setting<>(Maybe.MAYBE);
           usegoto = new Setting<>(true);
           rkoffset = new Setting<>(null);
           allownegativeint = new Setting<Boolean>(true);
